@@ -56,7 +56,7 @@ To try it locally from a clone, run `claude --plugin-dir ./plugins/oncue`.
    ```
 
 3. Claude copies the engine into `oncue-engine/` in that folder and installs it, once per session, then writes the storyboard.
-4. **Check-in 1: the beats.** Claude shows the beat list with preview stills. Change, cut or reorder beats now: once the voiceover is recorded, a wording change means paying for a new recording.
+4. **Check-in 1: the beats.** Claude shows the beat list with preview stills (or a Design canvas). Change, cut or reorder beats now: once the voiceover is recorded, a wording change means paying for a new recording.
 5. **Check-in 2: the voice.** Claude names the voice it picked and gives you two takes. Pick one, or ask for another voice.
 6. Claude builds the deck if you asked for one, checks stills against the real word timings, and renders the video in the background. Rendering runs at about 3–4 frames a second, so roughly 10 minutes for a 75-second Short.
 7. You get the MP4 (and the deck), with the take and voice used and the ElevenLabs credits spent.
@@ -68,7 +68,7 @@ Say "go ahead without stopping" to skip the check-ins.
 - **The subject and its sources:** a repo, README, docs page or notes. Claude uses real facts only and marks anything missing as `[YOUR FACT]`.
 - **Length and audience.** Without them, Claude aims for 45–80 seconds in 6–10 beats.
 - **The call to action:** install, follow, visit.
-- **The brand:** a design system, colours, or a square PNG logo. Without one, Claude picks a dark ground, one accent and one highlight from the subject and tells you.
+- **The brand:** a design system, colours, or a square PNG logo. Without one, Claude uses the product's logo and site; with neither, it picks a dark ground, one accent and one highlight from the subject and tells you.
 - **The voice,** such as "a warm, unhurried narrator". Without one, Claude picks a clear voice suited to a product explainer.
 - **The outputs,** if you want less than the whole pipeline: only the storyboard, only the deck, or a silent preview.
 
@@ -83,7 +83,7 @@ my-short/
   words.json         word timestamps for that take
   deck.pptx          editable 9:16 deck, voiceover in the speaker notes
   short.mp4          1080×1920, 30fps, H.264 with AAC audio
-  build/             stills/, scenes/ and timeline.json, rewritten on every run
+  build/             scenes/ and timeline.json (rewritten each run), stills/ (new frames are added, old ones stay)
 ```
 
 `short.json` is the source of truth. To change the copy, edit it (or ask Claude to) and rebuild; an edit made only in the `.pptx` leaves the deck and the video out of step.
@@ -128,11 +128,11 @@ The worked example is Gleaner's own Short: [examples/gleaner/short.json](plugins
 | The audio download is refused in a sandboxed session | Allow `storage.googleapis.com` in claude.ai Settings → Capabilities, or download the MP3 yourself and attach it. |
 | `Playwright is not installed` | In `oncue-engine/`: `npm install playwright && npx playwright install chromium`. |
 | An `ENOENT` error naming `ffmpeg` or `ffprobe` | Install ffmpeg so both are on `PATH`. |
-| `Font file missing` | A font in `brand.fonts` is not installed: `npm install @fontsource/<name>` in `oncue-engine/`. |
+| `Font file missing` | A font in `brand.fonts` is not installed: `npm install @fontsource/<name>` in `oncue-engine/`. If it is installed, it lacks a weight the video uses (400, 600, 700 and 800 for `sans`; 400 and 600 for `mono`), so pick a font that has them. |
 | `Line N (...) not found in the transcript` | The narrator changed that line's first word. Make its `vo` match what was said, or transcribe again. |
 | `cue word "..." not heard in this line` | That element is spaced evenly instead of landing on its word. Change its `cue` to a word the narrator said. |
 | `Pass --words and --audio together` | The transcript must be of that audio, so pass both or neither. |
-| Text hidden behind the Shorts buttons and captions | Keep content out of the bottom ~350px of the frame (the bottom 1.4 inches of the deck). |
+| Text hidden behind the Shorts buttons and captions | Keep content out of the bottom ~350px of the frame (about 1.8 inches of the deck). |
 
 ## The engine
 
@@ -146,7 +146,7 @@ node dist/cli.js stills short.json --words words.json --audio voiceover.mp3
 node dist/cli.js video  short.json --words words.json --audio voiceover.mp3 --out short.mp4
 ```
 
-Without `--words` and `--audio`, timing is estimated from the script and the video is a silent preview. Outputs go to `build/` beside `short.json` unless `--out` is given.
+Without `--words` and `--audio`, timing is estimated from the script and the video is a silent preview. Outputs go to `build/` beside `short.json`; `deck` and `video` take `--out` to write elsewhere.
 
 To try it on the bundled Gleaner Short, run `npm install` in the engine folder, then `npm run example:check`, `example:deck`, `example:stills` or `example:video`. The results land in `examples/gleaner/build/`.
 
