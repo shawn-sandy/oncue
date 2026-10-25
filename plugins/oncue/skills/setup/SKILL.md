@@ -1,23 +1,40 @@
 ---
 name: setup
-description: Get OnCue ready to run. Check Node, ffmpeg and ffprobe, set up the engine with Playwright and Chromium, check the ElevenLabs connector, fix what can be fixed in the session, and report which outputs (storyboard, deck, stills, voiceover, video) will work. Use when the user has just installed the plugin, asks to set up or check OnCue, asks what they need to make a Short, or a stage failed because Playwright, ffmpeg or ElevenLabs is missing.
+description: Get OnCue ready to run. Report the installed plugin version and scope and how to update it or install it for collaborators, check Node, ffmpeg and ffprobe, set up the engine with Playwright and Chromium, check the ElevenLabs connector, fix what can be fixed in the session, and report which outputs (storyboard, deck, stills, voiceover, video) will work. Use when the user has just installed the plugin, asks to set up, check, update or share OnCue, asks what they need to make a Short, or a stage failed because Playwright, ffmpeg or ElevenLabs is missing.
 ---
 
 # Setup
 
-Check what OnCue needs on this machine and in this session, fix what you can, and say which outputs are ready. Nothing here spends ElevenLabs credits: never call a generation or transcription tool during setup.
+Check the plugin and what OnCue needs on this machine and in this session, fix what you can, and say which outputs are ready. Nothing here spends ElevenLabs credits: never call a generation or transcription tool during setup.
 
 Work through the checks in order and keep going past a failure, so the report covers everything at once.
 
-## 1. Node.js
+Below, `<plugin>` is the absolute path of the folder two levels above this skill's folder, the one holding `engine/` and `skills/`.
+
+## 1. The plugin
+
+Read the version this session loaded from `<plugin>/.claude-plugin/plugin.json`. Where the `claude` CLI is on `PATH`, see how it was installed:
+
+```bash
+claude plugin list --json
+```
+
+An entry with the `id` `oncue@oncue` gives its `scope` (`user`, `project` or `local`) and the `version` on disk; a `project` or `local` entry names its folder in `projectPath`. A version on disk newer than the loaded one is an update waiting for `/reload-plugins` or a new session. With no `oncue@oncue` entry, OnCue was most likely loaded with `--plugin-dir` from a clone, which updates with `git pull` in that clone. Without the CLI, report the loaded version alone.
+
+The person's Claude Code settings are theirs to change: give these commands, and run one only if they ask you to.
+
+- **Update.** OnCue's marketplace does not auto-update by default. Run `claude plugin update oncue@oncue` in a shell, with `--scope` for a project or local install, or choose **Update now** for OnCue on the **Installed** tab of `/plugin`. To have it update itself, select the `oncue` marketplace on the **Marketplaces** tab of `/plugin` and choose **Enable auto-update**. The running session keeps the version it loaded, so after updating, run `/reload-plugins` or start a new session and set up again: the checks below then run against the new version, and step 4 replaces any engine copy made by the old one.
+- **Install for collaborators.** `claude plugin install oncue@oncue --scope project` turns OnCue on in this repository's `.claude/settings.json`, which they commit. That does not download it for anyone else: each collaborator runs `claude plugin install oncue --marketplace shawn-sandy/oncue --scope project` once (Claude Code 2.1.292 or later; on older versions, `claude plugin marketplace add shawn-sandy/oncue` first, then `claude plugin install oncue@oncue --scope project`).
+
+## 2. Node.js
 
 ```bash
 node --version
 ```
 
-Every stage needs 22 or newer. If it is older or missing, tell the person to install Node 22+ (nodejs.org or their version manager), skip steps 3 and 4, which need it, and still run steps 2 and 5 and the report.
+Every stage needs 22 or newer. If it is older or missing, tell the person to install Node 22+ (nodejs.org or their version manager), skip steps 4 and 5, which need it, and still run steps 3 and 6 and the report.
 
-## 2. ffmpeg and ffprobe
+## 3. ffmpeg and ffprobe
 
 ```bash
 ffmpeg -version | head -1
@@ -26,11 +43,19 @@ ffprobe -version | head -1
 
 Each must print a version line; `command not found` names the one that is missing. Check them separately: `command -v ffmpeg ffprobe` exits 0 in bash even when one is missing. The video needs ffmpeg, and anything timed to a real voiceover (stills or video with `--audio`) needs ffprobe. One package installs both: `brew install ffmpeg` on macOS, `sudo apt install ffmpeg` on Debian or Ubuntu. Ask before installing; anything with `sudo` the person runs themselves. Without ffmpeg the storyboard, the deck and silent preview stills still work.
 
-## 3. The engine
+## 4. The engine
 
-The engine is in this plugin's `engine/` folder (`../../engine` from this skill's folder). Below, `<plugin>` is the absolute path of the folder two levels above this skill's folder, the one holding `engine/` and `skills/`.
+The engine is in this plugin's `engine/` folder (`../../engine` from this skill's folder).
 
-If `oncue-engine/` already exists in the working directory, reuse it: `cd oncue-engine && npm install`. Copying over it would nest the engine inside it. Otherwise copy it there, so installs never touch the plugin cache:
+If `oncue-engine/` already exists in the working directory, check that this version of the plugin made it:
+
+```bash
+diff -rq <plugin>/engine/dist oncue-engine/dist
+```
+
+No output means it did: reuse it with `cd oncue-engine && npm install`. Copying over it would nest the engine inside it. When `diff` lists files, an older OnCue made the copy and it still runs the old engine. Rename it with `mv oncue-engine oncue-engine.old` (pick another name if that one is taken: `mv` into an existing folder nests it), make a fresh copy as below, and tell the person they can delete the old one once the new one works. The fresh copy needs Playwright again (step 5), and any `@fontsource/*` package in the old copy's `package.json` but not the new one needs `npm install @fontsource/<name>`.
+
+With no `oncue-engine/`, or after renaming an old one, copy the engine there, so installs never touch the plugin cache:
 
 ```bash
 cp -R <plugin>/engine ./oncue-engine && cd oncue-engine && npm install
@@ -44,7 +69,7 @@ npm run example:check
 
 It prints the Gleaner example's beats and ends with `OK.` The storyboard and the deck are now ready.
 
-## 4. Playwright with Chromium
+## 5. Playwright with Chromium
 
 Stills and video drive headless Chromium; the deck does not. If `node -p "require('playwright/package.json').version"` prints 1.40.0 or later, Playwright is already installed (many sandboxes preinstall it matched to their browser): use it and install nothing. The engine needs at least 1.40.0. Otherwise, missing or older:
 
@@ -64,7 +89,7 @@ This writes silent preview frames to `examples/gleaner/build/stills/`. Open one:
 
 When ffprobe is present, also run `npm run example:stills`, which times the frames to the example's voiceover through ffprobe. Do not render the example video here; it takes minutes, and the stills exercise the same chain.
 
-## 5. ElevenLabs
+## 6. ElevenLabs
 
 The voiceover skill uses the ElevenLabs connector's `creative_*` tools (`creative_list_voices`, `creative_generate_speech`, `creative_transcribe_audio`). Check whether they are in this session; do not call them.
 
@@ -78,9 +103,9 @@ Mention the cost: generation spends their ElevenLabs credits, about 1,100 a take
 
 In a sandboxed session (claude.ai or a cloud environment), the audio downloads come from `storage.googleapis.com`. Tell the person to allow that domain under claude.ai Settings → Capabilities before the voiceover stage.
 
-## 6. Report
+## 7. Report
 
-A short table of each check (Node, ffmpeg and ffprobe, engine, Playwright with Chromium, ElevenLabs), ready or missing, with the fix for each one missing. Then say what works now:
+A short table of each check (the plugin's version and scope, Node, ffmpeg and ffprobe, engine, Playwright with Chromium, ElevenLabs), ready or missing, with the fix for each one missing. Flag an update waiting to load, or an engine copy replaced in step 4. Then say what works now:
 
 | Output | Needs |
 | --- | --- |
