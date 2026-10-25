@@ -41,4 +41,4 @@ Run every command from `oncue-engine`. `npm run example:check` confirms the inst
 
 - **Sandbox network.** Many sessions block downloads from ElevenLabs' file host `storage.googleapis.com`. If a download is refused, tell the person to add that domain under claude.ai Settings → Capabilities, or to attach the MP3. Do not retry through other tools.
 - **Transcribe, don't guess.** Pauses between lines are no longer than pauses inside them, so splitting audio on silence puts cuts mid-sentence. Always time from a word-level transcript (the voiceover skill gets one).
-- **Long renders.** About 3–4 frames a second, so roughly 10 minutes for a 75-second video. Run it in the background and keep the person posted at milestones.
+- **Long renders.** Speed depends on the machine: on an Apple M4 Max the 75-second example rendered at about 30 frames a second, in 76 seconds, and slower machines take longer. Run it in the background and keep the person posted at milestones.
