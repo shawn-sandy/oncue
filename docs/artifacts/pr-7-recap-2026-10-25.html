@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>OnCue install and updates</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: a single reading column like a broadcast cue sheet; a timecode-style rail of labels, cards only where a change or decision stands on its own. */
+:root {
+  --ground: #f5f7fa;
+  --surface: #ffffff;
+  --ink: #18202c;
+  --muted: #566176;
+  --rule: #d9dee7;
+  --accent: #1d5c8a;
+  --cue: #b46a00;
+  --cue-soft: #fbf1e2;
+  --accent-soft: #e6eff7;
+  --diagram: #ffffff;
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --step--1: 0.8125rem;
+  --step-0: 1rem;
+  --step-1: 1.1875rem;
+  --step-2: 1.5rem;
+  --step-3: 2.25rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #11151c;
+    --surface: #181e27;
+    --ink: #e5e9f0;
+    --muted: #9aa5b8;
+    --rule: #2a3340;
+    --accent: #7db6e3;
+    --cue: #f0b061;
+    --cue-soft: #2b2316;
+    --accent-soft: #19283a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #11151c;
+  --surface: #181e27;
+  --ink: #e5e9f0;
+  --muted: #9aa5b8;
+  --rule: #2a3340;
+  --accent: #7db6e3;
+  --cue: #f0b061;
+  --cue-soft: #2b2316;
+  --accent-soft: #19283a;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  line-height: 1.6;
+}
+.page {
+  max-width: 54rem;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 2.5rem 4rem;
+  display: grid;
+  gap: 3rem;
+}
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: var(--step-3); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: var(--step-2); font-weight: 600; }
+h3 { font-size: var(--step-1); font-weight: 600; }
+p { margin: 0; max-width: 65ch; }
+a { color: var(--accent); text-underline-offset: 0.15em; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  background: var(--accent-soft);
+  padding: 0.05em 0.35em;
+  border-radius: 3px;
+  overflow-wrap: anywhere;
+}
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--cue);
+}
+section { display: grid; gap: 1.25rem; }
+.section-head { display: grid; gap: 0.35rem; border-top: 1px solid var(--rule); padding-top: 1.25rem; }
+
+/* Header */
+header { display: grid; gap: 1rem; }
+.meta { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; color: var(--muted); font-size: var(--step--1); font-family: var(--font-mono); }
+.pill {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  padding: 0.1em 0.6em;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  color: var(--ink);
+}
+.pill.ok { border-color: var(--accent); color: var(--accent); }
+.lede { font-size: var(--step-1); line-height: 1.5; color: var(--ink); }
+
+/* Stat strip */
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--rule); border-radius: 6px; background: var(--surface); }
+.stat { padding: 0.9rem 1rem; display: grid; gap: 0.15rem; }
+.stat + .stat { border-left: 1px solid var(--rule); }
+.stat b { font-family: var(--font-display); font-size: var(--step-3); font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+.stat span { color: var(--muted); font-size: var(--step--1); }
+@media (max-width: 34rem) {
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat:nth-child(3) { border-left: 0; }
+  .stat:nth-child(n+3) { border-top: 1px solid var(--rule); }
+}
+
+/* Change cards */
+.cards { display: grid; gap: 1rem; }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 1.1rem 1.25rem;
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.facts { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr); gap: 0.5rem 1rem; margin: 0; }
+.facts dt { font-family: var(--font-mono); font-size: var(--step--1); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding-top: 0.2rem; }
+.facts dd { margin: 0; min-width: 0; }
+@media (max-width: 34rem) {
+  .facts { grid-template-columns: minmax(0, 1fr); gap: 0.15rem; }
+  .facts dd + dt { margin-top: 0.5rem; }
+}
+
+/* Diagrams */
+figure { margin: 0; display: grid; gap: 0.6rem; }
+.diagram {
+  background: var(--diagram);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 1rem;
+  overflow-x: auto;
+}
+.diagram pre.mermaid { margin: 0; background: transparent; }
+figcaption { color: var(--muted); font-size: var(--step--1); max-width: 65ch; }
+figcaption b { color: var(--ink); font-weight: 600; }
+
+/* Table */
+.table-wrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 36rem; font-size: 0.9375rem; }
+th, td { text-align: left; vertical-align: top; padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--rule); }
+tr:last-child td { border-bottom: 0; }
+th { font-family: var(--font-mono); font-size: var(--step--1); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 500; }
+td:first-child { font-weight: 600; width: 28%; }
+td.after { background: var(--accent-soft); }
+
+/* Lists */
+.list { display: grid; gap: 1rem; margin: 0; padding: 0; list-style: none; }
+.list > li { display: grid; gap: 0.35rem; min-width: 0; }
+.list > li > p { color: var(--ink); }
+.rejected { color: var(--muted); }
+.rejected b { color: var(--ink); font-weight: 600; }
+ol.decisions { counter-reset: d; }
+ol.decisions > li { counter-increment: d; padding-left: 2.25rem; position: relative; }
+ol.decisions > li::before {
+  content: counter(d);
+  position: absolute; left: 0; top: 0.1rem;
+  font-family: var(--font-mono); font-size: var(--step--1);
+  width: 1.6rem; height: 1.6rem; display: grid; place-items: center;
+  border: 1px solid var(--rule); border-radius: 50%; color: var(--muted);
+}
+.note { background: var(--cue-soft); border-radius: 6px; padding: 0.9rem 1.1rem; display: grid; gap: 0.4rem; }
+.note p { max-width: none; }
+.open > li { border-left: 3px solid var(--cue); padding-left: 1rem; }
+.files { display: grid; gap: 1rem; }
+.files h3 { font-size: var(--step-0); font-family: var(--font-mono); font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.files ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.5rem; }
+.files li { min-width: 0; }
+dl.glossary { display: grid; grid-template-columns: 13rem minmax(0, 1fr); gap: 0.6rem 1.25rem; margin: 0; }
+dl.glossary dt { font-weight: 600; min-width: 0; }
+dl.glossary dd { margin: 0; min-width: 0; }
+@media (max-width: 34rem) {
+  dl.glossary { grid-template-columns: minmax(0, 1fr); gap: 0.15rem; }
+  dl.glossary dd + dt { margin-top: 0.6rem; }
+}
+footer { color: var(--muted); font-size: var(--step--1); border-top: 1px solid var(--rule); padding-top: 1rem; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+<style>body{margin:0}img{max-width:100%}.mermaid-diagram{margin-block:4px}.mermaid-diagram svg{display:block;margin:0 auto;max-width:100%;height:auto}</style>
+</head>
+<body>
+
+
+<main class="page">
+
+  <header>
+    <span class="eyebrow">Team recap, pull request 7</span>
+    <h1>OnCue install and updates</h1>
+    <div class="meta">
+      <a href="https://github.com/shawn-sandy/oncue/pull/7">shawn-sandy/oncue#7</a>
+      <span class="pill">Open, into main</span>
+      <span class="pill ok">validate check passing</span>
+      <span>OnCue 1.2.0</span>
+      <span>2026-10-25</span>
+    </div>
+  </header>
+
+  <section aria-labelledby="glance">
+    <div class="section-head">
+      <span class="eyebrow">At a glance</span>
+      <h2 id="glance">Setup now handles the plugin itself</h2>
+    </div>
+    <div class="stats" role="list">
+      <div class="stat" role="listitem"><b>3</b><span>changes</span></div>
+      <div class="stat" role="listitem"><b>4</b><span>files</span></div>
+      <div class="stat" role="listitem"><b>6</b><span>decisions</span></div>
+      <div class="stat" role="listitem"><b>4</b><span>open items</span></div>
+    </div>
+    <p class="lede">OnCue's setup skill now covers the plugin as well as what it needs on the machine. Ask Claude to set up, update or share OnCue, and it first reports which version is loaded and how it was installed, then gives the commands for the change you asked for.</p>
+    <p>An update now also reaches project folders that already hold a copy of the engine. Before this change those folders kept running the old engine without saying so. The work ships as OnCue 1.2.0 in pull request 7, open against <code>main</code> with its <code>validate</code> check passing.</p>
+  </section>
+
+  <section aria-labelledby="changed">
+    <div class="section-head">
+      <span class="eyebrow">What changed</span>
+      <h2 id="changed">Three changes</h2>
+    </div>
+    <div class="cards">
+      <article class="card">
+        <h3>Setup starts with the plugin itself</h3>
+        <dl class="facts">
+          <dt>Affects</dt>
+          <dd>OnCue users, and teammates installing it in a shared repository.</dd>
+          <dt>What is new</dt>
+          <dd>
+            <p><code>/oncue:setup</code> has a new first step. It reads the loaded version from <code>plugins/oncue/.claude-plugin/plugin.json</code>, runs <code>claude plugin list --json</code> to find the install scope that applies to the current folder, and flags an update that is on disk but not loaded yet.</p>
+            <p style="margin-top:0.5rem">It then gives the commands to update OnCue or install it for collaborators. It runs them only when the person asks for that change. When they only asked to update or share, it stops after this step instead of running every dependency check.</p>
+          </dd>
+          <dt>How to reach it</dt>
+          <dd>Ask Claude to "set up OnCue", "update OnCue" or "share OnCue with my team", or run <code>/oncue:setup</code>.</dd>
+        </dl>
+      </article>
+      <article class="card">
+        <h3>Old engine copies are replaced after an update</h3>
+        <dl class="facts">
+          <dt>Affects</dt>
+          <dd>Anyone who updates OnCue after making a Short in a folder.</dd>
+          <dt>What is new</dt>
+          <dd>
+            <p>The setup and explainer-video skills used to reuse any <code>oncue-engine/</code> folder they found. Now they first compare it with the loaded plugin's compiled engine using <code>diff -rq &lt;plugin&gt;/engine/dist oncue-engine/dist</code>.</p>
+            <p style="margin-top:0.5rem">No output means the copy matches, and it is reused. Any difference means an older OnCue made it: the copy is renamed to <code>oncue-engine.old</code>, a fresh one is made, and Playwright and any fonts the old copy had are reinstalled. The storyboard, vertical-deck and animate-short skills set up the engine through explainer-video, so they get the same check.</p>
+          </dd>
+          <dt>How to reach it</dt>
+          <dd>Automatic, the next time any OnCue stage runs in that folder.</dd>
+        </dl>
+      </article>
+      <article class="card">
+        <h3>README and version 1.2.0</h3>
+        <dl class="facts">
+          <dt>Affects</dt>
+          <dd>People reading the README, and anyone tracking releases.</dd>
+          <dt>What is new</dt>
+          <dd>The Install section explains updating, since OnCue's marketplace does not auto-update by default, and project-scope installs. The setup row in the skills table mentions updates, and there is a 1.2.0 changelog entry. <code>plugin.json</code> moves from 1.1.0 to 1.2.0.</dd>
+          <dt>How to reach it</dt>
+          <dd><code>README.md</code>, in the Install, Run one stage at a time and Changelog sections.</dd>
+        </dl>
+      </article>
+    </div>
+  </section>
+
+  <section aria-labelledby="works">
+    <div class="section-head">
+      <span class="eyebrow">How it works now</span>
+      <h2 id="works">Two flows changed shape</h2>
+    </div>
+    <figure>
+      <div class="diagram">
+<div class="mermaid-diagram"><svg id="recap-mermaid-0" width="586" xmlns="http://www.w3.org/2000/svg" class="flowchart" height="765.3125" viewBox="0 0 586 765.3125" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#recap-mermaid-0{font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;fill:#42392e;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#recap-mermaid-0 .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#recap-mermaid-0 .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#recap-mermaid-0 .error-icon{fill:hsl(221.25, 42.1052631579%, 97.5490196078%);}#recap-mermaid-0 .error-text{fill:rgb(8.8815789475, 7.2368421054, 3.6184210527);stroke:rgb(8.8815789475, 7.2368421054, 3.6184210527);}#recap-mermaid-0 .edge-thickness-normal{stroke-width:1px;}#recap-mermaid-0 .edge-thickness-thick{stroke-width:3.5px;}#recap-mermaid-0 .edge-pattern-solid{stroke-dasharray:0;}#recap-mermaid-0 .edge-thickness-invisible{stroke-width:0;fill:none;}#recap-mermaid-0 .edge-pattern-dashed{stroke-dasharray:3;}#recap-mermaid-0 .edge-pattern-dotted{stroke-dasharray:2;}#recap-mermaid-0 .marker{fill:#8a7f6d;stroke:#8a7f6d;}#recap-mermaid-0 .marker.cross{stroke:#8a7f6d;}#recap-mermaid-0 svg{font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;}#recap-mermaid-0 p{margin:0;}#recap-mermaid-0 .label{font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;color:#42392e;}#recap-mermaid-0 .cluster-label text{fill:#42392e;}#recap-mermaid-0 .cluster-label span{color:#42392e;}#recap-mermaid-0 .cluster-label span p{background-color:transparent;}#recap-mermaid-0 .label text,#recap-mermaid-0 span{fill:#42392e;color:#42392e;}#recap-mermaid-0 .node rect,#recap-mermaid-0 .node circle,#recap-mermaid-0 .node ellipse,#recap-mermaid-0 .node polygon,#recap-mermaid-0 .node path{fill:#f4efe4;stroke:#7a6c52;stroke-width:1px;}#recap-mermaid-0 .rough-node .label text,#recap-mermaid-0 .node .label text,#recap-mermaid-0 .image-shape .label,#recap-mermaid-0 .icon-shape .label{text-anchor:middle;}#recap-mermaid-0 .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#recap-mermaid-0 .rough-node .label,#recap-mermaid-0 .node .label,#recap-mermaid-0 .image-shape .label,#recap-mermaid-0 .icon-shape .label{text-align:center;}#recap-mermaid-0 .node.clickable{cursor:pointer;}#recap-mermaid-0 .root .anchor path{fill:#8a7f6d!important;stroke-width:0;stroke:#8a7f6d;}#recap-mermaid-0 .arrowheadPath{fill:#000000;}#recap-mermaid-0 .edgePath .path{stroke:#8a7f6d;stroke-width:1px;}#recap-mermaid-0 .flowchart-link{stroke:#8a7f6d;fill:none;}#recap-mermaid-0 .edgeLabel{background-color:#ffffff;text-align:center;}#recap-mermaid-0 .edgeLabel p{background-color:#ffffff;}#recap-mermaid-0 .edgeLabel rect{opacity:0.5;background-color:#ffffff;fill:#ffffff;}#recap-mermaid-0 .labelBkg{background-color:rgba(255, 255, 255, 0.5);}#recap-mermaid-0 .cluster rect{fill:hsl(221.25, 42.1052631579%, 97.5490196078%);stroke:hsl(221.25, 2.1052631579%, 87.5490196078%);stroke-width:1px;}#recap-mermaid-0 .cluster text{fill:#42392e;}#recap-mermaid-0 .cluster span{color:#42392e;}#recap-mermaid-0 div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:12px;background:hsl(221.25, 42.1052631579%, 97.5490196078%);border:1px solid hsl(221.25, 2.1052631579%, 87.5490196078%);border-radius:2px;pointer-events:none;z-index:100;}#recap-mermaid-0 .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#42392e;}#recap-mermaid-0 rect.text{fill:none;stroke-width:0;}#recap-mermaid-0 .icon-shape,#recap-mermaid-0 .image-shape{background-color:#ffffff;text-align:center;}#recap-mermaid-0 .icon-shape p,#recap-mermaid-0 .image-shape p{background-color:#ffffff;padding:2px;}#recap-mermaid-0 .icon-shape .label rect,#recap-mermaid-0 .image-shape .label rect{opacity:0.5;background-color:#ffffff;fill:#ffffff;}#recap-mermaid-0 .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#recap-mermaid-0 .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#recap-mermaid-0 .node .neo-node{stroke:#7a6c52;}#recap-mermaid-0 [data-look="neo"].node rect,#recap-mermaid-0 [data-look="neo"].cluster rect,#recap-mermaid-0 [data-look="neo"].node polygon{stroke:url(#recap-mermaid-0-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#recap-mermaid-0 [data-look="neo"].swimlane.cluster rect{filter:none;}#recap-mermaid-0 [data-look="neo"].node path{stroke:url(#recap-mermaid-0-gradient);stroke-width:1px;}#recap-mermaid-0 [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#recap-mermaid-0 [data-look="neo"].node .neo-line path{stroke:#7a6c52;filter:none;}#recap-mermaid-0 [data-look="neo"].node circle{stroke:url(#recap-mermaid-0-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#recap-mermaid-0 [data-look="neo"].node circle .state-start{fill:#000000;}#recap-mermaid-0 [data-look="neo"].icon-shape .icon{fill:url(#recap-mermaid-0-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#recap-mermaid-0 [data-look="neo"].icon-shape .icon-neo path{stroke:url(#recap-mermaid-0-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#recap-mermaid-0 .node rect,#recap-mermaid-0 .node circle,#recap-mermaid-0 .node polygon,#recap-mermaid-0 .node path,#recap-mermaid-0 .cluster rect{stroke-width:2px;}#recap-mermaid-0 :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}</style><g><marker id="recap-mermaid-0_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="recap-mermaid-0_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="recap-mermaid-0_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></path></marker><marker id="recap-mermaid-0_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></polygon></marker><marker id="recap-mermaid-0_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="recap-mermaid-0_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="recap-mermaid-0_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="recap-mermaid-0_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="recap-mermaid-0_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="recap-mermaid-0_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="recap-mermaid-0_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"></path></marker><marker id="recap-mermaid-0_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M293,86L293,90.167C293,94.333,293,102.667,293,110.333C293,118,293,125,293,128.5L293,132" id="recap-mermaid-0-L_A_B_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_A_B_0" data-points="W3sieCI6MjkzLCJ5Ijo4Nn0seyJ4IjoyOTMsInkiOjExMX0seyJ4IjoyOTMsInkiOjEzNn1d" data-look="classic" marker-end="url(#recap-mermaid-0_flowchart-v2-pointEnd)"></path><path d="M293,214L293,218.167C293,222.333,293,230.667,293,238.333C293,246,293,253,293,256.5L293,260" id="recap-mermaid-0-L_B_C_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_B_C_0" data-points="W3sieCI6MjkzLCJ5IjoyMTR9LHsieCI6MjkzLCJ5IjoyMzl9LHsieCI6MjkzLCJ5IjoyNjR9XQ==" data-look="classic" marker-end="url(#recap-mermaid-0_flowchart-v2-pointEnd)"></path><path d="M237.646,421.959L221.039,437.351C204.431,452.743,171.215,483.528,154.608,504.42C138,525.313,138,536.313,138,541.813L138,547.313" id="recap-mermaid-0-L_C_D_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_C_D_0" data-points="W3sieCI6MjM3LjY0NjMzMjUzMTEyOTAyLCJ5Ijo0MjEuOTU4ODMyNTMxMTI5fSx7IngiOjEzOCwieSI6NTE0LjMxMjV9LHsieCI6MTM4LCJ5Ijo1NTEuMzEyNX1d" data-look="classic" marker-end="url(#recap-mermaid-0_flowchart-v2-pointEnd)"></path><path d="M348.354,421.959L364.961,437.351C381.569,452.743,414.785,483.528,431.392,504.42C448,525.313,448,536.313,448,541.813L448,547.313" id="recap-mermaid-0-L_C_E_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_C_E_0" data-points="W3sieCI6MzQ4LjM1MzY2NzQ2ODg3MSwieSI6NDIxLjk1ODgzMjUzMTEyOX0seyJ4Ijo0NDgsInkiOjUxNC4zMTI1fSx7IngiOjQ0OCwieSI6NTUxLjMxMjV9XQ==" data-look="classic" marker-end="url(#recap-mermaid-0_flowchart-v2-pointEnd)"></path><path d="M448,653.313L448,657.479C448,661.646,448,669.979,448,677.646C448,685.313,448,692.313,448,695.813L448,699.313" id="recap-mermaid-0-L_E_F_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_E_F_0" data-points="W3sieCI6NDQ4LCJ5Ijo2NTMuMzEyNX0seyJ4Ijo0NDgsInkiOjY3OC4zMTI1fSx7IngiOjQ0OCwieSI6NzAzLjMxMjV9XQ==" data-look="classic" marker-end="url(#recap-mermaid-0_flowchart-v2-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" data-id="L_A_B_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_B_C_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(138, 514.3125)"><g class="label" data-id="L_C_D_0" transform="translate(-12.4765625, -12)"><foreignObject width="24.953125" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>yes</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(448, 514.3125)"><g class="label" data-id="L_C_E_0" transform="translate(-9.0859375, -12)"><foreignObject width="18.171875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>no</p></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_E_F_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g></g><g class="nodes"><g class="node default" id="recap-mermaid-0-flowchart-A-0" data-look="classic" transform="translate(293, 47)"><rect class="basic label-container" style="" x="-130" y="-39" width="260" height="78"></rect><g class="label" style="" transform="translate(-100, -24)"><rect></rect><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>Person asks Claude to set up, update or share OnCue</p></span></div></foreignObject></g></g><g class="node default" id="recap-mermaid-0-flowchart-B-1" data-look="classic" transform="translate(293, 175)"><rect class="basic label-container" style="" x="-130" y="-39" width="260" height="78"></rect><g class="label" style="" transform="translate(-100, -24)"><rect></rect><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>Step 1: read the loaded version and install scope</p></span></div></foreignObject></g></g><g class="node default" id="recap-mermaid-0-flowchart-C-3" data-look="classic" transform="translate(293, 370.65625)"><polygon points="106.65625,0 213.3125,-106.65625 106.65625,-213.3125 0,-106.65625" class="label-container" transform="translate(-106.15625, 106.65625)"></polygon><g class="label" style="" transform="translate(-79.65625, -12)"><rect></rect><foreignObject width="159.3125" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>Only update or share?</p></span></div></foreignObject></g></g><g class="node default" id="recap-mermaid-0-flowchart-D-5" data-look="classic" transform="translate(138, 602.3125)"><rect class="basic label-container" style="" x="-130" y="-51" width="260" height="102"></rect><g class="label" style="" transform="translate(-100, -36)"><rect></rect><foreignObject width="200" height="72"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>Give the update or collaborator commands, run them if asked, report</p></span></div></foreignObject></g></g><g class="node default" id="recap-mermaid-0-flowchart-E-7" data-look="classic" transform="translate(448, 602.3125)"><rect class="basic label-container" style="" x="-130" y="-51" width="260" height="102"></rect><g class="label" style="" transform="translate(-100, -36)"><rect></rect><foreignObject width="200" height="72"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>Steps 2 to 6: Node, ffmpeg, engine, Playwright, ElevenLabs</p></span></div></foreignObject></g></g><g class="node default" id="recap-mermaid-0-flowchart-F-9" data-look="classic" transform="translate(448, 730.3125)"><rect class="basic label-container" style="" x="-129.671875" y="-27" width="259.34375" height="54"></rect><g class="label" style="" transform="translate(-99.671875, -12)"><rect></rect><foreignObject width="199.34375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>Step 7: report what is ready</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="recap-mermaid-0-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><defs><filter id="recap-mermaid-0-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><linearGradient id="recap-mermaid-0-gradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#7a6c52" stop-opacity="1"></stop><stop offset="100%" stop-color="hsl(-78.75, 2.1052631579%, 82.5490196078%)" stop-opacity="1"></stop></linearGradient></svg></div>
+      </div>
+      <figcaption><b>The setup flow.</b> Step 1 now checks the plugin, and a request only to update or share ends there instead of installing anything.</figcaption>
+    </figure>
+    <figure>
+      <div class="diagram">
+<div class="mermaid-diagram"><svg id="recap-mermaid-1" width="608.9453125" xmlns="http://www.w3.org/2000/svg" class="flowchart" height="854" viewBox="0 0 608.9453125 854" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#recap-mermaid-1{font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;fill:#42392e;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#recap-mermaid-1 .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#recap-mermaid-1 .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#recap-mermaid-1 .error-icon{fill:hsl(221.25, 42.1052631579%, 97.5490196078%);}#recap-mermaid-1 .error-text{fill:rgb(8.8815789475, 7.2368421054, 3.6184210527);stroke:rgb(8.8815789475, 7.2368421054, 3.6184210527);}#recap-mermaid-1 .edge-thickness-normal{stroke-width:1px;}#recap-mermaid-1 .edge-thickness-thick{stroke-width:3.5px;}#recap-mermaid-1 .edge-pattern-solid{stroke-dasharray:0;}#recap-mermaid-1 .edge-thickness-invisible{stroke-width:0;fill:none;}#recap-mermaid-1 .edge-pattern-dashed{stroke-dasharray:3;}#recap-mermaid-1 .edge-pattern-dotted{stroke-dasharray:2;}#recap-mermaid-1 .marker{fill:#8a7f6d;stroke:#8a7f6d;}#recap-mermaid-1 .marker.cross{stroke:#8a7f6d;}#recap-mermaid-1 svg{font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;}#recap-mermaid-1 p{margin:0;}#recap-mermaid-1 .label{font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;color:#42392e;}#recap-mermaid-1 .cluster-label text{fill:#42392e;}#recap-mermaid-1 .cluster-label span{color:#42392e;}#recap-mermaid-1 .cluster-label span p{background-color:transparent;}#recap-mermaid-1 .label text,#recap-mermaid-1 span{fill:#42392e;color:#42392e;}#recap-mermaid-1 .node rect,#recap-mermaid-1 .node circle,#recap-mermaid-1 .node ellipse,#recap-mermaid-1 .node polygon,#recap-mermaid-1 .node path{fill:#f4efe4;stroke:#7a6c52;stroke-width:1px;}#recap-mermaid-1 .rough-node .label text,#recap-mermaid-1 .node .label text,#recap-mermaid-1 .image-shape .label,#recap-mermaid-1 .icon-shape .label{text-anchor:middle;}#recap-mermaid-1 .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#recap-mermaid-1 .rough-node .label,#recap-mermaid-1 .node .label,#recap-mermaid-1 .image-shape .label,#recap-mermaid-1 .icon-shape .label{text-align:center;}#recap-mermaid-1 .node.clickable{cursor:pointer;}#recap-mermaid-1 .root .anchor path{fill:#8a7f6d!important;stroke-width:0;stroke:#8a7f6d;}#recap-mermaid-1 .arrowheadPath{fill:#000000;}#recap-mermaid-1 .edgePath .path{stroke:#8a7f6d;stroke-width:1px;}#recap-mermaid-1 .flowchart-link{stroke:#8a7f6d;fill:none;}#recap-mermaid-1 .edgeLabel{background-color:#ffffff;text-align:center;}#recap-mermaid-1 .edgeLabel p{background-color:#ffffff;}#recap-mermaid-1 .edgeLabel rect{opacity:0.5;background-color:#ffffff;fill:#ffffff;}#recap-mermaid-1 .labelBkg{background-color:rgba(255, 255, 255, 0.5);}#recap-mermaid-1 .cluster rect{fill:hsl(221.25, 42.1052631579%, 97.5490196078%);stroke:hsl(221.25, 2.1052631579%, 87.5490196078%);stroke-width:1px;}#recap-mermaid-1 .cluster text{fill:#42392e;}#recap-mermaid-1 .cluster span{color:#42392e;}#recap-mermaid-1 div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:12px;background:hsl(221.25, 42.1052631579%, 97.5490196078%);border:1px solid hsl(221.25, 2.1052631579%, 87.5490196078%);border-radius:2px;pointer-events:none;z-index:100;}#recap-mermaid-1 .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#42392e;}#recap-mermaid-1 rect.text{fill:none;stroke-width:0;}#recap-mermaid-1 .icon-shape,#recap-mermaid-1 .image-shape{background-color:#ffffff;text-align:center;}#recap-mermaid-1 .icon-shape p,#recap-mermaid-1 .image-shape p{background-color:#ffffff;padding:2px;}#recap-mermaid-1 .icon-shape .label rect,#recap-mermaid-1 .image-shape .label rect{opacity:0.5;background-color:#ffffff;fill:#ffffff;}#recap-mermaid-1 .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#recap-mermaid-1 .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#recap-mermaid-1 .node .neo-node{stroke:#7a6c52;}#recap-mermaid-1 [data-look="neo"].node rect,#recap-mermaid-1 [data-look="neo"].cluster rect,#recap-mermaid-1 [data-look="neo"].node polygon{stroke:url(#recap-mermaid-1-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#recap-mermaid-1 [data-look="neo"].swimlane.cluster rect{filter:none;}#recap-mermaid-1 [data-look="neo"].node path{stroke:url(#recap-mermaid-1-gradient);stroke-width:1px;}#recap-mermaid-1 [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#recap-mermaid-1 [data-look="neo"].node .neo-line path{stroke:#7a6c52;filter:none;}#recap-mermaid-1 [data-look="neo"].node circle{stroke:url(#recap-mermaid-1-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#recap-mermaid-1 [data-look="neo"].node circle .state-start{fill:#000000;}#recap-mermaid-1 [data-look="neo"].icon-shape .icon{fill:url(#recap-mermaid-1-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#recap-mermaid-1 [data-look="neo"].icon-shape .icon-neo path{stroke:url(#recap-mermaid-1-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#recap-mermaid-1 .node rect,#recap-mermaid-1 .node circle,#recap-mermaid-1 .node polygon,#recap-mermaid-1 .node path,#recap-mermaid-1 .cluster rect{stroke-width:2px;}#recap-mermaid-1 :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}</style><g><marker id="recap-mermaid-1_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="recap-mermaid-1_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="recap-mermaid-1_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></path></marker><marker id="recap-mermaid-1_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></polygon></marker><marker id="recap-mermaid-1_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="recap-mermaid-1_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="recap-mermaid-1_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="recap-mermaid-1_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="recap-mermaid-1_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="recap-mermaid-1_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="recap-mermaid-1_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"></path></marker><marker id="recap-mermaid-1_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M162.743,208.251L138.467,227.376C114.191,246.501,65.638,284.75,41.362,316.542C17.086,348.333,17.086,373.667,17.086,399C17.086,424.333,17.086,449.667,17.086,475C17.086,500.333,17.086,525.667,17.086,549C17.086,572.333,17.086,593.667,32.013,608.609C46.94,623.552,76.793,632.105,91.72,636.381L106.647,640.657" id="recap-mermaid-1-L_A_B_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_A_B_0" data-points="W3sieCI6MTYyLjc0MzEwNjgzMzM4NTUsInkiOjIwOC4yNTA5MTkzMzMzODU1fSx7IngiOjE3LjA4NTkzNzUsInkiOjMyM30seyJ4IjoxNy4wODU5Mzc1LCJ5IjozOTl9LHsieCI6MTcuMDg1OTM3NSwieSI6NDc1fSx7IngiOjE3LjA4NTkzNzUsInkiOjU1MX0seyJ4IjoxNy4wODU5Mzc1LCJ5Ijo2MTV9LHsieCI6MTEwLjQ5MjE4NzUsInkiOjY0MS43NTg0Mjc3NTIxMzMxfV0=" data-look="classic" marker-end="url(#recap-mermaid-1_flowchart-v2-pointEnd)"></path><path d="M284.854,241.638L291.21,255.199C297.567,268.759,310.279,295.879,316.636,314.94C322.992,334,322.992,345,322.992,350.5L322.992,356" id="recap-mermaid-1-L_A_C_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_A_C_0" data-points="W3sieCI6Mjg0Ljg1Mzg4OTYyNzY1OTU2LCJ5IjoyNDEuNjM4Mjk3ODcyMzQwNDJ9LHsieCI6MzIyLjk5MjE4NzUsInkiOjMyM30seyJ4IjozMjIuOTkyMTg3NSwieSI6MzYwfV0=" data-look="classic" marker-end="url(#recap-mermaid-1_flowchart-v2-pointEnd)"></path><path d="M247.069,438L235.064,444.167C223.059,450.333,199.049,462.667,187.044,476.333C175.039,490,175.039,505,175.039,512.5L175.039,520" id="recap-mermaid-1-L_C_D_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_C_D_0" data-points="W3sieCI6MjQ3LjA2ODg3MzM1NTI2MzE4LCJ5Ijo0Mzh9LHsieCI6MTc1LjAzOTA2MjUsInkiOjQ3NX0seyJ4IjoxNzUuMDM5MDYyNSwieSI6NTI0fV0=" data-look="classic" marker-end="url(#recap-mermaid-1_flowchart-v2-pointEnd)"></path><path d="M398.916,438L410.92,444.167C422.925,450.333,446.935,462.667,458.94,474.333C470.945,486,470.945,497,470.945,502.5L470.945,508" id="recap-mermaid-1-L_C_E_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_C_E_0" data-points="W3sieCI6Mzk4LjkxNTUwMTY0NDczNjgsInkiOjQzOH0seyJ4Ijo0NzAuOTQ1MzEyNSwieSI6NDc1fSx7IngiOjQ3MC45NDUzMTI1LCJ5Ijo1MTJ9XQ==" data-look="classic" marker-end="url(#recap-mermaid-1_flowchart-v2-pointEnd)"></path><path d="M470.945,590L470.945,594.167C470.945,598.333,470.945,606.667,454.845,615.304C438.746,623.942,406.546,632.885,390.446,637.356L374.346,641.827" id="recap-mermaid-1-L_E_B_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_E_B_0" data-points="W3sieCI6NDcwLjk0NTMxMjUsInkiOjU5MH0seyJ4Ijo0NzAuOTQ1MzEyNSwieSI6NjE1fSx7IngiOjM3MC40OTIxODc1LCJ5Ijo2NDIuODk3MjEzMzcwMzk4fV0=" data-look="classic" marker-end="url(#recap-mermaid-1_flowchart-v2-pointEnd)"></path><path d="M240.492,718L240.492,722.167C240.492,726.333,240.492,734.667,240.492,742.333C240.492,750,240.492,757,240.492,760.5L240.492,764" id="recap-mermaid-1-L_B_F_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_B_F_0" data-points="W3sieCI6MjQwLjQ5MjE4NzUsInkiOjcxOH0seyJ4IjoyNDAuNDkyMTg3NSwieSI6NzQzfSx7IngiOjI0MC40OTIxODc1LCJ5Ijo3Njh9XQ==" data-look="classic" marker-end="url(#recap-mermaid-1_flowchart-v2-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel" transform="translate(17.0859375, 475)"><g class="label" data-id="L_A_B_0" transform="translate(-9.0859375, -12)"><foreignObject width="18.171875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>no</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(322.9921875, 323)"><g class="label" data-id="L_A_C_0" transform="translate(-12.4765625, -12)"><foreignObject width="24.953125" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>yes</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(175.0390625, 475)"><g class="label" data-id="L_C_D_0" transform="translate(-35, -12)"><foreignObject width="70" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>no output</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(470.9453125, 475)"><g class="label" data-id="L_C_E_0" transform="translate(-36.5078125, -12)"><foreignObject width="73.015625" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>files listed</p></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_E_B_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_B_F_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g></g><g class="nodes"><g class="node default" id="recap-mermaid-1-flowchart-A-0" data-look="classic" transform="translate(240.4921875, 147)"><polygon points="139,0 278,-139 139,-278 0,-139" class="label-container" transform="translate(-138.5, 139)"></polygon><g class="label" style="" transform="translate(-100, -24)"><rect></rect><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>oncue-engine/ in this folder?</p></span></div></foreignObject></g></g><g class="node default" id="recap-mermaid-1-flowchart-B-1" data-look="classic" transform="translate(240.4921875, 679)"><rect class="basic label-container" style="" x="-130" y="-39" width="260" height="78"></rect><g class="label" style="" transform="translate(-100, -24)"><rect></rect><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>Copy the plugin's engine here and npm install</p></span></div></foreignObject></g></g><g class="node default" id="recap-mermaid-1-flowchart-C-3" data-look="classic" transform="translate(322.9921875, 399)"><rect class="basic label-container" style="" x="-130" y="-39" width="260" height="78"></rect><g class="label" style="" transform="translate(-100, -24)"><rect></rect><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>diff -rq: plugin engine/dist against oncue-engine/dist</p></span></div></foreignObject></g></g><g class="node default" id="recap-mermaid-1-flowchart-D-5" data-look="classic" transform="translate(175.0390625, 551)"><rect class="basic label-container" style="" x="-115.90625" y="-27" width="231.8125" height="54"></rect><g class="label" style="" transform="translate(-85.90625, -12)"><rect></rect><foreignObject width="171.8125" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>Reuse it and npm install</p></span></div></foreignObject></g></g><g class="node default" id="recap-mermaid-1-flowchart-E-7" data-look="classic" transform="translate(470.9453125, 551)"><rect class="basic label-container" style="" x="-130" y="-39" width="260" height="78"></rect><g class="label" style="" transform="translate(-100, -24)"><rect></rect><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>Rename it to oncue-engine.old</p></span></div></foreignObject></g></g><g class="node default" id="recap-mermaid-1-flowchart-F-11" data-look="classic" transform="translate(240.4921875, 807)"><rect class="basic label-container" style="" x="-130" y="-39" width="260" height="78"></rect><g class="label" style="" transform="translate(-100, -24)"><rect></rect><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>Reinstall Playwright and any fonts the old copy had</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="recap-mermaid-1-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><defs><filter id="recap-mermaid-1-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><linearGradient id="recap-mermaid-1-gradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#7a6c52" stop-opacity="1"></stop><stop offset="100%" stop-color="hsl(-78.75, 2.1052631579%, 82.5490196078%)" stop-opacity="1"></stop></linearGradient></svg></div>
+      </div>
+      <figcaption><b>The engine copy check.</b> An existing copy is reused only when its compiled engine matches the loaded plugin. Follow the "files listed" branch to see what an update now does.</figcaption>
+    </figure>
+  </section>
+
+  <section aria-labelledby="before-after">
+    <div class="section-head">
+      <span class="eyebrow">Before and after</span>
+      <h2 id="before-after">What behaves differently</h2>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th scope="col">Situation</th><th scope="col">Before</th><th scope="col">After</th></tr></thead>
+        <tbody>
+          <tr><td>"Set up OnCue"</td><td>Checked Node, ffmpeg, the engine, Playwright and ElevenLabs</td><td class="after">Reports the plugin's version and install scope first, then runs the same checks</td></tr>
+          <tr><td>"Update OnCue"</td><td>No skill handled it</td><td class="after">Setup gives the update command, says to reload, and stops after step 1</td></tr>
+          <tr><td>"Share OnCue with my team"</td><td>No skill handled it</td><td class="after">Setup gives the project-scope install command and the one each collaborator runs</td></tr>
+          <tr><td>An update is downloaded but not loaded</td><td>Not mentioned</td><td class="after">Flagged: run <code>/reload-plugins</code> or start a new session</td></tr>
+          <tr><td>Commands that change Claude Code settings</td><td>Not offered</td><td class="after">Offered, and run only when the person asks for that change</td></tr>
+          <tr><td><code>oncue-engine/</code> made by an older OnCue</td><td>Reused, so the old engine kept running</td><td class="after">Detected, renamed aside, and replaced with a fresh copy</td></tr>
+          <tr><td>Playwright and fonts in the old copy</td><td>Not applicable</td><td class="after">Reinstalled in the fresh copy; the old copy stays until the person deletes it</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="decisions">
+    <div class="section-head">
+      <span class="eyebrow">Decisions</span>
+      <h2 id="decisions">Six calls, with what was turned down</h2>
+    </div>
+    <ol class="list decisions">
+      <li>
+        <h3>Extend the setup skill instead of adding an install skill</h3>
+        <p>A separate install skill would trigger on the same requests ("set up", "install", "update"). And no skill inside a plugin can run before the plugin is installed, so its only real jobs were updating, scope and sharing, which fit as one step of setup.</p>
+        <p class="rejected"><b>Turned down:</b> a new <code>install</code> skill, which would have duplicated setup's triggers.</p>
+      </li>
+      <li>
+        <h3>Spot an old engine copy by comparing <code>engine/dist</code></h3>
+        <p>The compiled engine is the part an update changes, and nobody edits it by hand.</p>
+        <p class="rejected"><b>Turned down:</b> comparing the engine's <code>package.json</code> version, which stayed at 1.0.0 when 1.1.0 changed <code>dist/capture.js</code>; and comparing <code>package.json</code> contents, which always differ because Playwright and fonts are saved into the copy.</p>
+      </li>
+      <li>
+        <h3>Rename the old copy aside</h3>
+        <p>Renaming loses nothing, and the person deletes the old copy once the new one works.</p>
+        <p class="rejected"><b>Turned down:</b> copying over it, because <code>cp -R</code> onto an existing folder nests the engine inside it and overwriting <code>package.json</code> drops the saved Playwright and fonts; and deleting it, which cannot be undone.</p>
+      </li>
+      <li>
+        <h3>Give the commands, and run them only on request</h3>
+        <p>Plugin scope and updates live in the person's own Claude Code settings.</p>
+        <p class="rejected"><b>Turned down:</b> running <code>claude plugin update</code> or a project-scope install automatically.</p>
+      </li>
+      <li>
+        <h3>Keep "Claude Code 2.1.292 or later" in the collaborator command</h3>
+        <p>The review flagged it as unsourced, but the Claude Code docs state that minimum for installing with <code>--marketplace</code> from a shell.</p>
+        <p class="rejected"><b>Turned down:</b> removing the version note.</p>
+      </li>
+      <li>
+        <h3>Release as 1.2.0</h3>
+        <p>The repository's CLAUDE.md asks for a version bump whenever what a skill does changes.</p>
+        <p class="rejected"><b>Turned down:</b> a patch release, since this adds behavior. Two plans on <code>main</code> also name 1.2.0 (see Open items).</p>
+      </li>
+    </ol>
+    <div class="note">
+      <span class="eyebrow">Review</span>
+      <p>A fresh-context review of the branch found no critical defects. Its confirmed findings were fixed in commit <code>a1d846d</code>:</p>
+      <ul>
+        <li>choose the <code>oncue@oncue</code> entries that apply to this folder</li>
+        <li>stop after step 1 for update-only and share-only requests</li>
+        <li>drop <code>--scope</code> from the update command, which auto-detects it</li>
+        <li>define <code>&lt;plugin&gt;</code> in the explainer-video skill</li>
+      </ul>
+      <p>One claim the review didn't flag was also corrected. OnCue's marketplace entry is a relative path, which the docs say can load without an install record, so "a project-scope install never downloads OnCue for collaborators" was too broad.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="learnings">
+    <div class="section-head">
+      <span class="eyebrow">Learnings</span>
+      <h2 id="learnings">Gotchas found along the way</h2>
+    </div>
+    <ul class="list">
+      <li><p><code>claude plugin list --json</code> returns one entry per scope and project, so a plugin installed in several repositories appears many times under the same id. Picking the right entry needs the current folder.</p></li>
+      <li><p><code>claude plugin update</code> works out the scope on its own, and its output says a restart is needed. <code>/reload-plugins</code> or a new session loads the update.</p></li>
+      <li><p>Plugins from marketplaces outside Anthropic's official ones do not auto-update unless the person turns it on under <code>/plugin</code>, Marketplaces.</p></li>
+      <li><p>A plugin update changes only the plugin cache. A copy of the plugin's files in a working folder stays as it was, which is how the 1.1.0 engine change never reached folders set up under 1.0.0.</p></li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="open">
+    <div class="section-head">
+      <span class="eyebrow">Open items</span>
+      <h2 id="open">Still to settle</h2>
+    </div>
+    <ul class="list open">
+      <li>
+        <h3>Version collision</h3>
+        <p>This PR takes 1.2.0. <code>docs/plans/add-research-and-visuals-skills.md</code> and <code>docs/plans/add-elevenlabs-credits-status.md</code> on <code>main</code> also plan a 1.2.0. Whichever lands after this PR should bump to the next minor version and update its plan.</p>
+      </li>
+      <li>
+        <h3>CodeRabbit did not review</h3>
+        <p>Its comment on the PR reports a review rate limit, so the fresh-context review above is the only review so far. The <code>validate</code> check passes.</p>
+      </li>
+      <li>
+        <h3>Not yet run in a live session</h3>
+        <p>The new step 1 and the engine copy check were verified by <code>npm run validate</code>, against <code>claude plugin --help</code> and the Claude Code docs, and by running the <code>diff -rq</code> check on a fresh copy and a 1.0.0 copy in a scratch folder. Nobody has yet run <code>/oncue:setup</code> after a real plugin update.</p>
+      </li>
+      <li>
+        <h3>Old copies left behind</h3>
+        <p>Each update that replaces an engine copy leaves an <code>oncue-engine.old</code> folder, <code>node_modules</code> included, until the person deletes it. Setup tells them, but nothing deletes it for them.</p>
+      </li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="files">
+    <div class="section-head">
+      <span class="eyebrow">Files touched</span>
+      <h2 id="files">Four files</h2>
+    </div>
+    <div class="files">
+      <div>
+        <h3>Skills</h3>
+        <ul>
+          <li><code>plugins/oncue/skills/setup/SKILL.md</code>: new step 1 for the plugin (version, scope, update, collaborators), the engine copy check in step 4, later steps renumbered, and the report now covers the plugin.</li>
+          <li><code>plugins/oncue/skills/explainer-video/SKILL.md</code>: the same engine copy check, and a definition of <code>&lt;plugin&gt;</code>.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Docs</h3>
+        <ul>
+          <li><code>README.md</code>: updating and project-scope installs under Install, the setup row in the skills table, and the 1.2.0 changelog entry.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Release</h3>
+        <ul>
+          <li><code>plugins/oncue/.claude-plugin/plugin.json</code>: version 1.1.0 to 1.2.0.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="glossary">
+    <div class="section-head">
+      <span class="eyebrow">Glossary</span>
+      <h2 id="glossary">Terms on this page</h2>
+    </div>
+    <dl class="glossary">
+      <dt>OnCue</dt><dd>A Claude Code plugin that turns a topic into a vertical explainer video, a 9:16 slide deck and a voiceover.</dd>
+      <dt>Plugin</dt><dd>A package of skills and other extensions that Claude Code installs from a marketplace.</dd>
+      <dt>Marketplace</dt><dd>A catalog of plugins. OnCue's is the GitHub repository <code>shawn-sandy/oncue</code>, registered under the name <code>oncue</code>.</dd>
+      <dt>Skill</dt><dd>A set of instructions Claude follows for one kind of task, such as <code>setup</code> or <code>explainer-video</code>.</dd>
+      <dt>Install scope</dt><dd>Who gets a plugin: user scope is you in every project, project scope is everyone in a repository (recorded in its committed <code>.claude/settings.json</code>), and local scope is you in one repository only.</dd>
+      <dt>Engine</dt><dd>OnCue's Node program that renders the deck, stills and video from <code>short.json</code>.</dd>
+      <dt><code>oncue-engine/</code></dt><dd>The copy of the engine that OnCue's skills make in the working folder, so installing packages never touches the plugin's own files.</dd>
+      <dt><code>dist/</code></dt><dd>The engine's compiled JavaScript, shipped with the plugin; the part an OnCue update changes.</dd>
+      <dt>Playwright</dt><dd>The library that drives a headless Chromium browser to draw the video frames.</dd>
+      <dt><code>@fontsource</code> packages</dt><dd>npm packages that supply the fonts a brand asks for.</dd>
+      <dt><code>/reload-plugins</code></dt><dd>The Claude Code command that loads plugin changes into the running session.</dd>
+      <dt><code>diff -rq</code></dt><dd>A shell command that compares two folders and lists only the files that differ.</dd>
+    </dl>
+  </section>
+
+  <footer>Built from pull request 7: its two commit messages, the PR description and its discussion. No inline review threads were open.</footer>
+</main>
+
+</body>
+</html>
