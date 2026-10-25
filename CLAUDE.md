@@ -4,7 +4,7 @@ Guidance for Claude Code when working in this repository.
 
 ## What this repo is
 
-A Claude Code plugin marketplace (`oncue`) shipping one plugin, `oncue`, with five skills under `plugins/oncue/skills/` and a typed Node engine under `plugins/oncue/engine/`. The skills are prose the model reads at runtime; the engine does the rendering.
+A Claude Code plugin marketplace (`oncue`) shipping one plugin, `oncue`, with six skills under `plugins/oncue/skills/` and a typed Node engine under `plugins/oncue/engine/`. The skills are prose the model reads at runtime; the engine does the rendering.
 
 ## Engine
 

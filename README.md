@@ -22,7 +22,7 @@ Setting them up:
 
 - **Node.js 22 or newer.** Check with `node --version`.
 - **ffmpeg and ffprobe.** One package installs both: `brew install ffmpeg` on macOS, `sudo apt install ffmpeg` on Debian or Ubuntu.
-- **Playwright with Chromium.** Claude installs it in its copy of the engine the first time it is needed (`npm install playwright && npx playwright install chromium`). Where Playwright is already installed, as in many sandboxes, Claude uses that one.
+- **Playwright with Chromium.** Claude installs it in its copy of the engine the first time it is needed (`npm install --save-dev playwright && npx playwright install chromium`; on npm 12, plain `npm install playwright` installs nothing, because Playwright is an optional peer dependency). Where Playwright is already installed, as in many sandboxes, Claude uses that one.
 - **ElevenLabs.** An ElevenLabs account with credits, connected to Claude. In Claude Code, add the server, then run `/mcp` in a session and sign in with your ElevenLabs account (OAuth; no API key):
 
   ```bash
@@ -42,6 +42,8 @@ In Claude Code:
 ```
 
 To try it locally from a clone, run `claude --plugin-dir ./plugins/oncue`.
+
+Then ask Claude to "set up OnCue" (or run `/oncue:setup`). The setup skill checks everything under [Requirements](#requirements), installs what it can, and tells you which outputs are ready.
 
 ## Usage
 
@@ -106,6 +108,7 @@ Each stage is its own skill, so you can stop after any of them or start from an 
 
 | Skill | Ask for | You get |
 | --- | --- | --- |
+| [setup](plugins/oncue/skills/setup/SKILL.md) | "set up OnCue" | Node, ffmpeg, Playwright and ElevenLabs checked, the engine installed, and which outputs are ready |
 | [explainer-video](plugins/oncue/skills/explainer-video/SKILL.md) | "make an explainer short about our CLI" | The whole pipeline, with check-ins at the beats and the voice |
 | [storyboard](plugins/oncue/skills/storyboard/SKILL.md) | "storyboard a 60-second Short for this plugin" | `short.json`, a beat list, preview stills or a Design canvas |
 | [voiceover](plugins/oncue/skills/voiceover/SKILL.md) | "voice it with ElevenLabs" | Two takes as MP3, each with a word-level transcript |
@@ -126,7 +129,7 @@ The worked example is Gleaner's own Short: [examples/gleaner/short.json](plugins
 | You see | Do this |
 | --- | --- |
 | The audio download is refused in a sandboxed session | Allow `storage.googleapis.com` in claude.ai Settings → Capabilities, or download the MP3 yourself and attach it. |
-| `Playwright is not installed` | In `oncue-engine/`: `npm install playwright && npx playwright install chromium`. |
+| `Playwright is not installed` | In `oncue-engine/`: `npm install --save-dev playwright && npx playwright install chromium`. |
 | An `ENOENT` error naming `ffmpeg` or `ffprobe` | Install ffmpeg so both are on `PATH`. |
 | `Font file missing` | A font in `brand.fonts` is not installed: `npm install @fontsource/<name>` in `oncue-engine/`. If it is installed, it lacks a weight the video uses (400, 600, 700 and 800 for `sans`; 400 and 600 for `mono`), so pick a font that has them. |
 | `Line N (...) not found in the transcript` | The narrator changed that line's first word. Make its `vo` match what was said, or transcribe again. |
@@ -148,7 +151,7 @@ node dist/cli.js video  short.json --words words.json --audio voiceover.mp3 --ou
 
 Without `--words` and `--audio`, timing is estimated from the script and the video is a silent preview. Outputs go to `build/` beside `short.json`; `deck` and `video` take `--out` to write elsewhere.
 
-To try it on the bundled Gleaner Short, run `npm install` in the engine folder, then `npm run example:check`, `example:deck`, `example:stills` or `example:video`. The results land in `examples/gleaner/build/`. `npm install` leaves out Playwright, an optional peer dependency, so run `npm install playwright && npx playwright install chromium` before `example:stills` or `example:video`; `example:video` also needs ffmpeg.
+To try it on the bundled Gleaner Short, run `npm install` in the engine folder, then `npm run example:check`, `example:deck`, `example:stills` or `example:video`. The results land in `examples/gleaner/build/`. `npm install` leaves out Playwright, an optional peer dependency, so run `npm install --no-save --save-dev playwright && npx playwright install chromium` before `example:stills` or `example:video`; `example:video` also needs ffmpeg. Those flags install it on npm 12 too without editing the shipped `package.json`. Any later `npm install` removes it again, so repeat the command after one.
 
 To work on the engine, run `npm install` and then `npm run build` in its folder. Sources are strict TypeScript in `src/`; the compiled `dist/` is committed so the skills run without a build step.
 
@@ -162,6 +165,12 @@ npm run engine:typecheck  # strict TypeScript check of the engine
 The plugin version lives only in `plugins/oncue/.claude-plugin/plugin.json`.
 
 ## Changelog
+
+### 1.1.0 (2026-10-25)
+
+- New setup skill: checks Node, ffmpeg and ffprobe, Playwright with Chromium and the ElevenLabs connector, installs the engine, and reports which outputs are ready.
+- Playwright installs now work on npm 12, which skips optional peer dependencies unless they are saved as dev dependencies. The skills, the engine's "Playwright is not installed" message and the README use `npm install --save-dev playwright`; `engine:typecheck` and the README's example step use `--no-save --save-dev`, so the shipped `package.json` stays unchanged.
+- README: requirements by output, a usage guide and troubleshooting.
 
 ### 1.0.0 (2026-10-25)
 
