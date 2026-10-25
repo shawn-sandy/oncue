@@ -10,7 +10,7 @@ export interface Size { width: number; height: number }
 
 async function loadPlaywright(): Promise<typeof import("playwright")> {
   try { return await import("playwright"); } catch {
-    throw new Error("Playwright is not installed. Run: npm install playwright && npx playwright install chromium (in the engine folder).");
+    throw new Error("Playwright is not installed. Run: npm install --save-dev playwright && npx playwright install chromium (in the engine folder).");
   }
 }
 

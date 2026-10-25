@@ -19,13 +19,13 @@ The deck and the video both read `short.json`, so they always match. The deck ca
 
 ## Set up the engine (once per session)
 
-The engine is a typed Node program in this plugin's `engine/` folder (`../../engine` from this skill's folder). Copy it into the working directory rather than running it inside the plugin, so installs never touch the plugin cache:
+The engine is a typed Node program in this plugin's `engine/` folder (`../../engine` from this skill's folder). If `oncue-engine/` already exists in the working directory (the setup skill, `../setup/SKILL.md`, makes it), reuse it with `cd oncue-engine && npm install`; copying over it would nest the engine inside it. Otherwise copy it into the working directory rather than running it inside the plugin, so installs never touch the plugin cache:
 
 ```bash
 cp -R <plugin>/engine ./oncue-engine && cd oncue-engine && npm install
 ```
 
-Requirements: Node 22+, `ffmpeg` and `ffprobe` on `PATH`, and Playwright with Chromium for the video and stills. If `require('playwright')` already works (many sandboxes preinstall it), use that and do not install another version. Otherwise run `npm install playwright && npx playwright install chromium` in `oncue-engine`. The deck needs no browser.
+Requirements: Node 22+, `ffmpeg` and `ffprobe` on `PATH`, and Playwright with Chromium for the video and stills. If `node -p "require('playwright/package.json').version"` prints 1.40.0 or later (many sandboxes preinstall it), use that and do not install another version. Otherwise run `npm install --save-dev playwright && npx playwright install chromium` in `oncue-engine`; keep `--save-dev`, because npm 12 skips optional peers otherwise. The deck needs no browser.
 
 Run every command from `oncue-engine`. `npm run example:check` confirms the install on the bundled Gleaner example.
 

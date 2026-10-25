@@ -44,7 +44,7 @@ async function loadPlaywright() {
         return await Promise.resolve().then(() => __importStar(require("playwright")));
     }
     catch {
-        throw new Error("Playwright is not installed. Run: npm install playwright && npx playwright install chromium (in the engine folder).");
+        throw new Error("Playwright is not installed. Run: npm install --save-dev playwright && npx playwright install chromium (in the engine folder).");
     }
 }
 async function open(scenesHtml, tl, size) {
