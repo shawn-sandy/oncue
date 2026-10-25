@@ -59,7 +59,7 @@ To try it locally from a clone, run `claude --plugin-dir ./plugins/oncue`.
 4. **Check-in 1: the beats.** Claude shows the beat list with preview stills (or a Design canvas). Change, cut or reorder beats now: once the voiceover is recorded, a wording change means paying for a new recording.
 5. **Check-in 2: the voice.** Claude names the voice it picked and gives you two takes. Pick one, or ask for another voice.
 6. Claude builds the deck if you asked for one, checks stills against the real word timings, and renders the video in the background. Rendering runs at about 3–4 frames a second, so roughly 10 minutes for a 75-second Short.
-7. You get the MP4 (and the deck), with the take and voice used and the ElevenLabs credits spent.
+7. You get the MP4, plus the deck if you asked for one, with the take and voice used and the ElevenLabs credits spent.
 
 Say "go ahead without stopping" to skip the check-ins.
 
@@ -148,7 +148,7 @@ node dist/cli.js video  short.json --words words.json --audio voiceover.mp3 --ou
 
 Without `--words` and `--audio`, timing is estimated from the script and the video is a silent preview. Outputs go to `build/` beside `short.json`; `deck` and `video` take `--out` to write elsewhere.
 
-To try it on the bundled Gleaner Short, run `npm install` in the engine folder, then `npm run example:check`, `example:deck`, `example:stills` or `example:video`. The results land in `examples/gleaner/build/`.
+To try it on the bundled Gleaner Short, run `npm install` in the engine folder, then `npm run example:check`, `example:deck`, `example:stills` or `example:video`. The results land in `examples/gleaner/build/`. `npm install` leaves out Playwright, an optional peer dependency, so run `npm install playwright && npx playwright install chromium` before `example:stills` or `example:video`; `example:video` also needs ffmpeg.
 
 To work on the engine, run `npm install` and then `npm run build` in its folder. Sources are strict TypeScript in `src/`; the compiled `dist/` is committed so the skills run without a build step.
 
