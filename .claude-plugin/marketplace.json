@@ -1,0 +1,27 @@
+{
+  "name": "oncue",
+  "description": "Claude plugins by Shawn Sandy for making short-form explainer videos and vertical presentations.",
+  "owner": {
+    "name": "Shawn Sandy",
+    "url": "https://github.com/shawn-sandy"
+  },
+  "plugins": [
+    {
+      "name": "oncue",
+      "source": "./plugins/oncue",
+      "description": "OnCue: explainer Shorts where every word lands on cue. Storyboard a topic, voice it with ElevenLabs, and render a native 9:16 PowerPoint deck and an animated MP4 for YouTube Shorts, Reels and TikTok, all from one short.json spec.",
+      "category": "productivity",
+      "tags": [
+        "video",
+        "youtube-shorts",
+        "presentations",
+        "pptx",
+        "elevenlabs",
+        "voiceover",
+        "animation",
+        "storyboard",
+        "marketing"
+      ]
+    }
+  ]
+}

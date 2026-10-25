@@ -1,0 +1,178 @@
+/**
+ * Writes the animated scenes page for a spec: <out>/scenes.html plus its fonts, logo and render.js.
+ * Layout is designed on a 1080×1920 stage and scaled to spec.format.
+ */
+import { copyFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { iconSvg } from "./icons";
+import type { Colors, LoadedSpec, Rich, Scene } from "./spec";
+import { runs } from "./spec";
+
+const esc = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+/** Rich text → HTML: {accent} in the accent colour, `code` in mono. */
+function rich(text: Rich): string {
+  return runs(text).map((r) => r.accent ? `<span class="acc">${esc(r.text)}</span>` : r.code ? `<span class="code">${esc(r.text)}</span>` : esc(r.text)).join("");
+}
+
+function rgb(hex: string): string {
+  const n = parseInt(hex.slice(1), 16);
+  return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`;
+}
+
+/** data-* attributes for an animated element. */
+function fx(kind: string, cue?: string, extra: { delay?: number; dur?: number; spot?: boolean } = {}): string {
+  return [`data-fx="${kind}"`, cue ? `data-cue="${cue}"` : "", extra.delay ? `data-delay="${extra.delay}"` : "",
+    extra.dur ? `data-dur="${extra.dur}"` : "", extra.spot ? "data-spot" : ""].filter(Boolean).join(" ");
+}
+
+const header = (kicker: string, title: Rich): string =>
+  `<div class="kicker" ${fx("up", undefined, { delay: 0.1 })}>${esc(kicker)}</div>\n<h2 ${fx("up", undefined, { delay: 0.2 })}>${rich(title)}</h2>`;
+
+function body(scene: Scene, c: Colors): string {
+  const ico = (name: string, color = c.accent): string => `<span class="svg">${iconSvg(name, color)}</span>`;
+  switch (scene.kind) {
+    case "hook": {
+      // Build the headline word by word, keeping accent spans intact.
+      let i = 0;
+      const hw = runs(scene.headline).flatMap((r) => r.text.split(/\s+/).filter(Boolean).map((w) =>
+        `<span class="w${r.accent ? " acc" : ""}" ${fx("up", "headline", { delay: Number((0.1 * i++).toFixed(2)) })}>${esc(w)}</span>`)).join(" ");
+      return `<div class="center hook"><div data-float><img class="logo-xl" src="logo.png" alt="" ${fx("pop", undefined, { delay: 0.05, dur: 0.7 })}></div>
+<h1 class="hookline">${hw}</h1>
+${scene.sub ? `<div class="sub" ${fx("up", "sub")}>${rich(scene.sub)}</div>` : ""}</div>`;
+    }
+    case "list":
+      return `<div class="content">${header(scene.kicker, scene.title)}<div class="stack">${scene.items.map((it, i) =>
+        `<div class="card row" ${fx("left", `item${i}`, { spot: true })}><div class="ico">${ico(it.icon)}</div><div><div class="rt">${esc(it.title)}</div>${it.desc ? `<div class="rd">${rich(it.desc)}</div>` : ""}</div></div>`).join("")}</div></div>`;
+    case "card": {
+      const k = scene.card;
+      return `<div class="content">${header(scene.kicker, scene.title)}
+<div class="panel" ${fx("up", "card", { dur: 0.6 })}><div><div class="pt">${esc(k.title)}</div>${k.meta ? `<div class="pm" ${fx("fade", "meta")}>${esc(k.meta)}</div>` : ""}</div>
+<div class="hr" ${fx("drawX", "card", { delay: 0.3, dur: 0.6 })}></div>
+${k.rows.map((r, i) => `<div ${fx("left", `row${i}`)}><div class="pk">${esc(r.label)}</div><div class="pv">${rich(r.value)}</div></div>`).join("\n")}
+${k.tags?.length ? `<div class="tags">${k.tags.map((t, i) => `<span class="tag" ${fx("pop", "tags", { delay: Number((0.12 * i).toFixed(2)) })}>${esc(t)}</span>`).join("")}</div>` : ""}</div></div>`;
+    }
+    case "chat": {
+      const firstYou = scene.turns.findIndex((t) => t.from === "you");
+      return `<div class="content">${header(scene.kicker, scene.title)}<div class="thread">
+${firstYou >= 0 ? `<div class="string" ${fx("drawY", `turn${firstYou}`, { dur: 4.5 })}></div>` : ""}
+${scene.turns.map((t, i) => t.from === "you"
+  ? `<div class="bubble" ${fx("up", `turn${i}`)}><div class="wrap" ${fx("pop", `turn${i}`, { delay: 0.2 })}><i></i><i></i></div><div class="who">you</div><div class="said" ${fx("type", `turn${i}`, { delay: 0.15 })}>${esc(t.text)}</div></div>`
+  : `<div class="bubble reply" ${fx("up", `turn${i}`, { spot: true })}><b>${esc(BRAND_LABEL)}</b> ${esc(t.text)}</div>`).join("\n")}
+</div></div>`;
+    }
+    case "steps":
+      return `<div class="content">${header(scene.kicker, scene.title)}<div class="steps"><div class="line" ${fx("drawY", "step0", { dur: 5 })}></div>
+${scene.steps.map((s, i) => `<div class="step"><div class="num" ${fx("pop", `step${i}`)}>${i + 1}</div><div ${fx("left", `step${i}`, { delay: 0.1 })}><div class="rt">${esc(s.title)}</div>${s.desc ? `<div class="rd">${rich(s.desc)}</div>` : ""}</div></div>`).join("\n")}</div>
+${scene.result ? `<div class="result" ${fx("up", "result", { spot: true })}><span class="svg sm">${iconSvg("FiCheck", c.panelInk)}</span>${esc(scene.result.text)}</div>` : ""}</div>`;
+    case "grid":
+      return `<div class="content">${header(scene.kicker, scene.title)}<div class="grid">${scene.tiles.map((t, i) =>
+        `<div class="tile" ${fx("pop", `tile${i}`, { spot: true })}><span class="svg md">${iconSvg(t.icon, c.accent)}</span><span>${esc(t.label)}</span></div>`).join("")}</div></div>`;
+    case "media":
+      return `<div class="content">${header(scene.kicker, scene.title)}
+<div class="player" ${fx("pop", "media", { dur: 0.6 })}><div class="play" ${fx("pop", "media", { delay: 0.25, spot: true })}><span class="svg lg">${iconSvg("FiPlay", c.ground)}</span></div><div class="scrub" ${fx("drawX", "media", { delay: 0.4, dur: 5 })}></div></div>
+<div class="moments">${scene.moments.map((m, i) => `<div class="moment" ${fx("left", `moment${i}`, { spot: true })}><span class="ts">${esc(m.time)}</span><span class="ml">${esc(m.label)}</span></div>`).join("")}</div></div>`;
+    case "cta":
+      return `<div class="center"><div data-float><img class="logo-lg" src="logo.png" alt="" ${fx("pop", undefined, { delay: 0.05, dur: 0.7 })}></div>
+<h1 class="cta" ${fx("up", undefined, { delay: 0.25 })}>${rich(scene.headline)}</h1>
+${scene.sub ? `<div class="sub" ${fx("up", "sub")}>${rich(scene.sub)}</div>` : ""}
+${scene.pill ? `<div class="pill" ${fx("pop", "pill", { spot: true })}><span class="svg md">${iconSvg(scene.pill.icon, c.ground)}</span><span>${esc(scene.pill.text)}</span></div>` : ""}
+${scene.follow ? `<div class="follow" ${fx("up", "follow")}>${rich(scene.follow)}</div>` : ""}</div>`;
+  }
+}
+
+let BRAND_LABEL = "";
+
+function fontFile(pkg: string, weight: number, root: string): string {
+  const f = join(root, "node_modules", "@fontsource", pkg, "files", `${pkg}-latin-${weight}-normal.woff2`);
+  if (!existsSync(f)) throw new Error(`Font file missing: ${f}. Run: npm install @fontsource/${pkg} (in the engine folder).`);
+  return f;
+}
+
+export function writeScenes(loaded: LoadedSpec, outDir: string, engineRoot: string): string {
+  const { spec, logoPath } = loaded;
+  const c = spec.brand.colors;
+  BRAND_LABEL = spec.brand.name.toLowerCase();
+  mkdirSync(join(outDir, "fonts"), { recursive: true });
+  const faces: string[] = [];
+  for (const w of [400, 600, 700, 800]) {
+    copyFileSync(fontFile(spec.brand.fonts.sans, w, engineRoot), join(outDir, "fonts", `sans-${w}.woff2`));
+    faces.push(`@font-face{font-family:"Sans";src:url(fonts/sans-${w}.woff2) format("woff2");font-weight:${w}}`);
+  }
+  for (const w of [400, 600]) {
+    copyFileSync(fontFile(spec.brand.fonts.mono, w, engineRoot), join(outDir, "fonts", `mono-${w}.woff2`));
+    faces.push(`@font-face{font-family:"Mono";src:url(fonts/mono-${w}.woff2) format("woff2");font-weight:${w}}`);
+  }
+  copyFileSync(logoPath, join(outDir, "logo.png"));
+  copyFileSync(resolve(engineRoot, "dist", "render.js"), join(outDir, "render.js"));
+
+  const k = spec.format.width / 1080;
+  const brandRow = `<div class="brand"><img src="logo.png" alt="">${esc(spec.brand.name)}</div>`;
+  const sceneHtml = spec.lines.map((l, i) =>
+    `<!-- ${i + 1} · ${l.scene.kind} -->\n<section class="scene">${l.scene.kind === "hook" || l.scene.kind === "cta" ? "" : brandRow}\n${body(l.scene, c)}\n</section>`).join("\n\n");
+
+  const html = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>${esc(spec.title)}</title>
+<style>
+${faces.join("\n")}
+:root{--ground:${c.ground};--card:${c.card};--chip:${c.chip};--rule:${c.rule};--ink:${c.ink};--muted:${c.muted};--accent:${c.accent};--hl:${c.highlight};--hl-rgb:${rgb(c.highlight)};--you:${c.you};--panel:${c.panel};--panel-ink:${c.panelInk};--panel-muted:${c.panelMuted};--panel-rule:${c.panelRule}}
+*{box-sizing:border-box}html,body{margin:0;background:var(--ground);overflow:hidden}
+#stage{position:relative;width:1080px;height:1920px;overflow:hidden;background:var(--ground);font-family:"Sans",sans-serif;color:var(--ink);transform:scale(${k});transform-origin:0 0}
+.blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.55}
+.b1{width:900px;height:900px;left:-300px;top:-200px;background:var(--panel)}
+.b2{width:760px;height:760px;right:-320px;top:700px;background:var(--chip)}
+.b3{width:620px;height:620px;left:120px;bottom:-260px;background:var(--hl);opacity:.12}
+#progress{position:absolute;left:0;top:0;width:100%;height:10px;background:var(--hl);transform-origin:left;transform:scaleX(0);z-index:5}
+.scene{position:absolute;inset:0;visibility:hidden;transform-origin:50% 40%}
+.brand{position:absolute;left:90px;top:96px;display:flex;align-items:center;gap:20px;font-weight:700;font-size:44px}
+.brand img{width:76px;height:76px;object-fit:contain}
+.content{position:absolute;left:90px;right:90px;top:230px;bottom:360px;display:flex;flex-direction:column;justify-content:center;gap:34px}
+.center{position:absolute;left:90px;right:90px;top:260px;bottom:340px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:44px;text-align:center}
+.kicker{font-family:"Mono",monospace;font-size:32px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+h1,h2{margin:0;font-weight:800;letter-spacing:-.02em;line-height:1.08}
+h2{font-size:80px}.hookline{font-size:104px}.cta{font-size:120px}
+.w{display:inline-block}
+.acc{color:var(--accent)}.code{font-family:"Mono",monospace;color:var(--ink)}
+.logo-xl{width:360px;height:360px;display:block;object-fit:contain}.logo-lg{width:260px;height:260px;display:block;object-fit:contain}
+.sub{font-size:46px;color:var(--muted)}.sub .acc{color:var(--hl);font-weight:700}
+.follow{font-size:44px;color:var(--accent)}
+.svg{display:inline-flex;width:54px;height:54px}.svg svg{width:100%;height:100%}
+.svg.sm{width:56px;height:56px}.svg.md{width:64px;height:64px}.svg.lg{width:84px;height:84px}
+.stack{display:flex;flex-direction:column;gap:30px;margin-top:10px}
+.card{background:var(--card);border:2px solid var(--rule);border-radius:36px}
+.row{display:flex;gap:34px;align-items:center;padding:34px 38px}
+.ico{width:110px;height:110px;flex:none;border-radius:50%;background:var(--chip);display:flex;align-items:center;justify-content:center}
+.rt{font-size:46px;font-weight:700;line-height:1.15}.rd{font-size:34px;color:var(--muted);line-height:1.3;margin-top:6px}
+.panel{background:var(--panel);border-radius:44px;padding:48px 50px;display:flex;flex-direction:column;gap:26px;color:var(--panel-ink)}
+.pt{font-size:52px;font-weight:800}.pm{font-family:"Mono",monospace;font-size:28px;color:var(--panel-muted)}
+.hr{height:3px;background:var(--panel-rule);transform-origin:left}
+.pk{font-size:38px;font-weight:700}.pv{font-size:34px;color:var(--panel-muted);margin-top:2px}
+.tags{display:flex;gap:16px;flex-wrap:wrap}.tag{font-family:"Mono",monospace;font-size:32px;padding:10px 28px;border-radius:999px;background:var(--panel-rule);color:var(--panel-ink)}
+.thread{position:relative;padding-left:110px;display:flex;flex-direction:column;gap:30px;margin-top:10px}
+.string{position:absolute;left:44px;top:30px;bottom:30px;width:8px;border-radius:4px;background:var(--hl);transform-origin:top}
+.wrap{position:absolute;left:-80px;top:52px;width:54px;display:flex;flex-direction:column;gap:9px}.wrap i{display:block;height:7px;border-radius:4px;background:var(--hl)}
+.bubble{position:relative;background:var(--card);border:2px solid var(--rule);border-radius:30px;padding:28px 36px}
+.who{font-family:"Mono",monospace;font-size:26px;letter-spacing:.14em;text-transform:uppercase;color:var(--you)}
+.said{font-family:"Mono",monospace;font-size:42px;margin-top:8px;min-height:52px}
+.reply{font-size:38px;line-height:1.3}.reply b{color:var(--accent)}
+.steps{position:relative;display:flex;flex-direction:column;gap:64px;margin-top:20px}
+.steps .line{position:absolute;left:61px;top:70px;bottom:70px;width:8px;border-radius:4px;background:var(--hl);transform-origin:top}
+.step{position:relative;display:flex;gap:40px;align-items:flex-start}
+.num{width:130px;height:130px;flex:none;border-radius:50%;background:var(--hl);color:var(--ground);font-size:58px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.result{display:flex;align-items:center;gap:24px;padding:28px 36px;border-radius:30px;background:var(--panel);color:var(--panel-ink);font-size:38px;font-weight:700;margin-top:10px}
+.player{position:relative;height:500px;border-radius:44px;background:var(--card);border:2px solid var(--rule);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.play{width:190px;height:190px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center}
+.scrub{position:absolute;left:0;bottom:0;height:12px;width:100%;background:var(--hl);transform-origin:left}
+.moments{display:flex;flex-direction:column;gap:14px}.moment{display:flex;align-items:center;gap:32px;padding:20px 26px;border-radius:999px}
+.ts{font-family:"Mono",monospace;font-size:36px;font-weight:600;padding:12px 32px;border-radius:999px;background:var(--chip);color:var(--accent)}.ml{font-size:40px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:30px;margin-top:10px}
+.tile{display:flex;flex-direction:column;gap:30px;padding:40px 36px;border-radius:36px;background:var(--card);border:2px solid var(--rule)}.tile>span:last-child{font-size:40px;font-weight:700;line-height:1.15}
+.pill{display:flex;align-items:center;gap:24px;padding:34px 52px;border-radius:999px;background:var(--accent);color:var(--ground)}.pill>span:last-child{font-family:"Mono",monospace;font-size:44px;font-weight:600}
+</style></head>
+<body><div id="stage"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div id="progress"></div>
+${sceneHtml}
+</div><script src="render.js"></script></body></html>`;
+  const file = join(outDir, "scenes.html");
+  writeFileSync(file, html);
+  return file;
+}
