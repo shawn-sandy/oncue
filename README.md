@@ -43,7 +43,7 @@ In Claude Code:
 
 To try it locally from a clone, run `claude --plugin-dir ./plugins/oncue`.
 
-Then ask Claude to "set up OnCue" (or run `/oncue:setup`). The setup skill checks everything under [Requirements](#requirements), installs what it can, and tells you which outputs are ready.
+Then ask Claude to "set up OnCue" (or run `/oncue:setup`). The setup skill checks Node, ffmpeg and ffprobe, the engine, Playwright with Chromium and the ElevenLabs connector listed under [Requirements](#requirements), installs what it can, and tells you which outputs are ready.
 
 ## Usage
 

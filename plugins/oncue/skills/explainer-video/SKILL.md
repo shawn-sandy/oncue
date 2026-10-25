@@ -25,7 +25,7 @@ The engine is a typed Node program in this plugin's `engine/` folder (`../../eng
 cp -R <plugin>/engine ./oncue-engine && cd oncue-engine && npm install
 ```
 
-Requirements: Node 22+, `ffmpeg` and `ffprobe` on `PATH`, and Playwright with Chromium for the video and stills. If `require('playwright')` already works (many sandboxes preinstall it), use that and do not install another version. Otherwise run `npm install --save-dev playwright && npx playwright install chromium` in `oncue-engine`; keep `--save-dev`, because npm 12 skips optional peers otherwise. The deck needs no browser.
+Requirements: Node 22+, `ffmpeg` and `ffprobe` on `PATH`, and Playwright with Chromium for the video and stills. If `node -p "require('playwright/package.json').version"` prints 1.40.0 or later (many sandboxes preinstall it), use that and do not install another version. Otherwise run `npm install --save-dev playwright && npx playwright install chromium` in `oncue-engine`; keep `--save-dev`, because npm 12 skips optional peers otherwise. The deck needs no browser.
 
 Run every command from `oncue-engine`. `npm run example:check` confirms the install on the bundled Gleaner example.
 

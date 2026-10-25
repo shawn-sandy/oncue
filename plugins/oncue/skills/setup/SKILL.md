@@ -20,10 +20,11 @@ Every stage needs 22 or newer. If it is older or missing, tell the person to ins
 ## 2. ffmpeg and ffprobe
 
 ```bash
-command -v ffmpeg ffprobe
+ffmpeg -version | head -1
+ffprobe -version | head -1
 ```
 
-Both must print a path. The video needs ffmpeg, and anything timed to a real voiceover (stills or video with `--audio`) needs ffprobe. One package installs both: `brew install ffmpeg` on macOS, `sudo apt install ffmpeg` on Debian or Ubuntu. Ask before installing; anything with `sudo` the person runs themselves. Without ffmpeg the storyboard, the deck and silent preview stills still work.
+Each must print a version line; `command not found` names the one that is missing. Check them separately: `command -v ffmpeg ffprobe` exits 0 in bash even when one is missing. The video needs ffmpeg, and anything timed to a real voiceover (stills or video with `--audio`) needs ffprobe. One package installs both: `brew install ffmpeg` on macOS, `sudo apt install ffmpeg` on Debian or Ubuntu. Ask before installing; anything with `sudo` the person runs themselves. Without ffmpeg the storyboard, the deck and silent preview stills still work.
 
 ## 3. The engine
 
@@ -45,7 +46,7 @@ It prints the Gleaner example's beats and ends with `OK.` The storyboard and the
 
 ## 4. Playwright with Chromium
 
-Stills and video drive headless Chromium; the deck does not. If `node -e "require('playwright')"` succeeds, Playwright is already installed (many sandboxes preinstall it matched to their browser): use it and install nothing. Otherwise:
+Stills and video drive headless Chromium; the deck does not. If `node -p "require('playwright/package.json').version"` prints 1.40.0 or later, Playwright is already installed (many sandboxes preinstall it matched to their browser): use it and install nothing. The engine needs at least 1.40.0. Otherwise, missing or older:
 
 ```bash
 npm install --save-dev playwright && npx playwright install chromium
