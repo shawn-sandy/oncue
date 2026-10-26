@@ -103,7 +103,7 @@ Resolved in the 2026-10-25 review:
 
 ## Risks & tensions
 
-- **whisper.cpp output shape and punctuation are unverified.** The flags exist (`-ml`, `-sow`, `-oj`, `-ojf` in the whisper.cpp CLI README), but the exact word-level JSON and whether punctuation stays attached to words come from secondary sources. Mitigation: phase 1 runs it on `examples/gleaner/voiceover.mp3` and commits a trimmed fixture before any code. The timeline's fallback (:51) still matches a line's first word when punctuation is missing.
+- **whisper.cpp output shape and punctuation are unverified.** The flags exist (`-ml`, `-sow`, `-oj`, `-ojf` in the whisper.cpp CLI README), but the exact word-level JSON and whether punctuation stays attached to words come from secondary sources. Mitigation: phase 1 runs it on `examples/gleaner/voiceover.mp3` and commits the full output as a fixture before any code, because the integration test needs every script line to match the Gleaner `short.json`. The timeline's fallback (:51) still matches a line's first word when punctuation is missing.
 - **Timing accuracy may be lower than Scribe.** WhisperX's docs say plain Whisper timestamps can be off, which is why WhisperX adds forced alignment. Mitigation: phase 6 compares whisper.cpp timings with the committed Scribe `words.json` for the same audio. If cues drift visibly, a later phase can swap the shared timing step to WhisperX without touching recipes.
 - **Ad-libs break line matching.** A recording that changes a line's first word stops `buildTimeline` with "Line N not found". The existing error already names the line, and the recipe tells the reader to read verbatim.
 - **Input format.** Whether whisper-cli reads MP3 directly is unverified; the timing step converts to WAV with ffmpeg first, which works either way.
@@ -116,7 +116,7 @@ Resolved in the 2026-10-25 review:
 
 | Phase | Work | Size | Depends on |
 |---|---|---|---|
-| 1 | Verify whisper.cpp: install, get a model, run on `examples/gleaner/voiceover.mp3`; record the exact command, JSON shape, punctuation behaviour and input-format needs; commit a trimmed fixture | S | — |
+| 1 | Verify whisper.cpp: install, get a model, run on `examples/gleaner/voiceover.mp3`; record the exact command, JSON shape, punctuation behaviour and input-format needs; commit the full output as a fixture | S | — |
 | 2 | Workstream A: normalizer, one test per shape (failing first), rebuild and commit `dist/` | S | 1 |
 | 3 | Workstream B: voiceover selection rule, "Other engines", `own-recording.md`, `whisper-timing.md` | M | 1 |
 | 4 | Workstream C, plus the explainer-video lines from Workstream D | S | 3 |
