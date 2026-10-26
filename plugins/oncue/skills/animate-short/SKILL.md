@@ -34,7 +34,7 @@ This writes one frame per scene (85% of the way through it) to `build/stills/`; 
 node dist/cli.js video <folder>/short.json --words <folder>/words.json --audio <folder>/voiceover.mp3 --out <folder>/short.mp4
 ```
 
-Expect 3–4 frames a second: about 10 minutes for 75 seconds at 30fps. Run it in the background and report progress at milestones; render several takes in parallel when the person wants to compare voices.
+Speed depends on the machine: on an Apple M4 Max the 75-second example rendered at about 30 frames a second, in 76 seconds; slower machines take longer. Run it in the background and report progress at milestones; render several takes in parallel when the person wants to compare voices.
 
 The output is H.264 with AAC audio at the spec's size, starting 0.3s before the first word and holding 1.6s on the last scene.
 
