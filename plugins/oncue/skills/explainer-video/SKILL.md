@@ -19,7 +19,7 @@ The deck and the video both read `short.json`, so they always match. The deck ca
 
 ## Set up the engine (once per session)
 
-The engine is a typed Node program in this plugin's `engine/` folder (`../../engine` from this skill's folder). If `oncue-engine/` already exists in the working directory (the setup skill, `../setup/SKILL.md`, makes it), reuse it with `cd oncue-engine && npm install`; copying over it would nest the engine inside it. Otherwise copy it into the working directory rather than running it inside the plugin, so installs never touch the plugin cache:
+The engine is a typed Node program in this plugin's `engine/` folder (`../../engine` from this skill's folder; `<plugin>` below is the absolute path of the folder holding `engine/`). If `oncue-engine/` already exists in the working directory (the setup skill, `../setup/SKILL.md`, makes it), check that this version of the plugin made it with `diff -rq <plugin>/engine/dist oncue-engine/dist`. If it prints nothing, reuse it with `cd oncue-engine && npm install`; copying over it would nest the engine inside it. When `diff` lists files, an older OnCue made the copy and it still runs the old engine: rename it with `mv oncue-engine oncue-engine.old` (pick another name if that one is taken: `mv` into an existing folder nests it), copy afresh as below, reinstall Playwright and any `@fontsource/*` package in the old copy's `package.json` but not the new one, and tell the person they can delete the old copy once the new one works. With no `oncue-engine/`, copy it into the working directory rather than running it inside the plugin, so installs never touch the plugin cache:
 
 ```bash
 cp -R <plugin>/engine ./oncue-engine && cd oncue-engine && npm install

@@ -43,7 +43,9 @@ In Claude Code:
 
 To try it locally from a clone, run `claude --plugin-dir ./plugins/oncue`.
 
-Then ask Claude to "set up OnCue" (or run `/oncue:setup`). The setup skill checks Node, ffmpeg and ffprobe, the engine, Playwright with Chromium and the ElevenLabs connector listed under [Requirements](#requirements), installs what it can, and tells you which outputs are ready.
+Then ask Claude to "set up OnCue" (or run `/oncue:setup`). The setup skill reports the installed version and scope, checks Node, ffmpeg and ffprobe, the engine, Playwright with Chromium and the ElevenLabs connector listed under [Requirements](#requirements), installs what it can, and tells you which outputs are ready.
+
+OnCue's marketplace does not auto-update by default. To update, run `claude plugin update oncue@oncue` (or choose **Update now** on the **Installed** tab of `/plugin`), then `/reload-plugins` and set up again: that replaces any engine copy the old version made. To turn OnCue on for everyone in a repository, install it with `--scope project` and commit `.claude/settings.json`; each collaborator still runs the install once. Ask Claude to "share OnCue with my team" for the exact commands.
 
 ## Usage
 
@@ -108,7 +110,7 @@ Each stage is its own skill, so you can stop after any of them or start from an 
 
 | Skill | Ask for | You get |
 | --- | --- | --- |
-| [setup](plugins/oncue/skills/setup/SKILL.md) | "set up OnCue" | Node, ffmpeg, Playwright and ElevenLabs checked, the engine installed, and which outputs are ready |
+| [setup](plugins/oncue/skills/setup/SKILL.md) | "set up OnCue", "update OnCue" | The plugin version and how to update or share it; Node, ffmpeg, Playwright and ElevenLabs checked, the engine installed, and which outputs are ready |
 | [explainer-video](plugins/oncue/skills/explainer-video/SKILL.md) | "make an explainer short about our CLI" | The whole pipeline, with check-ins at the beats and the voice |
 | [storyboard](plugins/oncue/skills/storyboard/SKILL.md) | "storyboard a 60-second Short for this plugin" | `short.json`, a beat list, preview stills or a Design canvas |
 | [voiceover](plugins/oncue/skills/voiceover/SKILL.md) | "voice it with ElevenLabs" | Two takes as MP3, each with a word-level transcript |
@@ -165,6 +167,12 @@ npm run engine:typecheck  # strict TypeScript check of the engine
 The plugin version lives only in `plugins/oncue/.claude-plugin/plugin.json`.
 
 ## Changelog
+
+### 1.2.0 (2026-10-25)
+
+- The setup skill now covers the plugin itself: it reports the loaded version and install scope, flags an update waiting to load, and gives the commands to update OnCue or install it for collaborators at project scope.
+- After an update, the setup and explainer-video skills replace an `oncue-engine/` copy made by an older version (found with `diff -rq` against the plugin's `engine/dist`) instead of reusing it, so the new engine actually runs.
+- README: updating and project-scope installs.
 
 ### 1.1.0 (2026-10-25)
 
