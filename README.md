@@ -2,7 +2,7 @@
 
 **Explainer Shorts where every word lands on cue.**
 
-Give Claude a topic and get a finished explainer: storyboarded beats, an ElevenLabs voiceover, a native PowerPoint deck, and an animated MP4 where every card, step and tile appears on the exact word that names it. Make it vertical (1080×1920) for YouTube Shorts, Reels and TikTok, widescreen (1920×1080) for a YouTube video, or any custom size.
+Give Claude a topic and get a finished explainer: storyboarded beats, an ElevenLabs voiceover, a native PowerPoint deck, and an animated MP4 where every card, step and tile appears on the exact word that names it. Make it vertical (1080×1920) for YouTube Shorts, Reels and TikTok, widescreen (1920×1080) for a YouTube video, or a custom size (even sides from 320 to 4096 px, the long side at most 2.4× the short one).
 
 One file, `short.json`, drives the storyboard, the voiceover script, the deck and the video, so they always match. Its `format` sets the size: frames wider than tall get a landscape layout, the rest the portrait one.
 
@@ -142,9 +142,9 @@ The worked example is Gleaner's own Short: [examples/gleaner/short.json](plugins
 | `cue word "..." not heard in this line` | That element is spaced evenly instead of landing on its word. Change its `cue` to a word the narrator said. |
 | `Pass --words and --audio together` | The transcript must be of that audio, so pass both or neither. |
 | Text hidden behind the Shorts buttons and captions | Portrait layouts keep content out of the bottom ~350px of the frame and the bottom 1.4 inches of the deck; don't move it there. |
-| `short.json format.width: must be even` (or `between 320 and 4096`, or `at most 2.4×`) | H.264 needs even sizes, and the layouts need a sensible shape. Use 1080×1920 or 1920×1080; square and 4:5 sizes render with the portrait layout, so every scene shrinks. |
+| `short.json format.width: must be even` (or `between 320 and 4096`, or `at most 2.4×`) | H.264 needs even sizes, and the layouts need a sensible shape. Use 1080×1920 or 1920×1080; square and 4:5 sizes use the portrait layout, which leaves less room, so dense scenes shrink. |
 | `warning: scene N (...) shrunk to ...` | That scene had more than fits its frame, so it was scaled down. Cut its copy (fewer items, shorter titles) to show it full size. |
-| `note: the deck is ... the nearest drawn size` | The deck is drawn for 9:16 and 16:9 only, so other sizes snap by orientation. The video keeps the exact size. |
+| `note: the deck is ... applies to the video only` | The deck is drawn for 9:16 and 16:9 only: landscape specs get 16:9, portrait and square ones 9:16. The video keeps the exact size. |
 
 ## The engine
 

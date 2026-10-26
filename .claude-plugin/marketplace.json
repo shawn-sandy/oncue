@@ -9,7 +9,7 @@
     {
       "name": "oncue",
       "source": "./plugins/oncue",
-      "description": "OnCue: explainer Shorts where every word lands on cue. Storyboard a topic, voice it with ElevenLabs, and render a native PowerPoint deck and an animated MP4, vertical 9:16 for YouTube Shorts, Reels and TikTok or widescreen 16:9 for YouTube, at any custom size, all from one short.json spec.",
+      "description": "OnCue: explainer Shorts where every word lands on cue. Storyboard a topic, voice it with ElevenLabs, and render a native PowerPoint deck and an animated MP4, vertical 9:16 for YouTube Shorts, Reels and TikTok or widescreen 16:9 for YouTube, or a custom size within the supported limits, all from one short.json spec.",
       "category": "productivity",
       "tags": [
         "video",

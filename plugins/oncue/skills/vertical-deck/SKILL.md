@@ -11,7 +11,7 @@ Write `deck.pptx` from `short.json`: 5.625 × 10 inches (exports as 1080×1920) 
 ## When this is the right output
 
 - The person wants a .pptx (to edit, present, or record in PowerPoint or Keynote), or an editable companion to the video.
-- The deck is drawn for 9:16 and 16:9 only. Any other `format` (1080×1350, 1080×1080) snaps to the nearer of the two by orientation, and `deck` prints a one-line note saying so; the video keeps the exact size.
+- The deck is drawn for 9:16 and 16:9 only. The spec's orientation picks one: landscape (wider than tall) gets the 16:9 deck, portrait and square (1080×1350, 1080×1080) the 9:16 deck. When the spec's aspect differs from the deck's, `deck` prints a one-line note saying so; the video keeps the exact size.
 - In 16:9, each slide follows the same arrangement as the video: lists, cards, chats and steps put the kicker and title beside the body, grids and media put them above it, and the hook and call to action stay centred.
 - No spec yet? Run the storyboard skill (`../storyboard/SKILL.md`) first. A deck needs only `short.json` and the logo, not the voiceover.
 
@@ -33,4 +33,4 @@ Look for text running past its box (titles over about 45 characters, a `desc` ov
 
 ## Deliver
 
-Send the file with a one-line note. Mention that File → Export → Create a Video in PowerPoint (or File → Export To → Movie in Keynote, custom 1080×1920, or 1920×1080 for a 16:9 deck) records the narration from the notes into an MP4. The animate-short skill (`../animate-short/SKILL.md`) makes an animated, voiced MP4 directly.
+Send the file with a one-line note. Speaker notes are not narration: to turn the deck into a voiced video, the person first records the slideshow while reading the notes (Record in PowerPoint, Play → Record Slideshow in Keynote), then exports it (File → Export → Create a Video in PowerPoint, or File → Export To → Movie in Keynote, custom 1080×1920, or 1920×1080 for a 16:9 deck). The animate-short skill (`../animate-short/SKILL.md`) makes an animated, voiced MP4 directly from the voiceover files.

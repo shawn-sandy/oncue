@@ -111,13 +111,15 @@ export async function writeDeck(loaded: LoadedSpec, outFile: string): Promise<st
         return;
       }
       case "list": {
-        const n = scene.items.length, gap = 0.2, h = Math.min(1.3, bh / n - gap);
+        // Gaps (and the icon and text padding) shrink only when the rows would not otherwise fit, so every
+        // count keeps positive heights inside the box; the documented 2-4 items lay out as they always have.
+        const n = scene.items.length, gap = Math.min(0.2, bh / n / 4), h = Math.min(1.3, bh / n - gap), d = Math.min(0.7, h), pad = Math.min(0.1, h / 4);
         for (const [i, it] of scene.items.entries()) {
           const y = top + i * (h + gap);
           card(s, M, y, CW, h, c.card, `item-${i}`);
-          await dot(s, it.icon, M + 0.3, y + (h - 0.7) / 2);
+          await dot(s, it.icon, M + 0.3, y + (h - d) / 2, d);
           text(s, [{ text: it.title, options: { bold: true, fontSize: 20, breakLine: true } }, ...(it.desc ? rt(it.desc, { fontSize: 15, color: hex(c.muted) }) : [])],
-            { x: M + 1.2, y: y + 0.1, w: CW - 1.4, h: h - 0.2, valign: "middle" });
+            { x: M + 1.2, y: y + pad, w: CW - 1.4, h: h - 2 * pad, valign: "middle" });
         }
         return;
       }
@@ -142,7 +144,7 @@ export async function writeDeck(loaded: LoadedSpec, outFile: string): Promise<st
         return;
       }
       case "chat": {
-        const n = scene.turns.length, gap = 0.2, h = Math.min(0.95, bh / n - gap), bw = 3.9;
+        const n = scene.turns.length, gap = Math.min(0.2, bh / n / 4), h = Math.min(0.95, bh / n - gap), bw = 3.9;
         scene.turns.forEach((t, i) => {
           const you = t.from === "you", y = top + i * (h + gap), x = you ? M + CW - bw : M;
           card(s, x, y, bw, h, you ? c.highlight : c.card, `turn-${i}`);
@@ -171,12 +173,14 @@ export async function writeDeck(loaded: LoadedSpec, outFile: string): Promise<st
       }
       case "grid": {
         // Three columns when the body runs across the width; short tiles put the label beside the icon.
-        const cols = CW > 2 * bh ? 3 : 2, gw = (CW - 0.3 * (cols - 1)) / cols, rowsN = Math.ceil(scene.tiles.length / cols), gh = Math.min(1.35, bh / rowsN - 0.25);
+        // Row gaps shrink only when the rows would not otherwise fit, as in list.
+        const cols = CW > 2 * bh ? 3 : 2, gw = (CW - 0.3 * (cols - 1)) / cols, rowsN = Math.ceil(scene.tiles.length / cols);
+        const rg = Math.min(0.25, bh / rowsN / 4), gh = Math.min(1.35, bh / rowsN - rg), d = Math.min(0.55, gh);
         const beside = gh < 1.3;
         for (const [i, t] of scene.tiles.entries()) {
-          const x = M + (i % cols) * (gw + 0.3), y = top + Math.floor(i / cols) * (gh + 0.25);
+          const x = M + (i % cols) * (gw + 0.3), y = top + Math.floor(i / cols) * (gh + rg);
           card(s, x, y, gw, gh, c.card, `tile-${i}`);
-          await dot(s, t.icon, x + 0.25, beside ? y + (gh - 0.55) / 2 : y + 0.25, 0.55);
+          await dot(s, t.icon, x + 0.25, beside ? y + (gh - d) / 2 : y + 0.25, d);
           text(s, t.label, beside ? { x: x + 0.95, y, w: gw - 1.1, h: gh, fontSize: 15, bold: true, valign: "middle" }
             : { x: x + 0.25, y: y + gh - 0.5, w: gw - 0.4, h: 0.4, fontSize: 15, bold: true, valign: "middle" });
         }
@@ -189,12 +193,15 @@ export async function writeDeck(loaded: LoadedSpec, outFile: string): Promise<st
         card(s, M, top, pw, ph, c.card, "player");
         await dot(s, "FiPlay", M + (pw - 1.0) / 2, top + (across ? (ph - 1.0) / 2 : 0.5), 1.0);
         const mx = across ? M + pw + 0.4 : M, mw = across ? CW - pw - 0.4 : CW;
-        const my = across ? top + (bh - scene.moments.length * 0.7 + 0.2) / 2 : top + 2.3;
+        // Moments sit 0.7 in apart; when more than fit, they close up together (k < 1) so the last stays in the box.
+        const n = scene.moments.length, room = across ? bh : bh - 2.3, k = Math.min(1, room / (n * 0.7 - 0.2));
+        const pitch = 0.7 * k, mh = 0.5 * k;
+        const my = across ? top + (bh - n * pitch + 0.2 * k) / 2 : top + 2.3;
         scene.moments.forEach((m, i) => {
-          const y = my + i * 0.7;
-          s.addShape(pres.ShapeType.roundRect, { x: mx, y, w: 1.0, h: 0.5, fill: { color: hex(c.chip) }, line: { color: hex(c.chip), width: 0 }, rectRadius: 0.25 });
-          text(s, m.time, { x: mx, y, w: 1.0, h: 0.5, fontSize: 14, bold: true, color: hex(c.accent), align: "center", valign: "middle", fontFace: "Courier New" });
-          text(s, m.label, { x: mx + 1.2, y, w: mw - 1.2, h: 0.5, fontSize: 16, valign: "middle" });
+          const y = my + i * pitch;
+          s.addShape(pres.ShapeType.roundRect, { x: mx, y, w: 1.0, h: mh, fill: { color: hex(c.chip) }, line: { color: hex(c.chip), width: 0 }, rectRadius: 0.25 * k });
+          text(s, m.time, { x: mx, y, w: 1.0, h: mh, fontSize: 14, bold: true, color: hex(c.accent), align: "center", valign: "middle", fontFace: "Courier New" });
+          text(s, m.label, { x: mx + 1.2, y, w: mw - 1.2, h: mh, fontSize: 16, valign: "middle" });
         });
         return;
       }

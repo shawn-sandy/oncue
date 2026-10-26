@@ -94,7 +94,7 @@ async function main(): Promise<void> {
       mkdirSync(resolve(out, ".."), { recursive: true });
       const d = deckSize(spec.format);
       if (Math.abs(d.width / d.height - spec.format.width / spec.format.height) > 0.01)
-        console.log(`note: the deck is ${d.width}×${d.height} in, the nearest drawn size; ${spec.format.width}×${spec.format.height} applies to the video only.`);
+        console.log(`note: the deck is ${d.width}×${d.height} in (${d.width > d.height ? "landscape specs get 16:9" : "portrait and square specs get 9:16"}); ${spec.format.width}×${spec.format.height} applies to the video only.`);
       console.log("wrote", await writeDeck(loaded, out));
       return;
     }

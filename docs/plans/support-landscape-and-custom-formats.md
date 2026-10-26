@@ -12,7 +12,7 @@ prototype: docs/prototypes/validate-output-sizes.html
 design: https://claude.ai/artifact/CVT6S6iArxPu2TKvnsGjrv
 design-dir: docs/designs/support-landscape-and-custom-formats/project
 proto-model: {"entity":"Output size","fields":[{"name":"label","type":"string"},{"name":"width","type":"number"},{"name":"height","type":"number"},{"name":"layout","type":"string"},{"name":"deck","type":"string"}],"action":"Add size","successSignal":"Sizes"}
-glance: Today a short.json with any size other than 9:16 passes validation and then renders with most of each scene cut off, so OnCue can only make Shorts, Reels and TikToks. After this the same spec renders a YouTube-ready 16:9 video and deck, other sizes shrink a scene to fit instead of cutting it, and the 9:16 output stays byte-for-byte identical. New node:test suites and a before-and-after comparison of the example's stills and slides prove it.
+glance: Today a short.json with any size other than 9:16 passes validation and then renders with most of each scene cut off, so OnCue can only make Shorts, Reels and TikToks. After this the same spec renders a YouTube-ready 16:9 video and deck, other sizes shrink a scene to fit instead of cutting it, and 9:16 specs that fit their frame (the Gleaner example among them) render byte-for-byte as before. New node:test suites and a before-and-after comparison of the example's stills and slides prove it.
 ---
 
 # Plan: Render OnCue explainers at 16:9 or any custom size from the same short.json
@@ -167,7 +167,7 @@ Copy the Gleaner example to a scratch folder, set `format` to 1920×1080, and ru
 
 `node dist/cli.js video <copy>/short.json` writes an MP4 that `ffprobe` reports as 1920×1080 at 30/1 fps with an audio stream.
 
-`node dist/cli.js deck <copy>/short.json` writes a 10×5.625 in deck. `test/deck.test.mjs` confirms every shape is on the slide, and the LibreOffice images show the same arrangement per scene as the video.
+`node dist/cli.js deck <copy>/short.json` writes a 10×5.625 in deck. `test/deck.test.mjs` confirms every shape is on the slide, and the slides, as LibreOffice images when it is installed or else drawn from the slide XML geometry, show the same arrangement per scene as the video.
 
 Repeat the stills at 1080×1080: every `fits` entry is true. Then rerun the untouched example at 1080×1920: `cmp` and `diff -r` against the step 1 baseline print nothing. Finally, `npm run validate`, `npm run engine:typecheck` and `npm run engine:test` all exit 0 from the repo root.
 

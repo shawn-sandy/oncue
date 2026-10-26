@@ -24,7 +24,7 @@ node dist/cli.js stills <folder>/short.json --words <folder>/words.json --audio 
 This writes one frame per scene (85% of the way through it) to `build/stills/`; pass `--at 3.5,12,20` for specific seconds. Combine them into a contact sheet and look at it:
 
 - Text fits its card. In a portrait frame, nothing sits in the bottom ~350px (Shorts UI).
-- No `warning: scene N (...) shrunk to ...` lines. The engine shrinks a scene that overflows its frame, which happens most at sizes other than 9:16 and 16:9, and records every scene in `build/fit.json`. A shrunk scene still shows everything, smaller; cut its copy (fewer items, shorter titles) to show it full size. When every scene shrinks, the size is square or 4:5, which uses the portrait layout; cutting copy won't fix that, so suggest 1080×1920 or 1920×1080.
+- No `warning: scene N (...) shrunk to ...` lines. The engine shrinks a scene that overflows its frame, which happens most at sizes other than 9:16 and 16:9, and records every scene in `build/fit.json`. A shrunk scene still shows everything, smaller; cut its copy (fewer items, shorter titles) to show it full size. Read `build/fit.json` and each shrunk scene's copy before suggesting a fix. At a square or 4:5 size, the portrait layout's Shorts inset leaves less room, so a scene may shrink that would fit at 1080×1920 or 1920×1080; suggest one of those when the post allows it, and cut copy otherwise.
 - Each scene shows what its line is saying at that moment.
 - No warnings about cue words. A warning means an element is spaced evenly instead of landing on its word; fix the cue in `short.json`.
 

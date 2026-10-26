@@ -74,3 +74,19 @@ for (const [w, h] of [[1080, 1920], [1920, 1080]]) {
     assert.deepEqual(d.outside, []);
   });
 }
+
+// Far past the documented counts, rows used to get negative heights and moments ran off the slide.
+const of = (/** @type {string} */ kind) => gleaner.lines.find((/** @type {any} */ l) => l.scene.kind === kind);
+const times = (/** @type {any[]} */ a, /** @type {number} */ n) => Array.from({ length: n }, (_, i) => ({ ...a[i % a.length], cue: undefined }));
+const crowded = [
+  { ...of("list"), scene: { ...of("list").scene, items: times(of("list").scene.items, 25) } },
+  { ...of("chat"), scene: { ...of("chat").scene, turns: times(of("chat").scene.turns, 25) } },
+  { ...of("grid"), scene: { ...of("grid").scene, tiles: times(of("grid").scene.tiles, 40) } },
+  { ...of("media"), scene: { ...of("media").scene, moments: times(of("media").scene.moments, 6) } },
+];
+for (const [w, h] of [[1080, 1920], [1920, 1080]]) {
+  test(`${w}×${h}: crowded list, chat, grid and media scenes keep every shape valid and on the slide`, async () => {
+    const d = await writeAndMeasure(`crowded-${w}x${h}`, { ...gleaner, format: { width: w, height: h }, lines: crowded });
+    assert.deepEqual(d.outside, []);
+  });
+}
