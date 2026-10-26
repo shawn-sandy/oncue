@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.plain = void 0;
+exports.plain = exports.WIDE = void 0;
+exports.checkFormat = checkFormat;
+exports.stageFor = stageFor;
 exports.loadSpec = loadSpec;
 exports.runs = runs;
 /**
@@ -14,12 +16,37 @@ const HEX = /^#[0-9a-fA-F]{6}$/;
 function fail(path, msg) { throw new Error(`short.json ${path}: ${msg}`); }
 function str(v, path) { if (typeof v !== "string" || !v.trim())
     fail(path, "must be a non-empty string"); }
+/** Sizes the H.264 encoder (yuv420p needs even sides) and both layouts can handle. */
+function checkFormat(format) {
+    const f = format;
+    if (!f || typeof f !== "object")
+        fail("format", "needs width and height");
+    for (const k of ["width", "height"]) {
+        const v = f[k];
+        if (typeof v !== "number" || !Number.isInteger(v))
+            fail(`format.${k}`, "must be a whole number of pixels");
+        if (v < 320 || v > 4096)
+            fail(`format.${k}`, `must be between 320 and 4096 (got ${v})`);
+        if (v % 2)
+            fail(`format.${k}`, `must be even, which H.264 video needs (got ${v})`);
+    }
+    const { width, height } = f;
+    if (Math.max(width, height) / Math.min(width, height) > 2.4)
+        fail("format", `the long side may be at most 2.4× the short side (got ${width}×${height})`);
+}
+function stageFor(format) {
+    const wide = format.width > format.height;
+    const scale = Math.min(format.width, format.height) / 1080;
+    return { wide, width: format.width / scale, height: format.height / scale, scale };
+}
+exports.WIDE = {
+    hook: "stack", list: "side", card: "side", chat: "side", steps: "side", grid: "top", media: "top", cta: "stack",
+};
 /** Reads and checks short.json; every error names the field to fix. */
 function loadSpec(file) {
     const spec = JSON.parse((0, node_fs_1.readFileSync)(file, "utf8"));
     str(spec.title, "title");
-    if (!spec.format || !(spec.format.width > 0) || !(spec.format.height > 0))
-        fail("format", "needs width and height");
+    checkFormat(spec.format);
     const b = spec.brand;
     if (!b)
         fail("brand", "is required");

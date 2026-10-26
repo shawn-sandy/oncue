@@ -1,6 +1,6 @@
 ---
 name: voiceover
-description: Record a narrator voiceover for a short.json explainer with the ElevenLabs connector, then transcribe it with word timestamps so slides and animations land on the right word. Use when the user wants a voiceover, narration or AI voice for a short, deck or explainer, such as "add a voiceover with ElevenLabs" or "narrate the storyboard".
+description: Record a narrator voiceover for a short.json explainer, a vertical Short or a widescreen landscape 16:9 YouTube video, with the ElevenLabs connector, then transcribe it with word timestamps so slides and animations land on the right word. Use when the user wants a voiceover, narration or AI voice for a short, deck, YouTube video or explainer, such as "add a voiceover with ElevenLabs" or "narrate the storyboard".
 argument-hint: '[path to short.json] [voice description]'
 ---
 

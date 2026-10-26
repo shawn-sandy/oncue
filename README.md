@@ -2,9 +2,9 @@
 
 **Explainer Shorts where every word lands on cue.**
 
-Give Claude a topic and get a finished vertical explainer: storyboarded beats, an ElevenLabs voiceover, a native 9:16 PowerPoint deck, and an animated 1080×1920 MP4 where every card, step and tile appears on the exact word that names it. Ready for YouTube Shorts, Reels and TikTok.
+Give Claude a topic and get a finished explainer: storyboarded beats, an ElevenLabs voiceover, a native PowerPoint deck, and an animated MP4 where every card, step and tile appears on the exact word that names it. Make it vertical (1080×1920) for YouTube Shorts, Reels and TikTok, widescreen (1920×1080) for a YouTube video, or a custom size (even sides from 320 to 4096 px, the long side at most 2.4× the short one).
 
-One file, `short.json`, drives the storyboard, the voiceover script, the deck and the video, so they always match.
+One file, `short.json`, drives the storyboard, the voiceover script, the deck and the video, so they always match. Its `format` sets the size: frames wider than tall get a landscape layout, the rest the portrait one.
 
 ## Requirements
 
@@ -13,7 +13,7 @@ What you need depends on how far you go:
 | To make | You need |
 | --- | --- |
 | A storyboard (`short.json` and a beat list) | Node.js 22 or newer |
-| The deck (an editable 9:16 `.pptx`) | Node.js |
+| The deck (an editable 9:16 or 16:9 `.pptx`) | Node.js |
 | Silent preview stills, or a silent preview video | Node.js and Playwright with Chromium; the video also needs ffmpeg |
 | The voiceover (`voiceover.mp3` and `words.json`) | The ElevenLabs connector and credits, or your own files (see [Without ElevenLabs](#without-elevenlabs)) |
 | Stills timed to the voiceover | Node.js, Playwright with Chromium, the voiceover files and `ffprobe` on `PATH` |
@@ -60,6 +60,8 @@ OnCue's marketplace does not auto-update by default. To update, run `claude plug
    our logo at assets/logo.png, and end with "star it on GitHub".
    ```
 
+   For YouTube rather than Shorts, ask for a widescreen or 16:9 video instead.
+
 3. Claude copies the engine into `oncue-engine/` in that folder and installs it, once per session, then writes the storyboard.
 4. **Check-in 1: the beats.** Claude shows the beat list with preview stills (or a Design canvas). Change, cut or reorder beats now: once the voiceover is recorded, a wording change means paying for a new recording.
 5. **Check-in 2: the voice.** Claude names the voice it picked and gives you two takes. Pick one, or ask for another voice.
@@ -75,6 +77,7 @@ Say "go ahead without stopping" to skip the check-ins.
 - **The call to action:** install, follow, visit.
 - **The brand:** a design system, colours, or a square PNG logo. Without one, Claude uses the product's logo and site; with neither, it picks a dark ground, one accent and one highlight from the subject and tells you.
 - **The voice,** such as "a warm, unhurried narrator". Without one, Claude picks a clear voice suited to a product explainer.
+- **Where it will be posted.** Shorts, Reels and TikTok get 1080×1920; a YouTube video or a landscape deck gets 1920×1080; name any other size you need.
 - **The outputs,** if you want less than the whole pipeline: only the storyboard, only the deck, or a silent preview.
 
 ### What you get
@@ -86,9 +89,9 @@ my-short/
   logo.png
   voiceover.mp3      the chosen take (voiceover-take1.mp3, words-take1.json, ... while you choose)
   words.json         word timestamps for that take
-  deck.pptx          editable 9:16 deck, voiceover in the speaker notes
-  short.mp4          1080×1920, 30fps, H.264 with AAC audio
-  build/             scenes/ and timeline.json (rewritten each run), stills/ (new frames are added, old ones stay)
+  deck.pptx          editable 9:16 or 16:9 deck, voiceover in the speaker notes
+  short.mp4          the spec's size (1080×1920, 1920×1080 or custom), 30fps, H.264 with AAC audio
+  build/             scenes/, timeline.json and fit.json (rewritten each run), stills/ (new frames are added, old ones stay)
 ```
 
 `short.json` is the source of truth. To change the copy, edit it (or ask Claude to) and rebuild; an edit made only in the `.pptx` leaves the deck and the video out of step.
@@ -115,15 +118,15 @@ Each stage is its own skill, so you can stop after any of them or start from an 
 | [explainer-video](plugins/oncue/skills/explainer-video/SKILL.md) | "make an explainer short about our CLI" | The whole pipeline, with check-ins at the beats and the voice |
 | [storyboard](plugins/oncue/skills/storyboard/SKILL.md) | "storyboard a 60-second Short for this plugin" | `short.json`, a beat list, preview stills or a Design canvas |
 | [voiceover](plugins/oncue/skills/voiceover/SKILL.md) | "voice it with ElevenLabs" | Two takes as MP3, each with a word-level transcript |
-| [vertical-deck](plugins/oncue/skills/vertical-deck/SKILL.md) | "make the 9:16 slides" | An editable .pptx, voiceover in the speaker notes |
+| [vertical-deck](plugins/oncue/skills/vertical-deck/SKILL.md) | "make the 9:16 slides" or "make a 16:9 deck" | An editable .pptx, voiceover in the speaker notes |
 | [animate-short](plugins/oncue/skills/animate-short/SKILL.md) | "render it, and animate the slides" | The final MP4, or a silent preview before audio exists |
 
 ## How it works
 
 1. **Storyboard.** Claude writes the beats into `short.json`: each beat's voiceover line, a scene (`hook`, `list`, `card`, `chat`, `steps`, `grid`, `media` or `cta`), and for each element the word it should enter on. See [the spec reference](plugins/oncue/skills/storyboard/references/spec.md).
 2. **Voiceover.** The ElevenLabs connector reads the whole script in one take for a consistent voice, then transcribes it with word timestamps.
-3. **Deck.** The engine writes real PowerPoint text and shapes in your brand colours.
-4. **Video.** Each scene is an HTML page stepped frame by frame in headless Chromium, with entrances on cue words, a typing effect, spotlight glows, drawn lines, scene transitions and a progress bar. ffmpeg encodes the frames and lays in the voice.
+3. **Deck.** The engine writes real PowerPoint text and shapes in your brand colours, on a 9:16 or 16:9 slide by the spec's orientation.
+4. **Video.** Each scene is an HTML page stepped frame by frame in headless Chromium at the spec's size; a scene too big for its frame is shrunk to fit, with a warning, with entrances on cue words, a typing effect, spotlight glows, drawn lines, scene transitions and a progress bar. ffmpeg encodes the frames and lays in the voice.
 
 The worked example is Gleaner's own Short: [examples/gleaner/short.json](plugins/oncue/engine/examples/gleaner/short.json), with its voiceover and transcript beside it.
 
@@ -138,21 +141,24 @@ The worked example is Gleaner's own Short: [examples/gleaner/short.json](plugins
 | `Line N (...) not found in the transcript` | The narrator changed that line's first word. Make its `vo` match what was said, or transcribe again. |
 | `cue word "..." not heard in this line` | That element is spaced evenly instead of landing on its word. Change its `cue` to a word the narrator said. |
 | `Pass --words and --audio together` | The transcript must be of that audio, so pass both or neither. |
-| Text hidden behind the Shorts buttons and captions | Keep content out of the bottom ~350px of the frame (about 1.8 inches of the deck). |
+| Text hidden behind the Shorts buttons and captions | Portrait layouts keep content out of the bottom ~350px of the frame and the bottom 1.4 inches of the deck; don't move it there. |
+| `short.json format.width: must be even` (or `between 320 and 4096`, or `at most 2.4×`) | H.264 needs even sizes, and the layouts need a sensible shape. Use 1080×1920 or 1920×1080; square and 4:5 sizes use the portrait layout, which leaves less room, so dense scenes shrink. |
+| `warning: scene N (...) shrunk to ...` | That scene had more than fits its frame, so it was scaled down. Cut its copy (fewer items, shorter titles) to show it full size. |
+| `note: the deck is ... applies to the video only` | The deck is drawn for 9:16 and 16:9 only: landscape specs get 16:9, portrait and square ones 9:16. The video keeps the exact size. |
 
 ## The engine
 
 The typed engine lives in [plugins/oncue/engine](plugins/oncue/engine). The skills copy it into your working folder and run it there:
 
 ```bash
-node dist/cli.js check  short.json                       # validate; print beats and estimated length
+node dist/cli.js check  short.json                       # validate; print the layout, beats and estimated length
 node dist/cli.js script short.json                       # the voiceover script
 node dist/cli.js deck   short.json --out deck.pptx
 node dist/cli.js stills short.json --words words.json --audio voiceover.mp3
 node dist/cli.js video  short.json --words words.json --audio voiceover.mp3 --out short.mp4
 ```
 
-Without `--words` and `--audio`, timing is estimated from the script and the video is a silent preview. Outputs go to `build/` beside `short.json`; `deck` and `video` take `--out` to write elsewhere.
+Without `--words` and `--audio`, timing is estimated from the script and the video is a silent preview. Outputs go to `build/` beside `short.json`; `deck` and `video` take `--out` to write elsewhere. `stills` and `video` also write `build/fit.json`, each scene's `scale` (1 unless the fit guard shrank it) and whether it `fits`.
 
 To try it on the bundled Gleaner Short, run `npm install` in the engine folder, then `npm run example:check`, `example:deck`, `example:stills` or `example:video`. The results land in `examples/gleaner/build/`. `npm install` leaves out Playwright, an optional peer dependency, so run `npm install --no-save --save-dev playwright && npx playwright install chromium` before `example:stills` or `example:video`. Those flags install it on npm 12 too without editing the shipped `package.json`. Any later `npm install` removes it again, so repeat the command after one. Both examples also need ffprobe, because they time the frames to the bundled voiceover, and `example:video` needs ffmpeg as well.
 
@@ -163,11 +169,23 @@ To work on the engine, run `npm install` and then `npm run build` in its folder.
 ```bash
 npm run validate          # manifests, skill frontmatter, links, shipped engine build, claude plugin validate
 npm run engine:typecheck  # strict TypeScript check of the engine
+npm run engine:test       # node:test suites; the browser ones skip without Chromium, as in CI
 ```
 
 The plugin version lives only in `plugins/oncue/.claude-plugin/plugin.json`.
 
 ## Changelog
+
+### 1.3.0 (2026-10-26)
+
+- Widescreen and custom sizes from the same `short.json`. A 1920×1080 `format` renders a landscape layout built for YouTube, with each scene kind arranged for the wide frame (header beside the body for lists, cards, chats and steps; above it for grids and media; hook and call to action centred). Any other size uses the layout for its orientation.
+- A fit guard shrinks any scene that would overflow its frame instead of cutting it off, warns about each one, and records every scene in `build/fit.json`.
+- The deck is 10×5.625 in for landscape specs, arranged like the video; other aspects snap to 9:16 or 16:9 with a note.
+- `loadSpec` rejects sizes that would fail later: odd, fractional or non-number sides, sides outside 320 to 4096 px, and a long side over 2.4× the short one. Specs that passed before but break these limits now fail `check` with the field named.
+- `check` prints the layout, and the 3-minute Shorts warning applies to portrait only.
+- 9:16 output is unchanged for specs that fit their frame: the Gleaner example's stills and slide XML are byte-identical to 1.2.0. A 9:16 scene that overflowed now shrinks to fit instead of being cut off. In the deck, card rows close up when they would run past the card, and a steps scene with four steps and a result drops its connector lines instead of writing them with a negative height.
+- New `npm run engine:test` (node:test), run in CI; the browser suites skip there without Chromium.
+- Every skill description now names widescreen, landscape, 16:9 and YouTube video, so those requests reach OnCue.
 
 ### 1.2.0 (2026-10-25)
 

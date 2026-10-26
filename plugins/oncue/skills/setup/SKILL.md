@@ -1,6 +1,6 @@
 ---
 name: setup
-description: Get OnCue ready to run. Report the installed plugin version and scope and how to update it or install it for collaborators, check Node, ffmpeg and ffprobe, set up the engine with Playwright and Chromium, check the ElevenLabs connector, fix what can be fixed in the session, and report which outputs (storyboard, deck, stills, voiceover, video) will work. Use when the user has just installed the plugin, asks to set up, check, update or share OnCue, asks what they need to make a Short, or a stage failed because Playwright, ffmpeg or ElevenLabs is missing.
+description: Get OnCue ready to run. Report the installed plugin version and scope and how to update it or install it for collaborators, check Node, ffmpeg and ffprobe, set up the engine with Playwright and Chromium, check the ElevenLabs connector, fix what can be fixed in the session, and report which outputs (storyboard, deck, stills, voiceover, video) will work. Use when the user has just installed the plugin, asks to set up, check, update or share OnCue, asks what they need to make a Short or a widescreen landscape 16:9 YouTube video, or a stage failed because Playwright, ffmpeg or ElevenLabs is missing.
 ---
 
 # Setup

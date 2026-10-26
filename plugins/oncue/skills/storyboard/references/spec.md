@@ -9,7 +9,7 @@ The full worked example is the engine's `examples/gleaner/short.json`.
 | Field | Type | Notes |
 | --- | --- | --- |
 | `title` | string | Name of the explainer; becomes the deck title. |
-| `format` | `{ width, height }` | Pixels. Use `1080` × `1920` (9:16) for YouTube Shorts, Reels and TikTok. Layouts are designed for portrait 9:16. |
+| `format` | `{ width, height }` | Pixels. `1080` × `1920` (9:16) for YouTube Shorts, Reels and TikTok; `1920` × `1080` (16:9) for a YouTube video or a landscape deck. Wider than tall uses the landscape layout, anything else the portrait one, so square and 4:5 sizes (`1080` × `1080`, `1080` × `1350`) keep its Shorts inset, leaving less room, so dense scenes shrink; the deck snaps to 9:16 or 16:9 the same way. Each side must be an even whole number from 320 to 4096 (H.264 needs even sizes), and the long side at most 2.4× the short side. A scene too big for its frame is shrunk to fit, with a warning, and every scene's scale is written to `build/fit.json`. |
 | `brand` | object | Colours, logo and fonts. See below. |
 | `lines` | array | One entry per beat, in order. Each beat is one voiceover line and one scene. |
 
@@ -69,6 +69,8 @@ Any element with a `cue` enters on that word of its own line:
 
 Content kinds share `kicker` (small mono label) and `title` (rich, 1–2 lines; keep under about 45 characters).
 
+In the landscape layout, `list`, `card`, `chat` and `steps` put the kicker and title in a column beside the body, `grid` and `media` put them above a body laid out across the width, and `hook` and `cta` stay centred.
+
 | kind | Fields | Good for |
 | --- | --- | --- |
 | `hook` | `headline`, `headlineCue?`, `sub?`, `subCue?` | First beat: logo, big promise. The headline builds word by word. |
@@ -76,7 +78,7 @@ Content kinds share `kicker` (small mono label) and `title` (rich, 1–2 lines; 
 | `card` | `card`: `title`, `cue?`, `meta?`, `metaCue?`, `rows[]` (`label`, `value`, `cue?`), `tags?`, `tagsCue?` | Showing an artifact or result and what it holds. |
 | `chat` | `turns[]`: `from` (`"you"` or `"app"`), `text`, `cue?` (2–4 turns) | Plain-language commands and replies; "you" turns type themselves out. |
 | `steps` | `steps[]`: `title`, `desc?`, `cue?` (2–4), `result?`: `text`, `cue?` | A how-to. |
-| `grid` | `tiles[]`: `icon`, `label`, `cue?` (2–6, two columns) | Integrations, destinations, options. |
+| `grid` | `tiles[]`: `icon`, `label`, `cue?` (2–6; two columns, three in landscape) | Integrations, destinations, options. |
 | `media` | `mediaCue?`, `moments[]`: `time`, `label`, `cue?` (2–4) | Video or audio features. |
 | `cta` | `headline`, `sub?`, `subCue?`, `pill?` (`icon`, `text`, `cue?`), `follow?`, `followCue?` | Last beat: where to get it, follow prompt. |
 

@@ -1,12 +1,12 @@
 ---
 name: animate-short
-description: Render a short.json explainer as an animated 1080×1920 MP4 where every card, step, tile and timestamp enters on the word the voiceover says, with typing, spotlight glows, drawn lines, scene transitions and a progress bar. Use when the user wants the video rendered, animation added to slides "to keep interest", a silent preview, or the final Short, Reel or TikTok file.
+description: Render a short.json explainer as an animated MP4, vertical 1080×1920 for Shorts, Reels and TikTok or widescreen landscape 1920×1080 (16:9) for a YouTube video, where every card, step, tile and timestamp enters on the word the voiceover says, with typing, spotlight glows, drawn lines, scene transitions and a progress bar. Use when the user wants the video rendered, animation added to slides "to keep interest", a silent preview, or the final Short, Reel, TikTok or YouTube video file.
 argument-hint: '[path to short.json]'
 ---
 
 # Animate a short
 
-Render `short.json` into an MP4. Each scene is an HTML page driven frame by frame in headless Chromium, so every frame is exact and repeatable; ffmpeg encodes the frames and lays in the voiceover.
+Render `short.json` into an MP4 at its `format` size. Each scene is an HTML page driven frame by frame in headless Chromium, so every frame is exact and repeatable; ffmpeg encodes the frames and lays in the voiceover.
 
 ## Inputs
 
@@ -23,7 +23,8 @@ node dist/cli.js stills <folder>/short.json --words <folder>/words.json --audio 
 
 This writes one frame per scene (85% of the way through it) to `build/stills/`; pass `--at 3.5,12,20` for specific seconds. Combine them into a contact sheet and look at it:
 
-- Text fits its card; nothing sits in the bottom ~350px (Shorts UI).
+- Text fits its card. In a portrait frame, nothing sits in the bottom ~350px (Shorts UI).
+- No `warning: scene N (...) shrunk to ...` lines. The engine shrinks a scene that overflows its frame, which happens most at sizes other than 9:16 and 16:9, and records every scene in `build/fit.json`. A shrunk scene still shows everything, smaller; cut its copy (fewer items, shorter titles) to show it full size. Read `build/fit.json` and each shrunk scene's copy before suggesting a fix. At a square or 4:5 size, the portrait layout's Shorts inset leaves less room, so a scene may shrink that would fit at 1080×1920 or 1920×1080; suggest one of those when the post allows it, and cut copy otherwise.
 - Each scene shows what its line is saying at that moment.
 - No warnings about cue words. A warning means an element is spaced evenly instead of landing on its word; fix the cue in `short.json`.
 
@@ -39,7 +40,7 @@ The output is H.264 with AAC audio at the spec's size, starting 0.3s before the 
 
 ## 3. Verify and deliver
 
-Probe the file (`ffprobe` for 1080×1920, 30fps, an audio stream) and grab a frame from each scene with `ffmpeg -ss <t> -frames:v 1` to confirm the encoded video, not only the stills. Then send it, and copy it to the person's folder when their computer is linked.
+Probe the file (`ffprobe` for the spec's `format` size, 30fps, an audio stream) and grab a frame from each scene with `ffmpeg -ss <t> -frames:v 1` to confirm the encoded video, not only the stills. Then send it, and copy it to the person's folder when their computer is linked.
 
 Say what is in it in a sentence or two, and offer one next step: burned-in captions (most Shorts are watched muted; the word timings are already there), a different take, or edits to the copy.
 

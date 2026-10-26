@@ -1,6 +1,6 @@
 ---
 name: explainer-video
-description: OnCue end to end. Make a short vertical explainer, from a topic to a storyboard, an ElevenLabs voiceover, a native 9:16 PowerPoint deck and a word-synced animated MP4 for YouTube Shorts, Reels or TikTok. Use when the user asks to make an explainer video, a product short, a 9:16 presentation they can turn into a video, or "a video like the Gleaner one", or names this plugin.
+description: OnCue end to end. Make a short explainer, vertical 9:16 or widescreen landscape 16:9, from a topic to a storyboard, an ElevenLabs voiceover, a native PowerPoint deck and a word-synced animated MP4 for YouTube Shorts, Reels, TikTok or a YouTube video. Use when the user asks to make an explainer video, a product short, a wide screen or 16:9 YouTube video, a presentation they can turn into a video, or "a video like the Gleaner one", or names this plugin.
 argument-hint: '[topic, product, or path to short.json]'
 ---
 
@@ -12,10 +12,10 @@ Run the whole pipeline. Each stage has its own skill; this one sets up the engin
 | --- | --- | --- |
 | 1. Storyboard | [storyboard](../storyboard/SKILL.md) | `short.json`, a beat list, preview stills or a Design canvas |
 | 2. Voiceover | [voiceover](../voiceover/SKILL.md) | `voiceover.mp3`, `words.json` (word timings) |
-| 3. Deck | [vertical-deck](../vertical-deck/SKILL.md) | `deck.pptx`, 9:16, voiceover in the speaker notes |
-| 4. Video | [animate-short](../animate-short/SKILL.md) | `short.mp4`, 1080×1920, every element entering on its word |
+| 3. Deck | [vertical-deck](../vertical-deck/SKILL.md) | `deck.pptx`, 9:16 or 16:9, voiceover in the speaker notes |
+| 4. Video | [animate-short](../animate-short/SKILL.md) | `short.mp4` at the spec's size (1080×1920, 1920×1080 or custom), every element entering on its word |
 
-The deck and the video both read `short.json`, so they always match. The deck can be built any time after stage 1; the video needs stage 2 for real audio, or renders a silent preview from estimated timing without it.
+The deck and the video both read `short.json`, so they always match. Its `format` sets the shape: 1080×1920 for Shorts, Reels and TikTok, 1920×1080 for a YouTube video, or a custom size; the storyboard skill picks it from where the video will be posted. The deck can be built any time after stage 1; the video needs stage 2 for real audio, or renders a silent preview from estimated timing without it.
 
 ## Set up the engine (once per session)
 

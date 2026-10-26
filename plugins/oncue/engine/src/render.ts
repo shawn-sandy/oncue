@@ -10,6 +10,7 @@
  *   data-fx="up|pop|left|right|fade|drawY|drawX|type"
  *   data-dur="0.5"                         entrance length in seconds
  *   data-spot                              glow for ~1.4s after entering, then settle
+ *   .content / .center                     the box a scene's content must fit (the fit guard shrinks it otherwise)
  */
 
 interface SceneTimingB { start: number; end: number; cues: Record<string, number> }
@@ -26,10 +27,14 @@ interface Anim {
   text: string;
 }
 
+/** The fit guard's result for one scene, 1-based. scale < 1 means the scene was shrunk to fit. */
+interface Fit { scene: number; scale: number; fits: boolean }
+
 interface Win extends Window {
   TIMELINE?: TimelineB;
   renderAt?: (t: number) => void;
   ready?: boolean;
+  FIT?: Fit[];
 }
 
 const clamp01 = (x: number): number => Math.max(0, Math.min(1, x));
@@ -124,10 +129,51 @@ function setup(tl: TimelineB): (t: number) => void {
   };
 }
 
-(function boot(): void {
+/** Viewport rect of everything inside el: a Range for text at any depth, plus every element's own box. */
+function extent(el: Element): DOMRect {
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  const rects = [...Array.from(range.getClientRects()), ...Array.from(el.querySelectorAll("*"), (e) => e.getBoundingClientRect())]
+    .filter((r) => r.width > 0 || r.height > 0);
+  const left = Math.min(...rects.map((r) => r.left)), top = Math.min(...rects.map((r) => r.top));
+  return new DOMRect(left, top, Math.max(...rects.map((r) => r.right)) - left, Math.max(...rects.map((r) => r.bottom)) - top);
+}
+
+/**
+ * Fit guard: custom sizes reach layouts that were never drawn for them, so any scene whose content
+ * overflows its .content/.center box (clipped to the frame) is scaled down around its own centre and
+ * centred in the box. Runs once, before the first frame, so every frame stays a pure function of time.
+ */
+function fit(): Fit[] {
+  return Array.from(document.querySelectorAll<HTMLElement>("section.scene"), (sc, i): Fit => {
+    const box = sc.querySelector<HTMLElement>(".content, .center");
+    if (!box) return { scene: i + 1, scale: 1, fits: true };
+    const b = box.getBoundingClientRect();
+    const l = Math.max(0, b.left), t = Math.max(0, b.top), r = Math.min(innerWidth, b.right), btm = Math.min(innerHeight, b.bottom);
+    const inside = (c: DOMRect): boolean => c.left >= l - 0.5 && c.top >= t - 0.5 && c.right <= r + 0.5 && c.bottom <= btm + 0.5;
+    const c = extent(box);
+    if (inside(c)) return { scene: i + 1, scale: 1, fits: true };
+    // Floor to 3 decimals so the reported scale is the applied one and never rounds up past the fit.
+    const s = Math.floor(Math.min(1, (r - l) / c.width, (btm - t) / c.height) * 1000) / 1000;
+    const k = b.width / box.offsetWidth; // viewport px per design px (the stage's scale)
+    const cx = c.left + c.width / 2, cy = c.top + c.height / 2;
+    box.style.transformOrigin = `${(cx - b.left) / k}px ${(cy - b.top) / k}px`;
+    box.style.transform = `translate(${((l + r) / 2 - cx) / k}px, ${((t + btm) / 2 - cy) / k}px) scale(${s})`;
+    return { scene: i + 1, scale: s, fits: inside(extent(box)) };
+  });
+}
+
+(async function boot(): Promise<void> {
   const w = window as Win;
   const tl = w.TIMELINE;
   if (!tl) throw new Error("TIMELINE missing");
+  // Measure with the real fonts, not the fallback: load every declared face first. A face that fails to load
+  // falls back, as it always has, instead of stopping the page from starting.
+  const faces: Promise<FontFace>[] = [];
+  document.fonts.forEach((f) => { faces.push(f.load()); });
+  await Promise.allSettled(faces);
+  // Before the first renderAt, so entrance offsets (drops, 0.55 scale) don't inflate the measurement.
+  w.FIT = fit();
   w.renderAt = setup(tl);
   w.renderAt(0);
   w.ready = true;

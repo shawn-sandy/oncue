@@ -2,7 +2,7 @@
   "name": "oncue-engine",
   "version": "1.0.0",
   "private": true,
-  "description": "Turns a short.json spec into a 9:16 PowerPoint deck and a word-synced animated MP4.",
+  "description": "Turns a short.json spec into a PowerPoint deck and a word-synced animated MP4 at 9:16, 16:9 or a custom size.",
   "license": "MIT",
   "main": "dist/cli.js",
   "bin": {
@@ -11,6 +11,7 @@
   "scripts": {
     "build": "tsc -p .",
     "typecheck": "tsc -p . --noEmit",
+    "test": "node --test \"test/*.test.mjs\"",
     "example:check": "node dist/cli.js check examples/gleaner/short.json",
     "example:deck": "node dist/cli.js deck examples/gleaner/short.json",
     "example:stills": "node dist/cli.js stills examples/gleaner/short.json --words examples/gleaner/words.json --audio examples/gleaner/voiceover.mp3",
