@@ -16,7 +16,8 @@ What you need depends on how far you go:
 | The deck (an editable 9:16 `.pptx`) | Node.js |
 | Silent preview stills, or a silent preview video | Node.js and Playwright with Chromium; the video also needs ffmpeg |
 | The voiceover (`voiceover.mp3` and `words.json`) | The ElevenLabs connector and credits, or your own files (see [Without ElevenLabs](#without-elevenlabs)) |
-| Stills timed to the voiceover, or the final voiced MP4 | All of the above, with `ffmpeg` and `ffprobe` on `PATH` |
+| Stills timed to the voiceover | Node.js, Playwright with Chromium, the voiceover files and `ffprobe` on `PATH` |
+| The final voiced MP4 | All of the above, with `ffmpeg` and `ffprobe` on `PATH` |
 
 Setting them up:
 
