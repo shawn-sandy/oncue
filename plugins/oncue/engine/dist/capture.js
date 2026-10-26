@@ -58,7 +58,8 @@ async function open(scenesHtml, tl, size) {
     await page.evaluate(() => document.fonts.ready);
     await page.waitForFunction(() => window.ready === true, undefined, { timeout: 15000 })
         .catch(() => { throw new Error(`Scenes page failed to start: ${errors.join("; ") || "timed out"}`); });
-    return { page, close: () => browser.close() };
+    const fit = await page.evaluate(() => window.FIT ?? []);
+    return { page, fit, close: () => browser.close() };
 }
 async function shot(page, t, size, type) {
     await page.evaluate((tt) => window.renderAt(tt), t);
@@ -66,7 +67,7 @@ async function shot(page, t, size, type) {
     return type === "jpeg" ? page.screenshot({ type: "jpeg", quality: 92, clip }) : page.screenshot({ type: "png", clip });
 }
 async function renderVideo(scenesHtml, tl, size, out, audio, fps = 30) {
-    const { page, close } = await open(scenesHtml, tl, size);
+    const { page, fit, close } = await open(scenesHtml, tl, size);
     const frames = Math.ceil(tl.duration * fps);
     const audioArgs = audio ? ["-i", audio] : ["-f", "lavfi", "-t", tl.duration.toFixed(3), "-i", "anullsrc=r=44100:cl=mono"];
     const filter = audio ? `[0:v]format=yuv420p[v];[1:a]adelay=${Math.round(tl.lead * 1000)}:all=1,apad[a]` : "[0:v]format=yuv420p[v];[1:a]anull[a]";
@@ -90,9 +91,10 @@ async function renderVideo(scenesHtml, tl, size, out, audio, fps = 30) {
     await done;
     await close();
     console.log(`wrote ${out}: ${frames} frames, ${tl.duration.toFixed(1)}s, in ${((Date.now() - t0) / 1000).toFixed(0)}s`);
+    return fit;
 }
 async function renderStills(scenesHtml, tl, size, dir, times) {
-    const { page, close } = await open(scenesHtml, tl, size);
+    const { page, fit, close } = await open(scenesHtml, tl, size);
     const files = [];
     for (const t of times) {
         const f = (0, node_path_1.join)(dir, `frame-${t.toFixed(2)}s.png`);
@@ -100,5 +102,5 @@ async function renderStills(scenesHtml, tl, size, dir, times) {
         files.push(f);
     }
     await close();
-    return files;
+    return { files, fit };
 }

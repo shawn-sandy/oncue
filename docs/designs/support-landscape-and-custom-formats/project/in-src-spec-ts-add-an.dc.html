@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Design canvas per aspect</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#4a5a56}a:hover{color:#1d2a27}
+</style>
+</helmet>
+<div style="width: 1520px; height: 660px; box-sizing: border-box; padding: 48px; background: #f3f5f4; font-family: 'Plus Jakarta Sans', sans-serif; color: #1d2a27; display: flex; flex-direction: column; gap: 28px">
+  <div style="display: flex; gap: 28px; align-items: center; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #4a5a56">
+    <span style="display: flex; align-items: center; gap: 8px"><span style="width: 22px; height: 14px; border: 2px dashed #3e7a70; box-sizing: border-box"></span>content box</span>
+    <span style="display: flex; align-items: center; gap: 8px"><span style="width: 22px; height: 14px; background: rgba(217, 138, 98, .35); border-top: 2px dashed #d98a62; box-sizing: border-box"></span>Shorts captions and buttons</span>
+    <span>frames drawn at 1:4 of design px</span>
+  </div>
+  <div style="display: flex; gap: 40px; align-items: flex-end">
+
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <div style="position: relative; width: 270px; height: 480px; background: #0e1d1a; border-radius: 6px; overflow: hidden">
+        <div style="position: absolute; left: 22px; top: 24px; display: flex; align-items: center; gap: 5px"><span style="width: 19px; height: 19px; border-radius: 5px; background: #9ed9c8"></span><span style="width: 44px; height: 7px; border-radius: 4px; background: #2b4842"></span></div>
+        <div style="position: absolute; left: 22px; right: 22px; top: 57px; bottom: 90px; border: 2px dashed #3e7a70; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #a3bab3">900 × 1330</div>
+        <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 90px; background: rgba(217, 138, 98, .18); border-top: 2px dashed #d98a62; display: flex; align-items: flex-end; padding: 8px 10px; box-sizing: border-box; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #d98a62">Shorts UI · 360 px</div>
+      </div>
+      <div style="font-size: 18px; font-weight: 700">1080 × 1920</div>
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.6; color: #4a5a56">portrait · 9:16<br>design 1080 × 1920 · scale 1<br>identical to today's stage</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <div style="position: relative; width: 480px; height: 270px; background: #0e1d1a; border-radius: 6px; overflow: hidden">
+        <div style="position: absolute; left: 22px; top: 15px; display: flex; align-items: center; gap: 5px"><span style="width: 19px; height: 19px; border-radius: 5px; background: #9ed9c8"></span><span style="width: 44px; height: 7px; border-radius: 4px; background: #2b4842"></span></div>
+        <div style="position: absolute; left: 22px; right: 22px; top: 45px; bottom: 30px; border: 2px dashed #3e7a70; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #a3bab3">1740 × 780</div>
+      </div>
+      <div style="font-size: 18px; font-weight: 700">1920 × 1080</div>
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.6; color: #4a5a56">landscape · 16:9 · no Shorts zone<br>design 1920 × 1080 · scale 1<br>3840 × 2160 → same design, scale 2</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <div style="position: relative; width: 270px; height: 270px; background: #0e1d1a; border-radius: 6px; overflow: hidden">
+        <div style="position: absolute; left: 22px; top: 24px; display: flex; align-items: center; gap: 5px"><span style="width: 19px; height: 19px; border-radius: 5px; background: #9ed9c8"></span><span style="width: 44px; height: 7px; border-radius: 4px; background: #2b4842"></span></div>
+        <div style="position: absolute; left: 22px; right: 22px; top: 57px; bottom: 90px; border: 2px dashed #3e7a70; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #a3bab3">900 × 490</div>
+        <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 90px; background: rgba(217, 138, 98, .18); border-top: 2px dashed #d98a62; display: flex; align-items: flex-end; padding: 8px 10px; box-sizing: border-box; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #d98a62">Shorts UI · 360 px</div>
+      </div>
+      <div style="font-size: 18px; font-weight: 700">1080 × 1080</div>
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.6; color: #4a5a56">portrait layout · 1:1<br>design 1080 × 1080 · scale 1<br>fit guard shrinks dense scenes</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <div style="position: relative; width: 270px; height: 338px; background: #0e1d1a; border-radius: 6px; overflow: hidden">
+        <div style="position: absolute; left: 22px; top: 24px; display: flex; align-items: center; gap: 5px"><span style="width: 19px; height: 19px; border-radius: 5px; background: #9ed9c8"></span><span style="width: 44px; height: 7px; border-radius: 4px; background: #2b4842"></span></div>
+        <div style="position: absolute; left: 22px; right: 22px; top: 57px; bottom: 90px; border: 2px dashed #3e7a70; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #a3bab3">900 × 760</div>
+        <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 90px; background: rgba(217, 138, 98, .18); border-top: 2px dashed #d98a62; display: flex; align-items: flex-end; padding: 8px 10px; box-sizing: border-box; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #d98a62">Shorts UI · 360 px</div>
+      </div>
+      <div style="font-size: 18px; font-weight: 700">1080 × 1350</div>
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.6; color: #4a5a56">portrait layout · 4:5<br>design 1080 × 1350 · scale 1<br>deck snaps to 5.625 × 10 in</div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1520,"height":660}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

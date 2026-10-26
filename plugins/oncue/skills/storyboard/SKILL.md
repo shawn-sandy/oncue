@@ -1,6 +1,6 @@
 ---
 name: storyboard
-description: Plan a vertical explainer as beats, voiceover lines and scenes, written to a short.json spec and optionally laid out as a storyboard on a Design canvas. Use when the user wants to storyboard, script, outline or plan a short, a Reel, a TikTok, a YouTube Short or a 9:16 presentation, such as "storyboard a short about our plugin" or "plan the beats before we build the video".
+description: Plan a vertical or widescreen explainer as beats, voiceover lines and scenes, written to a short.json spec and optionally laid out as a storyboard on a Design canvas. Use when the user wants to storyboard, script, outline or plan a short, a Reel, a TikTok, a YouTube Short, a landscape 16:9 YouTube video or a presentation, such as "storyboard a short about our plugin", "plan a wide screen video" or "plan the beats before we build the video".
 argument-hint: '[topic, product, or path to an existing short.json]'
 ---
 
@@ -12,6 +12,7 @@ Turn a topic into a locked set of beats: what the narrator says, what the viewer
 
 - What it is, who it is for, and the one thing a viewer should do at the end (install, follow, visit).
 - Real facts only: features, commands, names, links. Read the product's README, docs or code when they are available. Never invent numbers, quotes or results; mark a missing fact as `[YOUR FACT]` and say so.
+- Where it will be posted, which sets `format`: 1080×1920 (9:16) for YouTube Shorts, Reels and TikTok; 1920×1080 (16:9) for a YouTube video or a landscape presentation; 1080×1080 for a square post. Ask when it isn't clear; one spec renders one size.
 - The brand: a design system the person names or has (colours, fonts, logo), else the product's logo and site. With none, pick a dark ground, one accent and one highlight from the subject and say what you chose.
 
 ## 2. Shape the beats
@@ -37,7 +38,7 @@ node dist/cli.js check <folder>/short.json
 Show the beats so the person can change them before audio is recorded. Pick what the session supports:
 
 - **Silent preview stills (always available):** `node dist/cli.js stills <folder>/short.json` renders one frame per beat with estimated timing into `build/stills/`. Combine them into one contact sheet and show it with the beat list.
-- **Design canvas (when the Artifact tool offers the Design type):** one 420×1080 artboard per beat, each with a 9:16 frame sketch on top, then the voiceover line, a motion note, and a timing chip. Draw a dashed line over the bottom ~15% of each frame marking where YouTube's captions and buttons sit. Use the person's design system when one is installed.
+- **Design canvas (when the Artifact tool offers the Design type):** one 420×1080 artboard per beat, each with a frame sketch in the spec's aspect (9:16 or 16:9) on top, then the voiceover line, a motion note, and a timing chip. For a portrait frame, draw a dashed line over the bottom ~15% marking where the Shorts captions and buttons sit. Use the person's design system when one is installed.
 - **A table in the reply** when neither fits.
 
 Say plainly which details are placeholders (example titles, timestamps, numbers).

@@ -5,8 +5,10 @@ import { join } from "node:path";
 import type { Page } from "playwright";
 import type { Timeline } from "./timeline";
 
-interface RenderWindow { renderAt: (t: number) => void; ready?: boolean }
+interface RenderWindow { renderAt: (t: number) => void; ready?: boolean; FIT?: Fit[] }
 export interface Size { width: number; height: number }
+/** The fit guard's result per scene (render.ts): scale < 1 means the scene was shrunk to fit its frame. */
+export interface Fit { scene: number; scale: number; fits: boolean }
 
 async function loadPlaywright(): Promise<typeof import("playwright")> {
   try { return await import("playwright"); } catch {
@@ -14,7 +16,7 @@ async function loadPlaywright(): Promise<typeof import("playwright")> {
   }
 }
 
-async function open(scenesHtml: string, tl: Timeline, size: Size): Promise<{ page: Page; close: () => Promise<void> }> {
+async function open(scenesHtml: string, tl: Timeline, size: Size): Promise<{ page: Page; fit: Fit[]; close: () => Promise<void> }> {
   const { chromium } = await loadPlaywright();
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: size, deviceScaleFactor: 1 });
@@ -25,7 +27,8 @@ async function open(scenesHtml: string, tl: Timeline, size: Size): Promise<{ pag
   await page.evaluate(() => document.fonts.ready);
   await page.waitForFunction(() => (window as unknown as RenderWindow).ready === true, undefined, { timeout: 15000 })
     .catch(() => { throw new Error(`Scenes page failed to start: ${errors.join("; ") || "timed out"}`); });
-  return { page, close: () => browser.close() };
+  const fit = await page.evaluate(() => (window as unknown as RenderWindow).FIT ?? []);
+  return { page, fit, close: () => browser.close() };
 }
 
 async function shot(page: Page, t: number, size: Size, type: "jpeg" | "png"): Promise<Buffer> {
@@ -34,8 +37,8 @@ async function shot(page: Page, t: number, size: Size, type: "jpeg" | "png"): Pr
   return type === "jpeg" ? page.screenshot({ type: "jpeg", quality: 92, clip }) : page.screenshot({ type: "png", clip });
 }
 
-export async function renderVideo(scenesHtml: string, tl: Timeline, size: Size, out: string, audio: string | null, fps = 30): Promise<void> {
-  const { page, close } = await open(scenesHtml, tl, size);
+export async function renderVideo(scenesHtml: string, tl: Timeline, size: Size, out: string, audio: string | null, fps = 30): Promise<Fit[]> {
+  const { page, fit, close } = await open(scenesHtml, tl, size);
   const frames = Math.ceil(tl.duration * fps);
   const audioArgs = audio ? ["-i", audio] : ["-f", "lavfi", "-t", tl.duration.toFixed(3), "-i", "anullsrc=r=44100:cl=mono"];
   const filter = audio ? `[0:v]format=yuv420p[v];[1:a]adelay=${Math.round(tl.lead * 1000)}:all=1,apad[a]` : "[0:v]format=yuv420p[v];[1:a]anull[a]";
@@ -57,10 +60,11 @@ export async function renderVideo(scenesHtml: string, tl: Timeline, size: Size, 
   await done;
   await close();
   console.log(`wrote ${out}: ${frames} frames, ${tl.duration.toFixed(1)}s, in ${((Date.now() - t0) / 1000).toFixed(0)}s`);
+  return fit;
 }
 
-export async function renderStills(scenesHtml: string, tl: Timeline, size: Size, dir: string, times: number[]): Promise<string[]> {
-  const { page, close } = await open(scenesHtml, tl, size);
+export async function renderStills(scenesHtml: string, tl: Timeline, size: Size, dir: string, times: number[]): Promise<{ files: string[]; fit: Fit[] }> {
+  const { page, fit, close } = await open(scenesHtml, tl, size);
   const files: string[] = [];
   for (const t of times) {
     const f = join(dir, `frame-${t.toFixed(2)}s.png`);
@@ -68,5 +72,5 @@ export async function renderStills(scenesHtml: string, tl: Timeline, size: Size,
     files.push(f);
   }
   await close();
-  return files;
+  return { files, fit };
 }

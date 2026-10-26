@@ -64,10 +64,15 @@ export interface Line {
   scene: Scene;
 }
 
+export interface Format { width: number; height: number }
+
 export interface Spec {
   title: string;
-  /** Output size in px; 1080×1920 for Shorts, Reels and TikTok. */
-  format: { width: number; height: number };
+  /**
+   * Output size in px: 1080×1920 for Shorts, Reels and TikTok, 1920×1080 for YouTube, or any custom size.
+   * Wider than tall uses the landscape layout; anything else the portrait one. See checkFormat for limits.
+   */
+  format: Format;
   brand: Brand;
   lines: Line[];
 }
@@ -80,11 +85,43 @@ const HEX = /^#[0-9a-fA-F]{6}$/;
 function fail(path: string, msg: string): never { throw new Error(`short.json ${path}: ${msg}`); }
 function str(v: unknown, path: string): asserts v is string { if (typeof v !== "string" || !v.trim()) fail(path, "must be a non-empty string"); }
 
+/** Sizes the H.264 encoder (yuv420p needs even sides) and both layouts can handle. */
+export function checkFormat(format: unknown): asserts format is Format {
+  const f = format as Partial<Record<keyof Format, unknown>> | null | undefined;
+  if (!f || typeof f !== "object") fail("format", "needs width and height");
+  for (const k of ["width", "height"] as const) {
+    const v = f[k];
+    if (typeof v !== "number" || !Number.isInteger(v)) fail(`format.${k}`, "must be a whole number of pixels");
+    if (v < 320 || v > 4096) fail(`format.${k}`, `must be between 320 and 4096 (got ${v})`);
+    if (v % 2) fail(`format.${k}`, `must be even, which H.264 video needs (got ${v})`);
+  }
+  const { width, height } = f as Format;
+  if (Math.max(width, height) / Math.min(width, height) > 2.4) fail("format", `the long side may be at most 2.4× the short side (got ${width}×${height})`);
+}
+
+/** Which layout a format uses and its design canvas: the short side is always 1080 design px, scaled to the frame. */
+export interface Stage { wide: boolean; width: number; height: number; scale: number }
+export function stageFor(format: Format): Stage {
+  const wide = format.width > format.height;
+  const scale = Math.min(format.width, format.height) / 1080;
+  return { wide, width: format.width / scale, height: format.height / scale, scale };
+}
+
+/**
+ * How each scene kind is arranged in the landscape layout. Content scenes: "side" puts the kicker and
+ * title in a column beside the body, "top" puts them above a body laid out across the width.
+ * hook and cta: "stack" puts the logo above the headline, "side" beside it. The video and the deck both read this.
+ */
+export type Arrangement = "side" | "top" | "stack";
+export const WIDE: Record<SceneKind, Arrangement> = {
+  hook: "stack", list: "side", card: "side", chat: "side", steps: "side", grid: "top", media: "top", cta: "stack",
+};
+
 /** Reads and checks short.json; every error names the field to fix. */
 export function loadSpec(file: string): LoadedSpec {
   const spec = JSON.parse(readFileSync(file, "utf8")) as Spec;
   str(spec.title, "title");
-  if (!spec.format || !(spec.format.width > 0) || !(spec.format.height > 0)) fail("format", "needs width and height");
+  checkFormat(spec.format);
   const b = spec.brand;
   if (!b) fail("brand", "is required");
   str(b.name, "brand.name"); str(b.logo, "brand.logo");

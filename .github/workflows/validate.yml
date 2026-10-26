@@ -1,4 +1,5 @@
-# Validate manifests and skills, and type-check the engine, on every pull request and push to main.
+# Validate manifests and skills, and type-check and test the engine, on every pull request and push to main.
+# The browser tests skip here (Playwright is installed without a browser); run them locally.
 name: Validate
 
 on:
@@ -21,3 +22,4 @@ jobs:
           node-version: 22
       - run: npm run validate
       - run: npm run engine:typecheck
+      - run: npm run engine:test

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>check output per layout</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#4a5a56}a:hover{color:#1d2a27}
+</style>
+</helmet>
+<div style="width: 1400px; height: 700px; box-sizing: border-box; padding: 48px; background: #f3f5f4; font-family: 'Plus Jakarta Sans', sans-serif; color: #1d2a27; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px">
+
+  <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0">
+    <div style="display: flex; align-items: baseline; gap: 12px"><span style="font-size: 18px; font-weight: 700">1080 × 1920</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #4a5a56">portrait · Shorts length check on</span></div>
+    <div style="flex-grow: 1; border-radius: 12px; background: #0e1d1a; color: #e4efeb; font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 1.65; padding: 20px 24px; display: flex; flex-direction: column; overflow: hidden">
+      <div><span style="color: #9ed9c8">$</span> node dist/cli.js check gleaner/short.json</div>
+      <div style="color: #9ed9c8; font-weight: 600">format 1080×1920: portrait layout</div>
+      <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis"> 1 hook   Ever read something great online, then couldn't find it a week later?</div>
+      <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis"> 2 list   Tabs pile up, bookmarks lose their context, and notes turn into a pile</div>
+      <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis"> 3 card   Gleaner reads the page, skips the ads and navigation, and saves a clip</div>
+      <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #a3bab3"> …</div>
+      <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis"> 9 cta    Gleaner is open source on GitHub. Link in the description.</div>
+      <div style="margin-top: 8px">9 beats, about 82s of voiceover. OK.</div>
+      <div style="margin-top: 18px"><span style="color: #9ed9c8">$</span> node dist/cli.js check long/short.json</div>
+      <div style="color: #9ed9c8; font-weight: 600">format 1080×1920: portrait layout</div>
+      <div style="color: #a3bab3"> …</div>
+      <div style="margin-top: 8px">[N] beats, about [S]s of voiceover. OK.</div>
+      <div><span style="color: #d98a62; font-weight: 600">warning:</span> YouTube Shorts allow up to 3 minutes; this is close to or over the limit.</div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0">
+    <div style="display: flex; align-items: baseline; gap: 12px"><span style="font-size: 18px; font-weight: 700">1920 × 1080</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #4a5a56">landscape · no Shorts length check</span></div>
+    <div style="flex-grow: 1; border-radius: 12px; background: #0e1d1a; color: #e4efeb; font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 1.65; padding: 20px 24px; display: flex; flex-direction: column; overflow: hidden">
+      <div><span style="color: #9ed9c8">$</span> node dist/cli.js check gleaner-wide/short.json</div>
+      <div style="color: #9ed9c8; font-weight: 600">format 1920×1080: landscape layout</div>
+      <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis"> 1 hook   Ever read something great online, then couldn't find it a week later?</div>
+      <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis"> 2 list   Tabs pile up, bookmarks lose their context, and notes turn into a pile</div>
+      <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis"> 3 card   Gleaner reads the page, skips the ads and navigation, and saves a clip</div>
+      <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #a3bab3"> …</div>
+      <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis"> 9 cta    Gleaner is open source on GitHub. Link in the description.</div>
+      <div style="margin-top: 8px">9 beats, about 82s of voiceover. OK.</div>
+      <div style="margin-top: 18px"><span style="color: #9ed9c8">$</span> node dist/cli.js check long-wide/short.json</div>
+      <div style="color: #9ed9c8; font-weight: 600">format 1920×1080: landscape layout</div>
+      <div style="color: #a3bab3"> …</div>
+      <div style="margin-top: 8px">[N] beats, about [S]s of voiceover. OK.</div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1400,"height":700}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

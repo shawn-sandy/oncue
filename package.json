@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "validate": "node scripts/validate.mjs",
-    "engine:typecheck": "cd plugins/oncue/engine && npm ci && npm i --no-save --save-dev playwright && npx tsc -p . --noEmit"
+    "engine:typecheck": "cd plugins/oncue/engine && npm ci && npm i --no-save --save-dev playwright && npx tsc -p . --noEmit",
+    "engine:test": "cd plugins/oncue/engine && npm test"
   },
   "engines": {
     "node": ">=22"

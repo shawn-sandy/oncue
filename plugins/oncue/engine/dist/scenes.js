@@ -3,7 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.writeScenes = writeScenes;
 /**
  * Writes the animated scenes page for a spec: <out>/scenes.html plus its fonts, logo and render.js.
- * Layout is designed on a 1080×1920 stage and scaled to spec.format.
+ * Layout is designed on a stage whose short side is 1080 px (1080×1920 for 9:16, 1920×1080 for 16:9) and scaled
+ * to spec.format. Frames wider than tall get the landscape layout (#stage.wide), arranged per scene kind by WIDE.
  */
 const node_fs_1 = require("node:fs");
 const node_path_1 = require("node:path");
@@ -23,7 +24,8 @@ function fx(kind, cue, extra = {}) {
     return [`data-fx="${kind}"`, cue ? `data-cue="${cue}"` : "", extra.delay ? `data-delay="${extra.delay}"` : "",
         extra.dur ? `data-dur="${extra.dur}"` : "", extra.spot ? "data-spot" : ""].filter(Boolean).join(" ");
 }
-const header = (kicker, title) => `<div class="kicker" ${fx("up", undefined, { delay: 0.1 })}>${esc(kicker)}</div>\n<h2 ${fx("up", undefined, { delay: 0.2 })}>${rich(title)}</h2>`;
+/** A content scene: kicker and title in .head, the rest in .body, so the landscape layout can place them side by side or stacked. */
+const content = (kicker, title, inner) => `<div class="content"><div class="head"><div class="kicker" ${fx("up", undefined, { delay: 0.1 })}>${esc(kicker)}</div>\n<h2 ${fx("up", undefined, { delay: 0.2 })}>${rich(title)}</h2></div><div class="body">${inner}</div></div>`;
 function body(scene, c) {
     const ico = (name, color = c.accent) => `<span class="svg">${(0, icons_1.iconSvg)(name, color)}</span>`;
     switch (scene.kind) {
@@ -36,34 +38,34 @@ function body(scene, c) {
 ${scene.sub ? `<div class="sub" ${fx("up", "sub")}>${rich(scene.sub)}</div>` : ""}</div>`;
         }
         case "list":
-            return `<div class="content">${header(scene.kicker, scene.title)}<div class="stack">${scene.items.map((it, i) => `<div class="card row" ${fx("left", `item${i}`, { spot: true })}><div class="ico">${ico(it.icon)}</div><div><div class="rt">${esc(it.title)}</div>${it.desc ? `<div class="rd">${rich(it.desc)}</div>` : ""}</div></div>`).join("")}</div></div>`;
+            return content(scene.kicker, scene.title, `<div class="stack">${scene.items.map((it, i) => `<div class="card row" ${fx("left", `item${i}`, { spot: true })}><div class="ico">${ico(it.icon)}</div><div><div class="rt">${esc(it.title)}</div>${it.desc ? `<div class="rd">${rich(it.desc)}</div>` : ""}</div></div>`).join("")}</div>`);
         case "card": {
             const k = scene.card;
-            return `<div class="content">${header(scene.kicker, scene.title)}
+            return content(scene.kicker, scene.title, `
 <div class="panel" ${fx("up", "card", { dur: 0.6 })}><div><div class="pt">${esc(k.title)}</div>${k.meta ? `<div class="pm" ${fx("fade", "meta")}>${esc(k.meta)}</div>` : ""}</div>
 <div class="hr" ${fx("drawX", "card", { delay: 0.3, dur: 0.6 })}></div>
 ${k.rows.map((r, i) => `<div ${fx("left", `row${i}`)}><div class="pk">${esc(r.label)}</div><div class="pv">${rich(r.value)}</div></div>`).join("\n")}
-${k.tags?.length ? `<div class="tags">${k.tags.map((t, i) => `<span class="tag" ${fx("pop", "tags", { delay: Number((0.12 * i).toFixed(2)) })}>${esc(t)}</span>`).join("")}</div>` : ""}</div></div>`;
+${k.tags?.length ? `<div class="tags">${k.tags.map((t, i) => `<span class="tag" ${fx("pop", "tags", { delay: Number((0.12 * i).toFixed(2)) })}>${esc(t)}</span>`).join("")}</div>` : ""}</div>`);
         }
         case "chat": {
             const firstYou = scene.turns.findIndex((t) => t.from === "you");
-            return `<div class="content">${header(scene.kicker, scene.title)}<div class="thread">
+            return content(scene.kicker, scene.title, `<div class="thread">
 ${firstYou >= 0 ? `<div class="string" ${fx("drawY", `turn${firstYou}`, { dur: 4.5 })}></div>` : ""}
 ${scene.turns.map((t, i) => t.from === "you"
                 ? `<div class="bubble" ${fx("up", `turn${i}`)}><div class="wrap" ${fx("pop", `turn${i}`, { delay: 0.2 })}><i></i><i></i></div><div class="who">you</div><div class="said" ${fx("type", `turn${i}`, { delay: 0.15 })}>${esc(t.text)}</div></div>`
                 : `<div class="bubble reply" ${fx("up", `turn${i}`, { spot: true })}><b>${esc(BRAND_LABEL)}</b> ${esc(t.text)}</div>`).join("\n")}
-</div></div>`;
+</div>`);
         }
         case "steps":
-            return `<div class="content">${header(scene.kicker, scene.title)}<div class="steps"><div class="line" ${fx("drawY", "step0", { dur: 5 })}></div>
+            return content(scene.kicker, scene.title, `<div class="steps"><div class="line" ${fx("drawY", "step0", { dur: 5 })}></div>
 ${scene.steps.map((s, i) => `<div class="step"><div class="num" ${fx("pop", `step${i}`)}>${i + 1}</div><div ${fx("left", `step${i}`, { delay: 0.1 })}><div class="rt">${esc(s.title)}</div>${s.desc ? `<div class="rd">${rich(s.desc)}</div>` : ""}</div></div>`).join("\n")}</div>
-${scene.result ? `<div class="result" ${fx("up", "result", { spot: true })}><span class="svg sm">${(0, icons_1.iconSvg)("FiCheck", c.panelInk)}</span>${esc(scene.result.text)}</div>` : ""}</div>`;
+${scene.result ? `<div class="result" ${fx("up", "result", { spot: true })}><span class="svg sm">${(0, icons_1.iconSvg)("FiCheck", c.panelInk)}</span>${esc(scene.result.text)}</div>` : ""}`);
         case "grid":
-            return `<div class="content">${header(scene.kicker, scene.title)}<div class="grid">${scene.tiles.map((t, i) => `<div class="tile" ${fx("pop", `tile${i}`, { spot: true })}><span class="svg md">${(0, icons_1.iconSvg)(t.icon, c.accent)}</span><span>${esc(t.label)}</span></div>`).join("")}</div></div>`;
+            return content(scene.kicker, scene.title, `<div class="grid">${scene.tiles.map((t, i) => `<div class="tile" ${fx("pop", `tile${i}`, { spot: true })}><span class="svg md">${(0, icons_1.iconSvg)(t.icon, c.accent)}</span><span>${esc(t.label)}</span></div>`).join("")}</div>`);
         case "media":
-            return `<div class="content">${header(scene.kicker, scene.title)}
+            return content(scene.kicker, scene.title, `
 <div class="player" ${fx("pop", "media", { dur: 0.6 })}><div class="play" ${fx("pop", "media", { delay: 0.25, spot: true })}><span class="svg lg">${(0, icons_1.iconSvg)("FiPlay", c.ground)}</span></div><div class="scrub" ${fx("drawX", "media", { delay: 0.4, dur: 5 })}></div></div>
-<div class="moments">${scene.moments.map((m, i) => `<div class="moment" ${fx("left", `moment${i}`, { spot: true })}><span class="ts">${esc(m.time)}</span><span class="ml">${esc(m.label)}</span></div>`).join("")}</div></div>`;
+<div class="moments">${scene.moments.map((m, i) => `<div class="moment" ${fx("left", `moment${i}`, { spot: true })}><span class="ts">${esc(m.time)}</span><span class="ml">${esc(m.label)}</span></div>`).join("")}</div>`);
         case "cta":
             return `<div class="center"><div data-float><img class="logo-lg" src="logo.png" alt="" ${fx("pop", undefined, { delay: 0.05, dur: 0.7 })}></div>
 <h1 class="cta" ${fx("up", undefined, { delay: 0.25 })}>${rich(scene.headline)}</h1>
@@ -95,16 +97,16 @@ function writeScenes(loaded, outDir, engineRoot) {
     }
     (0, node_fs_1.copyFileSync)(logoPath, (0, node_path_1.join)(outDir, "logo.png"));
     (0, node_fs_1.copyFileSync)((0, node_path_1.resolve)(engineRoot, "dist", "render.js"), (0, node_path_1.join)(outDir, "render.js"));
-    const k = spec.format.width / 1080;
+    const stage = (0, spec_1.stageFor)(spec.format);
     const brandRow = `<div class="brand"><img src="logo.png" alt="">${esc(spec.brand.name)}</div>`;
-    const sceneHtml = spec.lines.map((l, i) => `<!-- ${i + 1} · ${l.scene.kind} -->\n<section class="scene">${l.scene.kind === "hook" || l.scene.kind === "cta" ? "" : brandRow}\n${body(l.scene, c)}\n</section>`).join("\n\n");
+    const sceneHtml = spec.lines.map((l, i) => `<!-- ${i + 1} · ${l.scene.kind} -->\n<section class="scene${stage.wide ? ` is-${spec_1.WIDE[l.scene.kind]}` : ""}">${l.scene.kind === "hook" || l.scene.kind === "cta" ? "" : brandRow}\n${body(l.scene, c)}\n</section>`).join("\n\n");
     const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>${esc(spec.title)}</title>
 <style>
 ${faces.join("\n")}
 :root{--ground:${c.ground};--card:${c.card};--chip:${c.chip};--rule:${c.rule};--ink:${c.ink};--muted:${c.muted};--accent:${c.accent};--hl:${c.highlight};--hl-rgb:${rgb(c.highlight)};--you:${c.you};--panel:${c.panel};--panel-ink:${c.panelInk};--panel-muted:${c.panelMuted};--panel-rule:${c.panelRule}}
 *{box-sizing:border-box}html,body{margin:0;background:var(--ground);overflow:hidden}
-#stage{position:relative;width:1080px;height:1920px;overflow:hidden;background:var(--ground);font-family:"Sans",sans-serif;color:var(--ink);transform:scale(${k});transform-origin:0 0}
+#stage{position:relative;width:${stage.width}px;height:${stage.height}px;overflow:hidden;background:var(--ground);font-family:"Sans",sans-serif;color:var(--ink);transform:scale(${stage.scale});transform-origin:0 0}
 .blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.55}
 .b1{width:900px;height:900px;left:-300px;top:-200px;background:var(--panel)}
 .b2{width:760px;height:760px;right:-320px;top:700px;background:var(--chip)}
@@ -114,6 +116,7 @@ ${faces.join("\n")}
 .brand{position:absolute;left:90px;top:96px;display:flex;align-items:center;gap:20px;font-weight:700;font-size:44px}
 .brand img{width:76px;height:76px;object-fit:contain}
 .content{position:absolute;left:90px;right:90px;top:230px;bottom:360px;display:flex;flex-direction:column;justify-content:center;gap:34px}
+.head,.body{display:flex;flex-direction:column;gap:34px}
 .center{position:absolute;left:90px;right:90px;top:260px;bottom:340px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:44px;text-align:center}
 .kicker{font-family:"Mono",monospace;font-size:32px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
 h1,h2{margin:0;font-weight:800;letter-spacing:-.02em;line-height:1.08}
@@ -155,8 +158,28 @@ h2{font-size:80px}.hookline{font-size:104px}.cta{font-size:120px}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:30px;margin-top:10px}
 .tile{display:flex;flex-direction:column;gap:30px;padding:40px 36px;border-radius:36px;background:var(--card);border:2px solid var(--rule)}.tile>span:last-child{font-size:40px;font-weight:700;line-height:1.15}
 .pill{display:flex;align-items:center;gap:24px;padding:34px 52px;border-radius:999px;background:var(--accent);color:var(--ground)}.pill>span:last-child{font-family:"Mono",monospace;font-size:44px;font-weight:600}
+/* Landscape: a 1080 px tall canvas with no Shorts safe zone (YouTube overlays only captions and the progress bar). */
+.wide .b2{top:240px}
+.wide .brand{top:64px}
+.wide .content{top:180px;bottom:90px}
+.wide .center{top:110px;bottom:110px}
+.wide .logo-xl{width:300px;height:300px}.wide .logo-lg{width:220px;height:220px}
+.wide .player{height:380px}
+/* Content "side": kicker and title in a column beside the body. */
+.wide .is-side .content{flex-direction:row;align-items:center;gap:100px}
+.wide .is-side .head{flex:0 0 36%}.wide .is-side .body{flex:1;min-width:0}
+/* Content "top": kicker and title above a body laid out across the width. */
+.wide .is-top .stack,.wide .is-top .steps{flex-direction:row;gap:30px}
+.wide .is-top .stack>*,.wide .is-top .step{flex:1;min-width:0}
+.wide .is-top .row{flex-direction:column;align-items:flex-start}.wide .is-top .steps .line{display:none}
+.wide .is-top .grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.wide .is-top .body:has(>.player){flex-direction:row;align-items:center}.wide .is-top .player{flex:1.4}.wide .is-top .moments{flex:1}
+/* hook and cta "stack" keeps the portrait column; "side" moves the logo left of a left-aligned text column. */
+.wide .is-side .center{align-items:flex-start;text-align:left;padding-left:420px}
+.wide .is-side .center>[data-float]{position:absolute;left:0;top:0;bottom:0;display:flex;align-items:center}
+.wide .is-side .logo-xl,.wide .is-side .logo-lg{width:320px;height:320px}
 </style></head>
-<body><div id="stage"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div id="progress"></div>
+<body><div id="stage"${stage.wide ? ' class="wide"' : ""}><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div id="progress"></div>
 ${sceneHtml}
 </div><script src="render.js"></script></body></html>`;
     const file = (0, node_path_1.join)(outDir, "scenes.html");

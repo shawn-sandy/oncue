@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>check rejects bad sizes</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#4a5a56}a:hover{color:#1d2a27}
+</style>
+</helmet>
+<div style="width: 960px; height: 560px; box-sizing: border-box; padding: 48px; background: #f3f5f4; font-family: 'Plus Jakarta Sans', sans-serif; color: #1d2a27; display: flex; flex-direction: column; gap: 16px">
+  <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #4a5a56; letter-spacing: .04em">node dist/cli.js check · exit code 1 on every run</div>
+  <div style="flex-grow: 1; border-radius: 12px; background: #0e1d1a; color: #e4efeb; font-family: 'JetBrains Mono', monospace; font-size: 15px; line-height: 1.6; display: flex; flex-direction: column; overflow: hidden">
+    <div style="display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: #152b27; border-bottom: 1px solid #2b4842">
+      <span style="width: 12px; height: 12px; border-radius: 50%; background: #2b4842"></span>
+      <span style="width: 12px; height: 12px; border-radius: 50%; background: #2b4842"></span>
+      <span style="width: 12px; height: 12px; border-radius: 50%; background: #2b4842"></span>
+      <span style="margin-left: 8px; font-size: 13px; color: #a3bab3">oncue-engine</span>
+    </div>
+    <div style="padding: 20px 24px; display: flex; flex-direction: column; gap: 18px">
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <div><span style="color: #9ed9c8">$</span> node dist/cli.js check odd/short.json</div>
+        <div style="color: #a3bab3">format is { "width": 1081, "height": 1920 }</div>
+        <div><span style="color: #d98a62; font-weight: 600">short.json format.width:</span> must be an even whole number from 320 to 4096 px (got 1081)</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <div><span style="color: #9ed9c8">$</span> node dist/cli.js check huge/short.json</div>
+        <div style="color: #a3bab3">format is { "width": 5000, "height": 2812 }</div>
+        <div><span style="color: #d98a62; font-weight: 600">short.json format.width:</span> must be an even whole number from 320 to 4096 px (got 5000)</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <div><span style="color: #9ed9c8">$</span> node dist/cli.js check tall/short.json</div>
+        <div style="color: #a3bab3">format is { "width": 1080, "height": 3000 }</div>
+        <div><span style="color: #d98a62; font-weight: 600">short.json format:</span> the long side must be at most 2.4× the short side (got 1080×3000)</div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":560}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

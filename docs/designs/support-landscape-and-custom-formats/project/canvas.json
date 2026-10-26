@@ -1,0 +1,25 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-10-25T17:40:00Z" },
+  "title": "OnCue 16:9 and custom sizes",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "write-plugins-oncue-engine-test-format.dc.html": { "x": 0, "y": 0, "w": 960, "h": 560, "title": "Step 2 · check rejects bad sizes" },
+    "in-src-spec-ts-add-an.dc.html": { "x": 1040, "y": 0, "w": 1520, "h": 660, "title": "Step 7 · Design canvas per aspect" },
+    "in-src-cli-ts-make-check.dc.html": { "x": 2640, "y": 0, "w": 1400, "h": 700, "title": "Step 14 · check output per layout" },
+    "write-test-landscape-test-mjs-the.dc.html": { "x": 0, "y": 820, "w": 2780, "h": 1760, "title": "Steps 5 and 8 · Scene kinds at 16:9" },
+    "in-src-capture-ts-read-window.dc.html": { "x": 0, "y": 2700, "w": 1416, "h": 800, "title": "Steps 9 and 10 · Fit guard" },
+    "update-the-skill-prose-for-both.dc.html": { "x": 1496, "y": 2700, "w": 1216, "h": 1100, "title": "Step 12 · Storyboard frame sketches" }
+  },
+  "order": [
+    "write-plugins-oncue-engine-test-format.dc.html",
+    "in-src-spec-ts-add-an.dc.html",
+    "in-src-cli-ts-make-check.dc.html",
+    "write-test-landscape-test-mjs-the.dc.html",
+    "in-src-capture-ts-read-window.dc.html",
+    "update-the-skill-prose-for-both.dc.html"
+  ],
+  "notes": {},
+  "designSystems": []
+}
