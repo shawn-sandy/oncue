@@ -4,6 +4,7 @@ type: feature
 created: 2026-10-25
 repo-name: oncue
 artifact-url: https://claude.ai/artifact/KMdYVvUNd4bwUhcRzffVfv
+issue: https://github.com/shawn-sandy/oncue/issues/10
 glance: Today a voiceover only works end to end with ElevenLabs, and anyone without it hits a dead end in the voiceover skill. After this, a person can read the script themselves, get word timings from whisper.cpp (a free transcriber that runs on their own machine), and render the same word-synced video, while ElevenLabs stays the default. We know it worked when the Gleaner example renders from whisper.cpp timings and the measured cue drift against ElevenLabs Scribe is reported.
 ---
 
