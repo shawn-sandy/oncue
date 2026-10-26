@@ -167,10 +167,11 @@ function fit(): Fit[] {
   const w = window as Win;
   const tl = w.TIMELINE;
   if (!tl) throw new Error("TIMELINE missing");
-  // Measure with the real fonts, not the fallback: load every declared face first.
+  // Measure with the real fonts, not the fallback: load every declared face first. A face that fails to load
+  // falls back, as it always has, instead of stopping the page from starting.
   const faces: Promise<FontFace>[] = [];
   document.fonts.forEach((f) => { faces.push(f.load()); });
-  await Promise.all(faces);
+  await Promise.allSettled(faces);
   // Before the first renderAt, so entrance offsets (drops, 0.55 scale) don't inflate the measurement.
   w.FIT = fit();
   w.renderAt = setup(tl);

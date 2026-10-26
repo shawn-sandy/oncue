@@ -6,7 +6,7 @@
  */
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
-import { copyFileSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -16,6 +16,7 @@ import timeline from "../dist/timeline.js";
 
 const engine = fileURLToPath(new URL("..", import.meta.url));
 const example = new URL("../examples/gleaner/", import.meta.url);
+const src = JSON.parse(readFileSync(new URL("short.json", example), "utf8"));
 const dir = mkdtempSync(join(tmpdir(), "oncue-landscape-"));
 after(() => rmSync(dir, { recursive: true, force: true }));
 
@@ -29,24 +30,39 @@ async function launch() {
   }
 }
 
+/**
+ * Writes the Gleaner example at 1920×1080 into its own folder and returns its scenes page and timeline.
+ * @param {string} name
+ */
+function build(name) {
+  const folder = join(dir, name);
+  mkdirSync(folder);
+  writeFileSync(join(folder, "short.json"), JSON.stringify({ ...src, format: { width: 1920, height: 1080 } }));
+  copyFileSync(new URL("logo.png", example), join(folder, "logo.png"));
+  const loaded = spec.loadSpec(join(folder, "short.json"));
+  const html = scenes.writeScenes(loaded, join(folder, "scenes"), engine);
+  const est = timeline.estimateWords(loaded.spec);
+  return { html, tl: timeline.buildTimeline(loaded.spec, est.words, est.seconds) };
+}
+
+/**
+ * Opens a scenes page the way capture.ts does and waits for it to report ready.
+ * @param {import("playwright").Browser} browser @param {string} html @param {unknown} tl
+ */
+async function open(browser, html, tl) {
+  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
+  await page.addInitScript(`window.TIMELINE = ${JSON.stringify(tl)};`);
+  await page.goto(pathToFileURL(html).href);
+  await page.waitForFunction(() => /** @type {any} */ (window).ready === true, undefined, { timeout: 15000 });
+  return page;
+}
+
 test("every scene of the Gleaner example at 1920×1080 stays inside the frame", async (t) => {
   const browser = await launch();
   if (typeof browser === "string") { t.skip(browser); return; }
   try {
-    const file = join(dir, "short.json");
-    const src = JSON.parse(readFileSync(new URL("short.json", example), "utf8"));
-    writeFileSync(file, JSON.stringify({ ...src, format: { width: 1920, height: 1080 } }));
-    copyFileSync(new URL("logo.png", example), join(dir, "logo.png"));
-    const loaded = spec.loadSpec(file);
-    const html = scenes.writeScenes(loaded, join(dir, "scenes"), engine);
-    const est = timeline.estimateWords(loaded.spec);
-    const tl = timeline.buildTimeline(loaded.spec, est.words, est.seconds);
-
-    const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
-    await page.addInitScript(`window.TIMELINE = ${JSON.stringify(tl)};`);
-    await page.goto(pathToFileURL(html).href);
-    await page.waitForFunction(() => /** @type {any} */ (window).ready === true, undefined, { timeout: 15000 });
-
+    const { html, tl } = build("frame");
+    const page = await open(browser, html, tl);
     const outside = [];
     for (const [i, s] of tl.scenes.entries()) {
       const r = await page.evaluate(({ i, at }) => {
@@ -65,6 +81,19 @@ test("every scene of the Gleaner example at 1920×1080 stays inside the frame", 
       if (r.left < 0 || r.top < 0 || r.right > 1920 || r.bottom > 1080) outside.push(`scene ${i + 1} (${src.lines[i].scene.kind}): ${JSON.stringify(r)}`);
     }
     assert.deepEqual(outside, []);
+  } finally {
+    await browser.close();
+  }
+});
+
+test("the scenes page still starts when a font fails to load", async (t) => {
+  const browser = await launch();
+  if (typeof browser === "string") { t.skip(browser); return; }
+  try {
+    const { html, tl } = build("bad-font");
+    writeFileSync(join(dir, "bad-font", "scenes", "fonts", "mono-600.woff2"), "not a font");
+    const page = await open(browser, html, tl);
+    assert.equal(await page.evaluate(() => /** @type {any} */ (window).FIT?.length), src.lines.length);
   } finally {
     await browser.close();
   }

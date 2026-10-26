@@ -113,7 +113,7 @@ export function stageFor(format: Format): Stage {
  * hook and cta: "stack" puts the logo above the headline, "side" beside it. The video and the deck both read this.
  */
 export type Arrangement = "side" | "top" | "stack";
-export const WIDE: Record<SceneKind, Arrangement> = {
+export const WIDE: { [K in SceneKind]: K extends "hook" | "cta" ? "stack" | "side" : "side" | "top" } = {
   hook: "stack", list: "side", card: "side", chat: "side", steps: "side", grid: "top", media: "top", cta: "stack",
 };
 

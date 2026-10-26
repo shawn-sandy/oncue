@@ -19,18 +19,24 @@ function specAt(width, height) {
   return file;
 }
 
+/** [width, height, why, the field the error must name] */
 const rejected = [
-  [1081, 1920, "odd width"],
-  [1080.5, 1920, "non-integer width"],
-  ["1080", 1920, "string width"],
-  [0, 1920, "zero width"],
-  [240, 426, "under 320"],
-  [5000, 2812, "over 4096"],
-  [1080, 3000, "beyond 2.4:1"],
+  [1081, 1920, "odd width", "format.width"],
+  [1080.5, 1920, "non-integer width", "format.width"],
+  ["1080", 1920, "string width", "format.width"],
+  [0, 1920, "zero width", "format.width"],
+  [240, 426, "under 320", "format.width"],
+  [5000, 2812, "over 4096", "format.width"],
+  [1920, 1081, "odd height", "format.height"],
+  [1920, 1080.5, "non-integer height", "format.height"],
+  [1920, "1080", "string height", "format.height"],
+  [640, 300, "height under 320", "format.height"],
+  [2048, 4100, "height over 4096", "format.height"],
+  [1080, 3000, "beyond 2.4:1", "format"],
 ];
-for (const [w, h, why] of rejected) {
-  test(`rejects ${JSON.stringify(w)}×${h} (${why}) naming the format field`, () => {
-    assert.throws(() => spec.loadSpec(specAt(w, h)), /^Error: short\.json format(\.width|\.height)?: /);
+for (const [w, h, why, field] of rejected) {
+  test(`rejects ${JSON.stringify(w)}×${JSON.stringify(h)} (${why}) naming ${field}`, () => {
+    assert.throws(() => spec.loadSpec(specAt(w, h)), new RegExp(`^Error: short\\.json ${String(field).replace(".", "\\.")}: `));
   });
 }
 

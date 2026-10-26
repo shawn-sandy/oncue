@@ -142,7 +142,7 @@ The worked example is Gleaner's own Short: [examples/gleaner/short.json](plugins
 | `cue word "..." not heard in this line` | That element is spaced evenly instead of landing on its word. Change its `cue` to a word the narrator said. |
 | `Pass --words and --audio together` | The transcript must be of that audio, so pass both or neither. |
 | Text hidden behind the Shorts buttons and captions | Portrait layouts keep content out of the bottom ~350px of the frame and the bottom 1.4 inches of the deck; don't move it there. |
-| `short.json format.width: must be even` (or `between 320 and 4096`, or `at most 2.4×`) | H.264 needs even sizes, and the layouts need a sensible shape. Use a size such as 1080×1920, 1920×1080 or 1080×1080. |
+| `short.json format.width: must be even` (or `between 320 and 4096`, or `at most 2.4×`) | H.264 needs even sizes, and the layouts need a sensible shape. Use 1080×1920 or 1920×1080; square and 4:5 sizes render with the portrait layout, so every scene shrinks. |
 | `warning: scene N (...) shrunk to ...` | That scene had more than fits its frame, so it was scaled down. Cut its copy (fewer items, shorter titles) to show it full size. |
 | `note: the deck is ... the nearest drawn size` | The deck is drawn for 9:16 and 16:9 only, so other sizes snap by orientation. The video keeps the exact size. |
 
@@ -183,7 +183,7 @@ The plugin version lives only in `plugins/oncue/.claude-plugin/plugin.json`.
 - The deck is 10×5.625 in for landscape specs, arranged like the video; other aspects snap to 9:16 or 16:9 with a note.
 - `loadSpec` rejects sizes that would fail later: odd, fractional or non-number sides, sides outside 320 to 4096 px, and a long side over 2.4× the short one. Specs that passed before but break these limits now fail `check` with the field named.
 - `check` prints the layout, and the 3-minute Shorts warning applies to portrait only.
-- 9:16 output is unchanged: the Gleaner example's stills and slide XML are byte-identical to 1.2.0.
+- 9:16 output is unchanged for specs that fit their frame: the Gleaner example's stills and slide XML are byte-identical to 1.2.0. A 9:16 scene that overflowed now shrinks to fit instead of being cut off. In the deck, card rows close up when they would run past the card, and a steps scene with four steps and a result drops its connector lines instead of writing them with a negative height.
 - New `npm run engine:test` (node:test), run in CI; the browser suites skip there without Chromium.
 - Every skill description now names widescreen, landscape, 16:9 and YouTube video, so those requests reach OnCue.
 

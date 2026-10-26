@@ -12,7 +12,7 @@ Turn a topic into a locked set of beats: what the narrator says, what the viewer
 
 - What it is, who it is for, and the one thing a viewer should do at the end (install, follow, visit).
 - Real facts only: features, commands, names, links. Read the product's README, docs or code when they are available. Never invent numbers, quotes or results; mark a missing fact as `[YOUR FACT]` and say so.
-- Where it will be posted, which sets `format`: 1080×1920 (9:16) for YouTube Shorts, Reels and TikTok; 1920×1080 (16:9) for a YouTube video or a landscape presentation; 1080×1080 for a square post. Ask when it isn't clear; one spec renders one size.
+- Where it will be posted, which sets `format`: 1080×1920 (9:16) for YouTube Shorts, Reels and TikTok; 1920×1080 (16:9) for a YouTube video or a landscape presentation. Square and 4:5 sizes (1080×1080, 1080×1350) render, but with the portrait layout, so every scene shrinks; say so before choosing one. Ask when it isn't clear; one spec renders one size.
 - The brand: a design system the person names or has (colours, fonts, logo), else the product's logo and site. With none, pick a dark ground, one accent and one highlight from the subject and say what you chose.
 
 ## 2. Shape the beats

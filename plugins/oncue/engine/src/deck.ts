@@ -159,7 +159,8 @@ export async function writeDeck(loaded: LoadedSpec, outFile: string): Promise<st
           text(s, String(i + 1), { x: M, y, w: 0.8, h: 0.8, fontSize: 24, bold: true, color: hex(c.ground), align: "center", valign: "middle", fontFace: head });
           text(s, [{ text: st.title, options: { bold: true, fontSize: 20, breakLine: true } }, ...(st.desc ? rt(st.desc, { fontSize: 15, color: hex(c.muted) }) : [])],
             { x: M + 1.1, y: y - 0.05, w: CW - 1.1, h: 1.1, valign: "top" });
-          if (i < scene.steps.length - 1) s.addShape(pres.ShapeType.line, { x: M + 0.4, y: y + 0.9, w: 0, h: pitch - 1.0, line: { color: hex(c.muted), width: 2, dashType: "dash" } });
+          // No connector when the steps sit closer than a circle and its gap: its height would be negative, which is invalid OOXML.
+          if (i < scene.steps.length - 1 && pitch > 1.0) s.addShape(pres.ShapeType.line, { x: M + 0.4, y: y + 0.9, w: 0, h: pitch - 1.0, line: { color: hex(c.muted), width: 2, dashType: "dash" } });
         });
         if (scene.result) {
           const y = top + scene.steps.length * pitch;
