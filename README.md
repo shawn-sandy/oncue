@@ -14,8 +14,9 @@ What you need depends on how far you go:
 | --- | --- |
 | A storyboard (`short.json` and a beat list) | Node.js 22 or newer |
 | The deck (an editable 9:16 `.pptx`) | Node.js |
-| Preview stills, or a silent preview video | Node.js and Playwright with Chromium; the video also needs ffmpeg |
+| Silent preview stills, or a silent preview video | Node.js and Playwright with Chromium; the video also needs ffmpeg |
 | The voiceover (`voiceover.mp3` and `words.json`) | The ElevenLabs connector and credits, or your own files (see [Without ElevenLabs](#without-elevenlabs)) |
+| Stills timed to the voiceover | Node.js, Playwright with Chromium, the voiceover files and `ffprobe` on `PATH` |
 | The final voiced MP4 | All of the above, with `ffmpeg` and `ffprobe` on `PATH` |
 
 Setting them up:
@@ -43,7 +44,9 @@ In Claude Code:
 
 To try it locally from a clone, run `claude --plugin-dir ./plugins/oncue`.
 
-Then ask Claude to "set up OnCue" (or run `/oncue:setup`). The setup skill checks Node, ffmpeg and ffprobe, the engine, Playwright with Chromium and the ElevenLabs connector listed under [Requirements](#requirements), installs what it can, and tells you which outputs are ready.
+Then ask Claude to "set up OnCue" (or run `/oncue:setup`). The setup skill reports the installed version and scope, checks Node, ffmpeg and ffprobe, the engine, Playwright with Chromium and the ElevenLabs connector listed under [Requirements](#requirements), installs what it can, and tells you which outputs are ready.
+
+OnCue's marketplace does not auto-update by default. To update, run `claude plugin update oncue@oncue` (or choose **Update now** on the **Installed** tab of `/plugin`), then `/reload-plugins` and set up again: that replaces any engine copy the old version made. To turn OnCue on for everyone in a repository, install it with `--scope project` and commit `.claude/settings.json`; each collaborator still runs the install once. Ask Claude to "share OnCue with my team" for the exact commands.
 
 ## Usage
 
@@ -60,7 +63,7 @@ Then ask Claude to "set up OnCue" (or run `/oncue:setup`). The setup skill check
 3. Claude copies the engine into `oncue-engine/` in that folder and installs it, once per session, then writes the storyboard.
 4. **Check-in 1: the beats.** Claude shows the beat list with preview stills (or a Design canvas). Change, cut or reorder beats now: once the voiceover is recorded, a wording change means paying for a new recording.
 5. **Check-in 2: the voice.** Claude names the voice it picked and gives you two takes. Pick one, or ask for another voice.
-6. Claude builds the deck if you asked for one, checks stills against the real word timings, and renders the video in the background. Rendering runs at about 3–4 frames a second, so roughly 10 minutes for a 75-second Short.
+6. Claude builds the deck if you asked for one, checks stills against the real word timings, and renders the video in the background. Render time depends on the machine: on an Apple M4 Max the 75-second example rendered at about 30 frames a second, in 76 seconds. Slower machines take longer.
 7. You get the MP4, plus the deck if you asked for one, with the take and voice used and the ElevenLabs credits spent.
 
 Say "go ahead without stopping" to skip the check-ins.
@@ -108,7 +111,7 @@ Each stage is its own skill, so you can stop after any of them or start from an 
 
 | Skill | Ask for | You get |
 | --- | --- | --- |
-| [setup](plugins/oncue/skills/setup/SKILL.md) | "set up OnCue" | Node, ffmpeg, Playwright and ElevenLabs checked, the engine installed, and which outputs are ready |
+| [setup](plugins/oncue/skills/setup/SKILL.md) | "set up OnCue", "update OnCue" | The plugin version and how to update or share it; Node, ffmpeg, Playwright and ElevenLabs checked, the engine installed, and which outputs are ready |
 | [explainer-video](plugins/oncue/skills/explainer-video/SKILL.md) | "make an explainer short about our CLI" | The whole pipeline, with check-ins at the beats and the voice |
 | [storyboard](plugins/oncue/skills/storyboard/SKILL.md) | "storyboard a 60-second Short for this plugin" | `short.json`, a beat list, preview stills or a Design canvas |
 | [voiceover](plugins/oncue/skills/voiceover/SKILL.md) | "voice it with ElevenLabs" | Two takes as MP3, each with a word-level transcript |
@@ -151,7 +154,7 @@ node dist/cli.js video  short.json --words words.json --audio voiceover.mp3 --ou
 
 Without `--words` and `--audio`, timing is estimated from the script and the video is a silent preview. Outputs go to `build/` beside `short.json`; `deck` and `video` take `--out` to write elsewhere.
 
-To try it on the bundled Gleaner Short, run `npm install` in the engine folder, then `npm run example:check`, `example:deck`, `example:stills` or `example:video`. The results land in `examples/gleaner/build/`. `npm install` leaves out Playwright, an optional peer dependency, so run `npm install --no-save --save-dev playwright && npx playwright install chromium` before `example:stills` or `example:video`; `example:video` also needs ffmpeg. Those flags install it on npm 12 too without editing the shipped `package.json`. Any later `npm install` removes it again, so repeat the command after one.
+To try it on the bundled Gleaner Short, run `npm install` in the engine folder, then `npm run example:check`, `example:deck`, `example:stills` or `example:video`. The results land in `examples/gleaner/build/`. `npm install` leaves out Playwright, an optional peer dependency, so run `npm install --no-save --save-dev playwright && npx playwright install chromium` before `example:stills` or `example:video`. Those flags install it on npm 12 too without editing the shipped `package.json`. Any later `npm install` removes it again, so repeat the command after one. Both examples also need ffprobe, because they time the frames to the bundled voiceover, and `example:video` needs ffmpeg as well.
 
 To work on the engine, run `npm install` and then `npm run build` in its folder. Sources are strict TypeScript in `src/`; the compiled `dist/` is committed so the skills run without a build step.
 
@@ -165,6 +168,12 @@ npm run engine:typecheck  # strict TypeScript check of the engine
 The plugin version lives only in `plugins/oncue/.claude-plugin/plugin.json`.
 
 ## Changelog
+
+### 1.2.0 (2026-10-25)
+
+- The setup skill now covers the plugin itself: it reports the loaded version and install scope, flags an update waiting to load, and gives the commands to update OnCue or install it for collaborators at project scope.
+- After an update, the setup and explainer-video skills replace an `oncue-engine/` copy made by an older version (found with `diff -rq` against the plugin's `engine/dist`) instead of reusing it, so the new engine actually runs.
+- README: updating and project-scope installs.
 
 ### 1.1.0 (2026-10-25)
 

@@ -19,7 +19,7 @@ The deck and the video both read `short.json`, so they always match. The deck ca
 
 ## Set up the engine (once per session)
 
-The engine is a typed Node program in this plugin's `engine/` folder (`../../engine` from this skill's folder). If `oncue-engine/` already exists in the working directory (the setup skill, `../setup/SKILL.md`, makes it), reuse it with `cd oncue-engine && npm install`; copying over it would nest the engine inside it. Otherwise copy it into the working directory rather than running it inside the plugin, so installs never touch the plugin cache:
+The engine is a typed Node program in this plugin's `engine/` folder (`../../engine` from this skill's folder; `<plugin>` below is the absolute path of the folder holding `engine/`). If `oncue-engine/` already exists in the working directory (the setup skill, `../setup/SKILL.md`, makes it), check that this version of the plugin made it with `diff -rq <plugin>/engine/dist oncue-engine/dist`. If it prints nothing, reuse it with `cd oncue-engine && npm install`; copying over it would nest the engine inside it. When `diff` lists files, an older OnCue made the copy and it still runs the old engine: rename it with `mv oncue-engine oncue-engine.old` (pick another name if that one is taken: `mv` into an existing folder nests it), copy afresh as below, reinstall Playwright and any `@fontsource/*` package in the old copy's `package.json` but not the new one, and tell the person they can delete the old copy once the new one works. With no `oncue-engine/`, copy it into the working directory rather than running it inside the plugin, so installs never touch the plugin cache:
 
 ```bash
 cp -R <plugin>/engine ./oncue-engine && cd oncue-engine && npm install
@@ -41,4 +41,4 @@ Run every command from `oncue-engine`. `npm run example:check` confirms the inst
 
 - **Sandbox network.** Many sessions block downloads from ElevenLabs' file host `storage.googleapis.com`. If a download is refused, tell the person to add that domain under claude.ai Settings → Capabilities, or to attach the MP3. Do not retry through other tools.
 - **Transcribe, don't guess.** Pauses between lines are no longer than pauses inside them, so splitting audio on silence puts cuts mid-sentence. Always time from a word-level transcript (the voiceover skill gets one).
-- **Long renders.** About 3–4 frames a second, so roughly 10 minutes for a 75-second video. Run it in the background and keep the person posted at milestones.
+- **Long renders.** Speed depends on the machine: on an Apple M4 Max the 75-second example rendered at about 30 frames a second, in 76 seconds, and slower machines take longer. Run it in the background and keep the person posted at milestones.
