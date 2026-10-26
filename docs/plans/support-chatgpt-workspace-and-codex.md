@@ -5,6 +5,7 @@ created: 2026-10-26
 repo-name: oncue
 workflow: never
 artifact-url: https://claude.ai/artifact/Djf6ZAqSh2LMg17XWyQDCE
+issue: https://github.com/shawn-sandy/oncue/issues/12
 glance: OnCue already installs in Codex, and a ChatGPT workspace admin can import it, but its skills tell every reader to use claude.ai and Claude Code commands, and its engine can only launch the Chromium that Playwright downloads, which ChatGPT's offline container cannot fetch. After this, setup gives Codex and ChatGPT users their own instructions, the other skills name no product, every skill states what it needs, and the engine can use a browser that is already installed. We know it worked when the ChatGPT probe results are recorded in this plan, `npm run validate` rejects product-specific wording outside setup, and stills render with ONCUE_CHROMIUM_PATH pointing at a real browser.
 ---
 
