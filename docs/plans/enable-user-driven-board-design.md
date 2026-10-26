@@ -4,7 +4,7 @@ type: feature
 created: 2026-10-25
 repo-name: oncue
 effort: medium
-artifact-url: https://claude.ai/artifact/MdM5vjSu36zacxZgkhbsVN
+artifact-url: https://claude.ai/artifact/3aKSmsRaDRragAh4xuXjs4
 glance: Every OnCue Short uses the same eight layouts with only colours, a logo and fonts swapped. This proposal maps what is fixed today, compares five ways to let the person's own design input drive the look, and recommends a theme-token layer first. A scratch prototype rendered two new looks while the Gleaner example stayed pixel-identical.
 ---
 
@@ -245,3 +245,4 @@ In a scratch project, copy `plugins/oncue/engine/examples/gleaner`, ask Claude t
 - docs/plans/add-research-and-visuals-skills.md: the `image` kind and the engine test setup this plan builds on
 - Shared notes folder for this session group: `patch-proto.cjs` (the scratch prototype), `deckbounds.cjs` (deck edge and negative-height check), and the contact sheets
 - plugins/oncue/engine/node_modules/pptxgenjs/dist/pptxgen.cjs.js: `rectRadius` to `adj` conversion
+- [OnCue user-driven design](https://claude.ai/artifact/MdM5vjSu36zacxZgkhbsVN): the proposal page, with the prototype stills, options table and open decisions
