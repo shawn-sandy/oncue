@@ -75,7 +75,7 @@ Say "go ahead without stopping" to skip the check-ins.
 - **The subject and its sources:** a repo, README, docs page or notes. Claude uses real facts only and marks anything missing as `[YOUR FACT]`.
 - **Length and audience.** Without them, Claude aims for 45–80 seconds in 6–10 beats.
 - **The call to action:** install, follow, visit.
-- **The brand:** a design system, colours, or a square PNG logo. Without one, Claude uses the product's logo and site; with neither, it picks a dark ground, one accent and one highlight from the subject and tells you.
+- **The brand and look:** a design system, a DESIGN.md or design tokens, a reference image or site, a few words such as "light, playful, rounded", colours, or a square PNG logo. Without one, Claude uses the product's logo and site; with neither, it picks a dark ground, one accent and one highlight from the subject and tells you.
 - **The voice,** such as "a warm, unhurried narrator". Without one, Claude picks a clear voice suited to a product explainer.
 - **Where it will be posted.** Shorts, Reels and TikTok get 1080×1920; a YouTube video or a landscape deck gets 1920×1080; name any other size you need.
 - **The outputs,** if you want less than the whole pipeline: only the storyboard, only the deck, or a silent preview.
@@ -123,7 +123,7 @@ Each stage is its own skill, so you can stop after any of them or start from an 
 
 ## How it works
 
-1. **Storyboard.** Claude writes the beats into `short.json`: each beat's voiceover line, a scene (`hook`, `list`, `card`, `chat`, `steps`, `grid`, `media` or `cta`), and for each element the word it should enter on. See [the spec reference](plugins/oncue/skills/storyboard/references/spec.md).
+1. **Storyboard.** Claude writes the beats into `short.json`: each beat's voiceover line, a scene (`hook`, `list`, `card`, `chat`, `steps`, `grid`, `media` or `cta`), and for each element the word it should enter on. It also sets the look: brand colours and fonts, and an optional `theme` for corners, type size, spacing, background and header, taken from your words, a DESIGN.md, design tokens, Figma, a reference image or a site. See [the spec reference](plugins/oncue/skills/storyboard/references/spec.md).
 2. **Voiceover.** The ElevenLabs connector reads the whole script in one take for a consistent voice, then transcribes it with word timestamps.
 3. **Deck.** The engine writes real PowerPoint text and shapes in your brand colours, on a 9:16 or 16:9 slide by the spec's orientation.
 4. **Video.** Each scene is an HTML page stepped frame by frame in headless Chromium at the spec's size; a scene too big for its frame is shrunk to fit, with a warning, with entrances on cue words, a typing effect, spotlight glows, drawn lines, scene transitions and a progress bar. ffmpeg encodes the frames and lays in the voice.
@@ -175,6 +175,15 @@ npm run engine:test       # node:test suites; the browser ones skip without Chro
 The plugin version lives only in `plugins/oncue/.claude-plugin/plugin.json`.
 
 ## Changelog
+
+### 1.4.0 (2026-10-26)
+
+- Theme tokens in both outputs. An optional `theme` in `short.json` sets `radius` (`sharp`, `soft`, `round`), `type` (`small`, `regular`, `large`), `density` (`compact`, `regular`, `airy`), `background` (`glow`, `subtle`, `flat`) and `header` (`brand`, `logo`, `none`). Each picks a scale for today's design, and the same scale drives the video and the deck; `background` is video only. `check` rejects an unknown key or value, naming the field and the allowed values.
+- New optional `brand.deckFonts.mono`: the deck's font for kickers, inline code, tags and timestamps. It defaults to Courier New, which the deck always used, whatever `fonts.mono` said.
+- `check` warns when a text-and-fill colour pair the renderers draw is under 4.5:1 contrast, naming both keys. It is a warning, not an error.
+- The deck draws icon-dot glyphs and "you" chat bubble text in `ground` on `highlight` instead of `panelInk`: 6.42:1 instead of 2.71:1 for the Gleaner palette. This changes those shapes in every deck.
+- The storyboard skill's first step now gathers the look: plain words, a DESIGN.md, design tokens, Figma, a reference image or a reference site, mapped to colours, fonts and `theme` by the new `references/theme.md`. A theme changes no `vo`, so restyling after the voiceover means rendering again, not recording again. Light palettes work: pair a light `ground` with `background: "flat"`, or `"subtle"` with a light `panel`.
+- Specs without `theme` render the same video frames as 1.3.0.
 
 ### 1.3.0 (2026-10-26)
 

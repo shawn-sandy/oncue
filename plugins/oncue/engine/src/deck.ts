@@ -6,7 +6,7 @@
 import PptxGenJS from "pptxgenjs";
 import { iconPng } from "./icons";
 import type { Arrangement, Colors, Format, LoadedSpec, Rich, Scene } from "./spec";
-import { runs, stageFor, WIDE } from "./spec";
+import { look, runs, stageFor, WIDE } from "./spec";
 
 type Pres = InstanceType<typeof PptxGenJS>;
 type Slide = ReturnType<Pres["addSlide"]>;
@@ -16,6 +16,8 @@ interface Box { x: number; y: number; w: number; h: number }
 
 const M = 0.5;
 const hex = (c: string): string => c.replace("#", "");
+/** pptxgenjs writes font names into typeface="…" unescaped, so a name with & < > or " would break the XML. */
+const xmlAttr = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 /** Slide size in inches, by the spec's orientation only; custom aspects apply to the video. */
 export function deckSize(format: Format): { width: number; height: number } {
@@ -62,8 +64,11 @@ export async function writeDeck(loaded: LoadedSpec, outFile: string): Promise<st
   const c: Colors = spec.brand.colors;
   const { wide } = stageFor(spec.format);
   const { width: W, height: H } = deckSize(spec.format);
-  const head = spec.brand.deckFonts.head;
-  const bodyFont = spec.brand.deckFonts.body;
+  const head = xmlAttr(spec.brand.deckFonts.head);
+  const bodyFont = xmlAttr(spec.brand.deckFonts.body);
+  const mono = xmlAttr(spec.brand.deckFonts.mono ?? "Courier New");
+  // The theme at the deck's 192 px per inch: the same multipliers as the video, ×1 by default.
+  const L = look(spec);
 
   const pres = new PptxGenJS();
   pres.defineLayout({ name: "SHORT", width: W, height: H });
@@ -71,28 +76,31 @@ export async function writeDeck(loaded: LoadedSpec, outFile: string): Promise<st
   pres.title = spec.title;
   pres.theme = { headFontFace: head, bodyFontFace: bodyFont };
 
-  /** Rich text → pptxgenjs runs: accent in the accent colour, code in Courier New. */
+  /** Rich text → pptxgenjs runs: accent in the accent colour, code in the deck's mono font. */
   const rt = (text: Rich, base: Record<string, unknown> = {}): TextRun[] =>
-    runs(text).map((r) => ({ text: r.text, options: { ...base, ...(r.accent ? { color: hex(c.accent) } : {}), ...(r.code ? { fontFace: "Courier New" } : {}) } }));
+    runs(text).map((r) => ({ text: r.text, options: { ...base, ...(r.accent ? { color: hex(c.accent) } : {}), ...(r.code ? { fontFace: mono } : {}) } }));
 
-  const card = (s: Slide, x: number, y: number, w: number, h: number, fill: string, name: string): void => {
-    s.addShape(pres.ShapeType.roundRect, { x, y, w, h, fill: { color: hex(fill) }, line: { color: hex(fill), width: 0 }, rectRadius: 0.18, objectName: name });
+  const card = (s: Slide, x: number, y: number, w: number, h: number, fill: string, name: string, radius = 0.18 * L.radius): void => {
+    s.addShape(pres.ShapeType.roundRect, { x, y, w, h, fill: { color: hex(fill) }, line: { color: hex(fill), width: 0 }, rectRadius: radius, objectName: name });
   };
   const dot = async (s: Slide, icon: string, x: number, y: number, d = 0.7): Promise<void> => {
     s.addShape(pres.ShapeType.ellipse, { x, y, w: d, h: d, fill: { color: hex(c.highlight) }, line: { color: hex(c.highlight), width: 0 }, objectName: `dot-${icon}` });
     const p = d * 0.25;
-    s.addImage({ data: await iconPng(icon, c.panelInk), x: x + p, y: y + p, w: d - 2 * p, h: d - 2 * p, altText: icon });
+    s.addImage({ data: await iconPng(icon, c.ground), x: x + p, y: y + p, w: d - 2 * p, h: d - 2 * p, altText: icon });
   };
+  /** Every slide's text goes through here, so the theme's type scale applies to each box and each run. */
   const text = (s: Slide, t: string | TextRun[], o: Record<string, unknown>): void => {
-    s.addText(t as never, { margin: 0, isTextBox: true, fontFace: bodyFont, color: hex(c.ink), ...o });
+    const sized = <T extends Record<string, unknown> | undefined>(p: T): T => (typeof p?.["fontSize"] === "number" ? { ...p, fontSize: p["fontSize"] * L.type } : p);
+    s.addText((typeof t === "string" ? t : t.map((r) => ({ ...r, options: sized(r.options) }))) as never, sized({ margin: 0, isTextBox: true, fontFace: bodyFont, color: hex(c.ink), ...o }));
   };
   const brandRow = (s: Slide): void => {
+    if (L.header === "none") return;
     s.addImage({ path: logoPath, x: M, y: 0.45, w: 0.42, h: 0.42, altText: `${spec.brand.name} logo` });
-    text(s, spec.brand.name, { x: M + 0.52, y: 0.45, w: 2.5, h: 0.42, fontSize: 15, bold: true, fontFace: head, valign: "middle" });
+    if (L.header === "brand") text(s, spec.brand.name, { x: M + 0.52, y: 0.45, w: 2.5, h: 0.42, fontSize: 15, bold: true, fontFace: head, valign: "middle" });
   };
   const header = (s: Slide, kicker: string, title: Rich, b: Box, size: number): void => {
     brandRow(s);
-    text(s, kicker.toUpperCase(), { x: b.x, y: b.y, w: b.w, h: 0.4, fontSize: 13, bold: true, color: hex(c.accent), charSpacing: 2, fontFace: "Courier New" });
+    text(s, kicker.toUpperCase(), { x: b.x, y: b.y, w: b.w, h: 0.4, fontSize: 13, bold: true, color: hex(c.accent), charSpacing: 2, fontFace: mono });
     text(s, rt(title), { x: b.x, y: b.y + 0.45, w: b.w, h: b.h - 0.45, fontSize: size, bold: true, fontFace: head, valign: "top" });
   };
 
@@ -113,7 +121,7 @@ export async function writeDeck(loaded: LoadedSpec, outFile: string): Promise<st
       case "list": {
         // Gaps (and the icon and text padding) shrink only when the rows would not otherwise fit, so every
         // count keeps positive heights inside the box; the documented 2-4 items lay out as they always have.
-        const n = scene.items.length, gap = Math.min(0.2, bh / n / 4), h = Math.min(1.3, bh / n - gap), d = Math.min(0.7, h), pad = Math.min(0.1, h / 4);
+        const n = scene.items.length, gap = Math.min(0.2 * L.density, bh / n / 4), h = Math.min(1.3, bh / n - gap), d = Math.min(0.7, h), pad = Math.min(0.1, h / 4);
         for (const [i, it] of scene.items.entries()) {
           const y = top + i * (h + gap);
           card(s, M, y, CW, h, c.card, `item-${i}`);
@@ -138,23 +146,23 @@ export async function writeDeck(loaded: LoadedSpec, outFile: string): Promise<st
         for (const t of k.tags ?? []) {
           const tw = 0.3 + t.length * 0.1;
           s.addShape(pres.ShapeType.roundRect, { x: tx, y: top + h - 0.7, w: tw, h: 0.4, fill: { color: hex(c.panelRule) }, line: { color: hex(c.panelRule), width: 0 }, rectRadius: 0.2 });
-          text(s, t, { x: tx, y: top + h - 0.7, w: tw, h: 0.4, fontSize: 12, color: hex(c.panelInk), align: "center", valign: "middle", fontFace: "Courier New" });
+          text(s, t, { x: tx, y: top + h - 0.7, w: tw, h: 0.4, fontSize: 12, color: hex(c.panelInk), align: "center", valign: "middle", fontFace: mono });
           tx += tw + 0.15;
         }
         return;
       }
       case "chat": {
-        const n = scene.turns.length, gap = Math.min(0.2, bh / n / 4), h = Math.min(0.95, bh / n - gap), bw = 3.9;
+        const n = scene.turns.length, gap = Math.min(0.2 * L.density, bh / n / 4), h = Math.min(0.95, bh / n - gap), bw = 3.9;
         scene.turns.forEach((t, i) => {
           const you = t.from === "you", y = top + i * (h + gap), x = you ? M + CW - bw : M;
           card(s, x, y, bw, h, you ? c.highlight : c.card, `turn-${i}`);
-          text(s, you ? [{ text: `“${t.text}”`, options: { color: hex(c.panelInk) } }] : [{ text: `${spec.brand.name.toLowerCase()} `, options: { bold: true, color: hex(c.accent) } }, { text: t.text }],
+          text(s, you ? [{ text: `“${t.text}”`, options: { color: hex(c.ground) } }] : [{ text: `${spec.brand.name.toLowerCase()} `, options: { bold: true, color: hex(c.accent) } }, { text: t.text }],
             { x: x + 0.25, y, w: bw - 0.5, h, fontSize: 15, valign: "middle" });
         });
         return;
       }
       case "steps": {
-        const n = scene.steps.length + (scene.result ? 1 : 0), pitch = Math.min(1.55, bh / n);
+        const n = scene.steps.length + (scene.result ? 1 : 0), pitch = Math.min(0.8 + 0.75 * L.density, bh / n);
         scene.steps.forEach((st, i) => {
           const y = top + i * pitch;
           s.addShape(pres.ShapeType.ellipse, { x: M, y, w: 0.8, h: 0.8, fill: { color: hex(c.highlight) }, line: { color: hex(c.highlight), width: 0 } });
@@ -174,11 +182,11 @@ export async function writeDeck(loaded: LoadedSpec, outFile: string): Promise<st
       case "grid": {
         // Three columns when the body runs across the width; short tiles put the label beside the icon.
         // Row gaps shrink only when the rows would not otherwise fit, as in list.
-        const cols = CW > 2 * bh ? 3 : 2, gw = (CW - 0.3 * (cols - 1)) / cols, rowsN = Math.ceil(scene.tiles.length / cols);
-        const rg = Math.min(0.25, bh / rowsN / 4), gh = Math.min(1.35, bh / rowsN - rg), d = Math.min(0.55, gh);
+        const cols = CW > 2 * bh ? 3 : 2, cg = 0.3 * L.density, gw = (CW - cg * (cols - 1)) / cols, rowsN = Math.ceil(scene.tiles.length / cols);
+        const rg = Math.min(0.25 * L.density, bh / rowsN / 4), gh = Math.min(1.35, bh / rowsN - rg), d = Math.min(0.55, gh);
         const beside = gh < 1.3;
         for (const [i, t] of scene.tiles.entries()) {
-          const x = M + (i % cols) * (gw + 0.3), y = top + Math.floor(i / cols) * (gh + rg);
+          const x = M + (i % cols) * (gw + cg), y = top + Math.floor(i / cols) * (gh + rg);
           card(s, x, y, gw, gh, c.card, `tile-${i}`);
           await dot(s, t.icon, x + 0.25, beside ? y + (gh - d) / 2 : y + 0.25, d);
           text(s, t.label, beside ? { x: x + 0.95, y, w: gw - 1.1, h: gh, fontSize: 15, bold: true, valign: "middle" }
@@ -193,14 +201,15 @@ export async function writeDeck(loaded: LoadedSpec, outFile: string): Promise<st
         card(s, M, top, pw, ph, c.card, "player");
         await dot(s, "FiPlay", M + (pw - 1.0) / 2, top + (across ? (ph - 1.0) / 2 : 0.5), 1.0);
         const mx = across ? M + pw + 0.4 : M, mw = across ? CW - pw - 0.4 : CW;
-        // Moments sit 0.7 in apart; when more than fit, they close up together (k < 1) so the last stays in the box.
-        const n = scene.moments.length, room = across ? bh : bh - 2.3, k = Math.min(1, room / (n * 0.7 - 0.2));
-        const pitch = 0.7 * k, mh = 0.5 * k;
-        const my = across ? top + (bh - n * pitch + 0.2 * k) / 2 : top + 2.3;
+        // Moments sit 0.7 in apart (0.5 in chips, 0.2 in gaps at regular density); when more than fit, they close up
+        // together (k < 1) so the last stays in the box.
+        const g = 0.2 * L.density, n = scene.moments.length, room = across ? bh : bh - 2.3, k = Math.min(1, room / (n * (0.5 + g) - g));
+        const pitch = (0.5 + g) * k, mh = 0.5 * k;
+        const my = across ? top + (bh - n * pitch + g * k) / 2 : top + 2.3;
         scene.moments.forEach((m, i) => {
           const y = my + i * pitch;
           s.addShape(pres.ShapeType.roundRect, { x: mx, y, w: 1.0, h: mh, fill: { color: hex(c.chip) }, line: { color: hex(c.chip), width: 0 }, rectRadius: 0.25 * k });
-          text(s, m.time, { x: mx, y, w: 1.0, h: mh, fontSize: 14, bold: true, color: hex(c.accent), align: "center", valign: "middle", fontFace: "Courier New" });
+          text(s, m.time, { x: mx, y, w: 1.0, h: mh, fontSize: 14, bold: true, color: hex(c.accent), align: "center", valign: "middle", fontFace: mono });
           text(s, m.label, { x: mx + 1.2, y, w: mw - 1.2, h: mh, fontSize: 16, valign: "middle" });
         });
         return;
@@ -211,7 +220,7 @@ export async function writeDeck(loaded: LoadedSpec, outFile: string): Promise<st
         text(s, rt(scene.headline), { ...headline, fontSize: 42, bold: true, fontFace: head, align: spot.align, valign: "middle" });
         if (scene.sub) text(s, rt(scene.sub, { color: hex(c.muted) }), { ...sub, fontSize: 18, align: spot.align });
         if (scene.pill) {
-          card(s, pill.x, pill.y, pill.w, pill.h, c.card, "pill");
+          card(s, pill.x, pill.y, pill.w, pill.h, c.card, "pill", 0.18); // a pill in the video, so radius leaves it alone
           await dot(s, scene.pill.icon, pill.x + 0.25, pill.y + (pill.h - 0.7) / 2);
           text(s, scene.pill.text, { x: pill.x + 1.1, y: pill.y, w: pill.w - 1.25, h: pill.h, fontSize: 16, bold: true, valign: "middle" });
         }

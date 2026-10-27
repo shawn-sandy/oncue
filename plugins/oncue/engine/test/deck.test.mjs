@@ -90,3 +90,14 @@ for (const [w, h] of [[1080, 1920], [1920, 1080]]) {
     assert.deepEqual(d.outside, []);
   });
 }
+
+// Theme extremes: bigger type with wider gaps, and the reverse, must keep every shape valid and on the slide,
+// including the crowded scenes above.
+for (const [w, h] of [[1080, 1920], [1920, 1080]]) {
+  for (const theme of [{ type: "large", density: "airy" }, { type: "small", density: "compact", radius: "sharp" }]) {
+    test(`${w}×${h} under ${JSON.stringify(theme)}: every shape stays valid and on the slide`, async () => {
+      const d = await writeAndMeasure(`theme-${theme.type}-${w}x${h}`, { ...gleaner, format: { width: w, height: h }, theme, lines: [...gleaner.lines, ...crowded, fourSteps] });
+      assert.deepEqual(d.outside, []);
+    });
+  }
+}
