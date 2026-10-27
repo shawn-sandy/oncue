@@ -16,6 +16,8 @@ interface Box { x: number; y: number; w: number; h: number }
 
 const M = 0.5;
 const hex = (c: string): string => c.replace("#", "");
+/** pptxgenjs writes font names into typeface="…" unescaped, so a name with & < > or " would break the XML. */
+const xmlAttr = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 /** Slide size in inches, by the spec's orientation only; custom aspects apply to the video. */
 export function deckSize(format: Format): { width: number; height: number } {
@@ -62,9 +64,9 @@ export async function writeDeck(loaded: LoadedSpec, outFile: string): Promise<st
   const c: Colors = spec.brand.colors;
   const { wide } = stageFor(spec.format);
   const { width: W, height: H } = deckSize(spec.format);
-  const head = spec.brand.deckFonts.head;
-  const bodyFont = spec.brand.deckFonts.body;
-  const mono = spec.brand.deckFonts.mono ?? "Courier New";
+  const head = xmlAttr(spec.brand.deckFonts.head);
+  const bodyFont = xmlAttr(spec.brand.deckFonts.body);
+  const mono = xmlAttr(spec.brand.deckFonts.mono ?? "Courier New");
   // The theme at the deck's 192 px per inch: the same multipliers as the video, ×1 by default.
   const L = look(spec);
 

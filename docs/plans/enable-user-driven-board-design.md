@@ -5,7 +5,7 @@ created: 2026-10-25
 repo-name: oncue
 effort: medium
 artifact-url: https://claude.ai/artifact/3aKSmsRaDRragAh4xuXjs4
-glance: Every OnCue Short used the same eight layouts with only colours, a logo and fonts swapped. OnCue 1.4.0 adds a theme layer, five named tokens for corners, type size, spacing, background and header that drive both the video and the deck, and the storyboard skill maps words, a DESIGN.md, design tokens, Figma, an image or a site onto them. check now warns on low-contrast colours, and Gleaner without a theme renders pixel-identical stills.
+glance: Every OnCue Short used the same eight layouts with only colours, a logo and fonts swapped. OnCue 1.4.0 adds a theme layer, five named tokens for corners, type size, spacing, background and header that drive the video and the deck (background the video only), and the storyboard skill maps words, a DESIGN.md, design tokens, Figma, an image or a site onto them. check now warns on low-contrast colours, and Gleaner without a theme renders pixel-identical stills.
 ---
 
 # Plan: User-driven board design for OnCue
@@ -172,7 +172,7 @@ Phase 1 only, with the recommended answers to the open decisions; decision 4 was
 
 - **File:** `plugins/oncue/engine/test/theme.test.mjs`
 - **Type:** smoke test against the committed `dist/`
-- **Asserts:** the Gleaner spec with `theme: { radius: "sharp", header: "none", background: "flat" }` produces a scenes page with no `.blob` and no `.brand` element and a `.card` corner of 7.2px (a fifth of 36px), and a deck whose list slide corner `adj` values are a fifth of the unthemed deck's and which holds no brand-name run or logo; the same spec without `theme` writes the same scenes page and slide XML as a spec whose `theme` lists every default.
+- **Asserts:** the Gleaner spec with `theme: { radius: "sharp", header: "none", background: "flat" }` produces a scenes page with no `.blob` and no `.brand` element and a `.card` corner of 7.2px (a fifth of 36px), and a deck whose list slide corner `adj` values are a fifth of the unthemed deck's and which holds no brand-name run or brand-row logo (the hook and call-to-action logos stay); the same spec without `theme` writes the same scenes page and slide XML as a spec whose `theme` lists every default.
 - **Run:** `npm run engine:test`
 
 ### Unit Tests

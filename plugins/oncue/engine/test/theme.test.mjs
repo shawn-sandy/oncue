@@ -260,6 +260,20 @@ test("deck: deckFonts.mono sets the mono runs, Courier New without it", async ()
   assert.match((await slides(gleaner))[LIST] ?? "", /typeface="Courier New"/);
 });
 
+test("deck: font names with XML characters are escaped once, in the slides and the theme", async () => {
+  const out = join(dir, `deck-${n++}.pptx`);
+  await deck.writeDeck(spec.loadSpec(write(themed(undefined, { deckFonts: { head: "A&B Sans", body: "Calibri", mono: "M<N> \"Mono\"" } }))), out);
+  const zip = await JSZip.loadAsync(readFileSync(out));
+  const parts = await Promise.all(Object.keys(zip.files).filter((f) => /^ppt\/(slides\/slide\d+|theme\/theme\d+)\.xml$/.test(f))
+    .map(async (f) => [f, (await zip.file(f)?.async("string")) ?? ""]));
+  // pptxgenjs writes fontFace into typeface="…" as is: a bare & or a stray quote makes the XML malformed.
+  const bad = parts.filter(([, xml]) => /&(?!(?:amp|lt|gt|quot|apos);|#\d+;)|typeface="[^"]*[<>][^"]*"/.test(xml)).map(([f]) => f);
+  assert.deepEqual(bad, []);
+  const all = parts.map(([, xml]) => xml).join("\n");
+  assert.match(all, /typeface="A&amp;B Sans"/);
+  assert.match(all, /typeface="M&lt;N&gt; &quot;Mono&quot;"/);
+});
+
 test("deck: the you bubble's text is the ground colour on highlight", async () => {
   const chat = (await slides(gleaner))[CHAT] ?? "";
   const you = /<a:rPr[^>]*>\s*<a:solidFill>\s*<a:srgbClr val="([0-9A-F]{6})"\/>(?:(?!<\/a:r>).)*<a:t>“/s.exec(chat);
