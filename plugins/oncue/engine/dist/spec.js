@@ -1,8 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.plain = exports.WIDE = void 0;
+exports.plain = exports.WIDE = exports.HEADERS = exports.SCALES = void 0;
+exports.look = look;
 exports.checkFormat = checkFormat;
 exports.stageFor = stageFor;
+exports.contrast = contrast;
+exports.contrastWarnings = contrastWarnings;
 exports.loadSpec = loadSpec;
 exports.runs = runs;
 /**
@@ -11,6 +14,26 @@ exports.runs = runs;
  */
 const node_fs_1 = require("node:fs");
 const node_path_1 = require("node:path");
+/**
+ * Each theme value and its multiplier on today's design: radius on card corners, type on font sizes, density on
+ * gaps and paddings, background on the glow's opacity. The default (×1) is today's look.
+ */
+exports.SCALES = {
+    radius: { sharp: 0.2, soft: 0.55, round: 1 },
+    type: { small: 0.9, regular: 1, large: 1.1 },
+    density: { compact: 0.75, regular: 1, airy: 1.3 },
+    background: { glow: 1, subtle: 0.4, flat: 0 },
+};
+/** What content scenes show above the kicker: logo and name, logo only, or nothing. */
+exports.HEADERS = ["brand", "logo", "none"];
+function look(spec) {
+    const t = spec.theme ?? {};
+    return {
+        radius: exports.SCALES.radius[t.radius ?? "round"], type: exports.SCALES.type[t.type ?? "regular"],
+        density: exports.SCALES.density[t.density ?? "regular"], background: exports.SCALES.background[t.background ?? "glow"],
+        header: t.header ?? "brand",
+    };
+}
 const KINDS = new Set(["hook", "list", "card", "chat", "steps", "grid", "media", "cta"]);
 const HEX = /^#[0-9a-fA-F]{6}$/;
 function fail(path, msg) { throw new Error(`short.json ${path}: ${msg}`); }
@@ -42,6 +65,49 @@ function stageFor(format) {
 exports.WIDE = {
     hook: "stack", list: "side", card: "side", chat: "side", steps: "side", grid: "top", media: "top", cta: "stack",
 };
+/** theme is optional; each key it has must be a known key with one of its listed values. */
+function checkTheme(theme) {
+    if (theme === undefined)
+        return;
+    if (!theme || typeof theme !== "object" || Array.isArray(theme))
+        fail("theme", "must be an object such as { \"radius\": \"soft\" }");
+    const choices = { ...Object.fromEntries(Object.entries(exports.SCALES).map(([k, v]) => [k, Object.keys(v)])), header: exports.HEADERS };
+    for (const [k, v] of Object.entries(theme)) {
+        const allowed = Object.hasOwn(choices, k) ? choices[k] : undefined;
+        if (!allowed)
+            fail(`theme.${k}`, `is not a theme key; use ${Object.keys(choices).join(", ")}`);
+        if (!allowed.includes(v))
+            fail(`theme.${k}`, `must be one of ${allowed.join(", ")}`);
+    }
+}
+/** WCAG 2 contrast ratio of two #rrggbb colours, from 1 (same) to 21 (black on white). */
+function contrast(a, b) {
+    const lum = (hex) => {
+        const [r, g, bl] = [1, 3, 5].map((i) => {
+            const c = parseInt(hex.slice(i, i + 2), 16) / 255;
+            return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+        });
+        return 0.2126 * r + 0.7152 * g + 0.0722 * bl;
+    };
+    const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
+    return (hi + 0.05) / (lo + 0.05);
+}
+/** Every text colour drawn on every fill, in the video or the deck: [text, fill]. */
+const TEXT_PAIRS = [
+    ["ink", "ground"], ["ink", "card"], ["muted", "ground"], ["muted", "card"], ["accent", "ground"], ["accent", "card"],
+    ["highlight", "ground"], ["accent", "chip"], ["you", "card"], ["panelInk", "panel"], ["panelMuted", "panel"],
+    // {accent} and `code` (ink, in the video) inside a card row's value.
+    ["accent", "panel"], ["ink", "panel"],
+    ["panelInk", "panelRule"], ["ground", "highlight"], ["ground", "accent"],
+];
+/** One warning per drawn pair under WCAG's 4.5:1 for text, naming both keys. */
+function contrastWarnings(c) {
+    return TEXT_PAIRS.flatMap(([text, fill]) => {
+        const r = contrast(c[text], c[fill]);
+        // Rounded down, so a failing 4.498 never prints as a passing-looking 4.50.
+        return r < 4.5 ? [`brand.colors.${text} on brand.colors.${fill} is ${(Math.floor(r * 100) / 100).toFixed(2)}:1; text needs 4.5:1 or more.`] : [];
+    });
+}
 /** Reads and checks short.json; every error names the field to fix. */
 function loadSpec(file) {
     const spec = JSON.parse((0, node_fs_1.readFileSync)(file, "utf8"));
@@ -63,6 +129,9 @@ function loadSpec(file) {
     str(b.fonts?.mono, "brand.fonts.mono");
     str(b.deckFonts?.head, "brand.deckFonts.head");
     str(b.deckFonts?.body, "brand.deckFonts.body");
+    if (b.deckFonts.mono !== undefined)
+        str(b.deckFonts.mono, "brand.deckFonts.mono");
+    checkTheme(spec.theme);
     if (!Array.isArray(spec.lines) || spec.lines.length === 0)
         fail("lines", "needs at least one line");
     spec.lines.forEach((l, i) => {

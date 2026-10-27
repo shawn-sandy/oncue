@@ -34,8 +34,36 @@ export interface Brand {
   colors: Colors;
   /** @fontsource package names used by the video, e.g. "plus-jakarta-sans". */
   fonts: { sans: string; mono: string };
-  /** Fonts written into the .pptx (rendered by the viewer's PowerPoint). */
-  deckFonts: { head: string; body: string };
+  /** Fonts written into the .pptx (rendered by the viewer's PowerPoint). mono defaults to Courier New. */
+  deckFonts: { head: string; body: string; mono?: string };
+}
+
+/**
+ * Each theme value and its multiplier on today's design: radius on card corners, type on font sizes, density on
+ * gaps and paddings, background on the glow's opacity. The default (×1) is today's look.
+ */
+export const SCALES = {
+  radius: { sharp: 0.2, soft: 0.55, round: 1 },
+  type: { small: 0.9, regular: 1, large: 1.1 },
+  density: { compact: 0.75, regular: 1, airy: 1.3 },
+  background: { glow: 1, subtle: 0.4, flat: 0 },
+} as const;
+/** What content scenes show above the kicker: logo and name, logo only, or nothing. */
+export const HEADERS = ["brand", "logo", "none"] as const;
+export type Header = (typeof HEADERS)[number];
+
+/** Optional look for the whole short; every unset key keeps today's design. */
+export type Theme = { [K in keyof typeof SCALES]?: keyof (typeof SCALES)[K] } & { header?: Header };
+
+/** A spec's theme as the renderers use it: multipliers, plus the header. */
+export interface Look { radius: number; type: number; density: number; background: number; header: Header }
+export function look(spec: Spec): Look {
+  const t = spec.theme ?? {};
+  return {
+    radius: SCALES.radius[t.radius ?? "round"], type: SCALES.type[t.type ?? "regular"],
+    density: SCALES.density[t.density ?? "regular"], background: SCALES.background[t.background ?? "glow"],
+    header: t.header ?? "brand",
+  };
 }
 
 /** Text may mark an accent span with {braces} and inline code with `backticks`. */
@@ -74,6 +102,8 @@ export interface Spec {
    */
   format: Format;
   brand: Brand;
+  /** Corners, type size, spacing, background and header, for the video and the deck alike. */
+  theme?: Theme;
   lines: Line[];
 }
 
@@ -117,6 +147,48 @@ export const WIDE: { [K in SceneKind]: K extends "hook" | "cta" ? "stack" | "sid
   hook: "stack", list: "side", card: "side", chat: "side", steps: "side", grid: "top", media: "top", cta: "stack",
 };
 
+/** theme is optional; each key it has must be a known key with one of its listed values. */
+function checkTheme(theme: unknown): void {
+  if (theme === undefined) return;
+  if (!theme || typeof theme !== "object" || Array.isArray(theme)) fail("theme", "must be an object such as { \"radius\": \"soft\" }");
+  const choices: Record<string, readonly string[]> = { ...Object.fromEntries(Object.entries(SCALES).map(([k, v]) => [k, Object.keys(v)])), header: HEADERS };
+  for (const [k, v] of Object.entries(theme)) {
+    const allowed = Object.hasOwn(choices, k) ? choices[k] : undefined;
+    if (!allowed) fail(`theme.${k}`, `is not a theme key; use ${Object.keys(choices).join(", ")}`);
+    if (!allowed.includes(v as string)) fail(`theme.${k}`, `must be one of ${allowed.join(", ")}`);
+  }
+}
+
+/** WCAG 2 contrast ratio of two #rrggbb colours, from 1 (same) to 21 (black on white). */
+export function contrast(a: string, b: string): number {
+  const lum = (hex: string): number => {
+    const [r, g, bl] = [1, 3, 5].map((i) => {
+      const c = parseInt(hex.slice(i, i + 2), 16) / 255;
+      return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    }) as [number, number, number];
+    return 0.2126 * r + 0.7152 * g + 0.0722 * bl;
+  };
+  const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x) as [number, number];
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+/** Every text colour drawn on every fill, in the video or the deck: [text, fill]. */
+const TEXT_PAIRS: [keyof Colors, keyof Colors][] = [
+  ["ink", "ground"], ["ink", "card"], ["muted", "ground"], ["muted", "card"], ["accent", "ground"], ["accent", "card"],
+  ["highlight", "ground"], ["accent", "chip"], ["you", "card"], ["panelInk", "panel"], ["panelMuted", "panel"],
+  // {accent} and `code` (ink, in the video) inside a card row's value.
+  ["accent", "panel"], ["ink", "panel"],
+  ["panelInk", "panelRule"], ["ground", "highlight"], ["ground", "accent"],
+];
+/** One warning per drawn pair under WCAG's 4.5:1 for text, naming both keys. */
+export function contrastWarnings(c: Colors): string[] {
+  return TEXT_PAIRS.flatMap(([text, fill]) => {
+    const r = contrast(c[text], c[fill]);
+    // Rounded down, so a failing 4.498 never prints as a passing-looking 4.50.
+    return r < 4.5 ? [`brand.colors.${text} on brand.colors.${fill} is ${(Math.floor(r * 100) / 100).toFixed(2)}:1; text needs 4.5:1 or more.`] : [];
+  });
+}
+
 /** Reads and checks short.json; every error names the field to fix. */
 export function loadSpec(file: string): LoadedSpec {
   const spec = JSON.parse(readFileSync(file, "utf8")) as Spec;
@@ -130,6 +202,8 @@ export function loadSpec(file: string): LoadedSpec {
   for (const k of needed) if (!b.colors?.[k]) fail(`brand.colors.${k}`, "is required");
   str(b.fonts?.sans, "brand.fonts.sans"); str(b.fonts?.mono, "brand.fonts.mono");
   str(b.deckFonts?.head, "brand.deckFonts.head"); str(b.deckFonts?.body, "brand.deckFonts.body");
+  if (b.deckFonts.mono !== undefined) str(b.deckFonts.mono, "brand.deckFonts.mono");
+  checkTheme(spec.theme);
   if (!Array.isArray(spec.lines) || spec.lines.length === 0) fail("lines", "needs at least one line");
   spec.lines.forEach((l, i) => {
     str(l.vo, `lines[${i}].vo`);

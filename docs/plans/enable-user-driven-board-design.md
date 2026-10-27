@@ -1,16 +1,16 @@
 ---
-status: todo
+status: completed
 type: feature
 created: 2026-10-25
 repo-name: oncue
 effort: medium
 artifact-url: https://claude.ai/artifact/3aKSmsRaDRragAh4xuXjs4
-glance: Every OnCue Short uses the same eight layouts with only colours, a logo and fonts swapped. This proposal maps what is fixed today, compares five ways to let the person's own design input drive the look, and recommends a theme-token layer first. A scratch prototype rendered two new looks while the Gleaner example stayed pixel-identical.
+glance: Every OnCue Short used the same eight layouts with only colours, a logo and fonts swapped. OnCue 1.4.0 adds a theme layer, five named tokens for corners, type size, spacing, background and header that drive both the video and the deck, and the storyboard skill maps words, a DESIGN.md, design tokens, Figma, an image or a site onto them. check now warns on low-contrast colours, and Gleaner without a theme renders pixel-identical stills.
 ---
 
 # Plan: User-driven board design for OnCue
 
-> **Proposal, not approved.** Nothing here is implemented. Steps, Files and Tests describe the recommended first step (Phase 1) and start only after the person picks a direction under Open decisions.
+> **Implemented in OnCue 1.4.0 (Phase 1).** Built with the recommended answers to the open decisions, except decision 4, which 1.3.0 overtook by shipping 16:9 and custom sizes. Findings 1 and 2 under Current state predate 1.3.0.
 
 ## Context
 
@@ -123,7 +123,7 @@ Each has a recommended answer; Phase 1 below assumes the recommended ones.
 1. **Direction.** Recommended: B now, C next. Alternatives: go straight to C or E, or keep A.
 2. **Token form.** Recommended: named enums (`sharp`, `soft`, `round`). Alternative: raw numbers (`radius: 24`), more freedom, harder to keep the deck in step and to translate from words.
 3. **Motion in Phase 1.** Recommended: no, Phase 2. It touches `src/render.ts` and needs its own timing review.
-4. **Non-9:16 formats now.** Recommended: make `loadSpec` reject any `format` that is not 9:16 in Phase 1, naming the field, until per-format layouts exist, instead of rendering the broken output in findings 1 and 2.
+4. **Non-9:16 formats now.** Recommended: make `loadSpec` reject any `format` that is not 9:16 in Phase 1, naming the field, until per-format layouts exist, instead of rendering the broken output in findings 1 and 2. Overtaken: 1.3.0 (#14) renders 16:9 and custom sizes, so no guard was added.
 5. **The Gleaner deck's 2.71:1 pair.** Recommended: switch the deck's "you" bubble text and icon-dot glyphs from `panelInk` to `ground` (6.42:1 for Gleaner), accepting that slide 4's bubble and the icon dots change in the Gleaner deck. Alternative: leave it and let the new contrast check report it.
 6. **Where restyling lives.** Recommended: a "Look" step in the storyboard skill plus `references/theme.md`, no new skill. Alternative: a separate `style` skill, if restyling after the voiceover turns out to be a common request on its own.
 7. **Order against the research and visuals plan.** Recommended: land Phase 1 after that plan's 1.3.0, so the `image` frame is themed from day one and the test setup already exists. Alternative: land first and let the visuals phase adopt the tokens.
@@ -134,38 +134,35 @@ Let the person's own design input (words, a DESIGN.md, tokens, Figma, a referenc
 
 ## Steps
 
-Phase 1 only, assuming the recommended answers to the open decisions.
+Phase 1 only, with the recommended answers to the open decisions; decision 4 was overtaken by 1.3.0.
 
-1. Write the failing engine tests `plugins/oncue/engine/test/theme-spec.test.mjs`, `theme-render.test.mjs` and `theme-fit.test.mjs` (cases under Tests), reusing the `node:test` setup from step 5 of `docs/plans/add-research-and-visuals-skills.md` if it has landed, else adding its `test` script, `engine:test` root script and CI step the same way. Why: the tests must fail before the change to prove they test it. Verify: `npm run engine:test` exits non-zero on theme assertions, not on an import or syntax error.
-2. Add an optional `theme` to `Spec` in `plugins/oncue/engine/src/spec.ts` with `radius`, `type`, `density`, `background` and `header`, exported defaults equal to today's design and exported scale tables; make `loadSpec` reject an unknown key or value naming `theme.<key>` and the allowed values, reject a `format` that is not 9:16 naming `format`, and accept an optional `brand.deckFonts.mono`. Why: `CLAUDE.md` requires the type and validation first, and every input route funnels through this one check. Verify: `npm run build && npm test` in the engine passes every theme-spec case.
-3. In the CSS template in `plugins/oncue/engine/src/scenes.ts`, set `--radius`, `--type`, `--density` and `--blob` on `:root` from the theme and write each size as an explicit `calc(<today's px> * var(--x))` per rule (not the prototype's regex), omit the blob divs for `flat`, and render the header as logo plus name, logo only, or nothing. Why: every default multiplies by 1, so no existing pixel moves. Verify: the scenes assertions in theme-render.test.mjs pass.
-4. Apply the same scales in `plugins/oncue/engine/src/deck.ts`: `rectRadius` values times the radius scale, point sizes times the type scale, gaps times the density scale, the brand row per `header`, mono runs in `deckFonts.mono ?? "Courier New"`, and `ground` instead of `panelInk` on `highlight` fills. Why: one token drives both renderers at 192 px per inch, so the deck stays in step. Verify: the deck assertions in theme-render.test.mjs pass, including no negative or off-slide shape for the `large` + `airy` and `small` + `compact` extremes.
-5. Report layout that does not fit: after the scenes page loads in `plugins/oncue/engine/src/capture.ts`, measure each scene's `.content` or `.center` box (`scrollHeight - clientHeight`) and return one warning per overflowing scene, which `stills` and `video` in `src/cli.ts` print beside the timeline warnings. Why: once titles, type and density come from the person, overflow lands on the header and the Shorts buttons with no warning today (finding 5). Verify: theme-fit.test.mjs passes locally with Chromium installed and skips with a printed reason without it.
-6. Warn on low contrast in `check` in `plugins/oncue/engine/src/cli.ts`, computing the WCAG ratio for every text pair the two renderers draw (ink, muted and accent on ground and card; accent on chip; you on card; panelInk and panelMuted on panel; panelInk on panelRule; ground on highlight and accent) and warning below 4.5:1, naming both keys. Why: palettes taken from images, sites or words are where bad input hurts legibility, and spec.md already asks for 4.5:1. Verify: the contrast cases in theme-spec.test.mjs pass and `npm run example:check` prints no contrast warning for Gleaner.
-7. Teach the storyboard skill to set the look: a "Look" bullet in step 1 of `plugins/oncue/skills/storyboard/SKILL.md` that lists the input routes and says a theme is safe after the voiceover, a `theme` table and the optional `deckFonts.mono` row in `skills/storyboard/references/spec.md` (replacing the dark-ground and portrait-only notes), and a new `skills/storyboard/references/theme.md` with the word, DESIGN.md, DTCG and reference-image mappings to colours and token values. Why: Claude, not the engine, translates input, so the mapping has to be written down where the skill reads it. Verify: `npm run validate` passes its link checks and `grep -c "theme" plugins/oncue/skills/storyboard/references/spec.md` counts the new rows.
-8. Rebuild and run the example end to end: `npm run build`, `npm run example:check`, `npm run example:deck` and `npm run example:stills`, then compare the Gleaner stills with ones rendered from main's `dist/` in a scratch folder. Why: `dist/` is committed, and the Gleaner example is the baseline that must not move. Verify: every still has 0 differing pixels against main's and the example prints no new warnings.
-9. Release the next minor version: bump `version` in `plugins/oncue/.claude-plugin/plugin.json`, add a `theme` keyword, add the theme to the README's "How it works", and add a changelog entry at the end of `README.md`. Why: `CLAUDE.md` asks for a bump when what the engine does changes. Verify: `npm run validate`, `npm run engine:typecheck` and `npm run engine:test` exit 0.
+1. [x] Write the failing engine tests: a new `plugins/oncue/engine/test/theme.test.mjs` (theme validation, contrast, both renderers under each token), theme extremes in `test/deck.test.mjs`, and theme fit cases in `test/fit.test.mjs`, on the `node:test` setup that 1.3.0 shipped. Why: the tests must fail before the change to prove they test it, and the existing files already hold the deck-measuring and stills helpers. Verify: before the change, `npm test` failed 27 new cases, each on its assertion, not on an import or syntax error.
+2. [x] Add an optional `theme` to `Spec` in `plugins/oncue/engine/src/spec.ts` with `radius`, `type`, `density`, `background` and `header`, exported scale tables (`SCALES`, `HEADERS`) whose defaults are x1, and a `look()` helper both renderers read; make `loadSpec` reject an unknown key (prototype names such as `toString` included) or value naming `theme.<key>` and the allowed values, and accept an optional `brand.deckFonts.mono`. No 9:16 guard: 1.3.0 (#14) renders 16:9 and custom sizes, which overtook open decision 4. Why: `CLAUDE.md` requires the type and validation first, and every input route funnels through this one check. Verify: `npm run build && npm test` passes every theme validation case.
+3. [x] In the CSS template in `plugins/oncue/engine/src/scenes.ts`, write each font size, gap, padding and card corner as today's px times its scale, computed when the page is written, omit the blob divs for `flat`, and render the header as logo plus name, logo only, or nothing. Pills, circles and line caps keep their fixed values. Why: every default multiplies by 1, so no existing pixel moves. Verify: the scenes assertions in theme.test.mjs pass.
+4. [x] Apply the same scales in `plugins/oncue/engine/src/deck.ts`: card corners times the radius scale (the call-to-action pill keeps its corner, as the video's pill stays round), every point size times the type scale through the one `text()` helper, gaps between items times the density scale, the brand row per `header`, mono runs in `deckFonts.mono ?? "Courier New"`, and `ground` instead of `panelInk` for the "you" bubble text and icon-dot glyphs on `highlight`. Why: one token drives both renderers at 192 px per inch, so the deck stays in step. Verify: the deck assertions in theme.test.mjs pass, and deck.test.mjs finds no negative or off-slide shape under `large` + `airy` and `small` + `compact` at 9:16 and 16:9.
+5. [x] Report layout that does not fit. 1.3.0's fit guard already measures each scene's `.content` or `.center` box in `src/render.ts` before the first frame, shrinks one that overflows, and has `stills` and `video` warn naming the scene and write `build/fit.json`; this plan adds the theme cases to `test/fit.test.mjs`. Why: once titles, type and density come from the person, overflow would otherwise land on the header and the Shorts buttons (finding 5). Verify: fit.test.mjs passes locally with Chromium: a 92-character list title over four items is named with no theme and under `type: "large"`, which shrinks it further, and Gleaner at 9:16 warns for no scene; it skips with a printed reason without Chromium.
+6. [x] Warn on low contrast in `check` in `plugins/oncue/engine/src/cli.ts`, computing the WCAG ratio for every text pair the two renderers draw (ink, muted and accent on ground and card; highlight on ground; accent on chip; you on card; panelInk, panelMuted, accent and ink on panel; panelInk on panelRule; ground on highlight and accent) and warning below 4.5:1, naming both keys, with the ratio rounded down so a failing pair never prints as 4.50. Why: palettes taken from images, sites or words are where bad input hurts legibility, and spec.md already asks for 4.5:1. Verify: the contrast cases in theme.test.mjs pass and `npm run example:check` prints no contrast warning for Gleaner.
+7. [x] Teach the storyboard skill to set the look: a "Look" bullet in step 1 of `plugins/oncue/skills/storyboard/SKILL.md` that lists the input routes and says a theme is safe after the voiceover, a `theme` section and the optional `deckFonts.mono` row in `skills/storyboard/references/spec.md` (replacing the dark-ground note), a new `skills/storyboard/references/theme.md` with the word, DESIGN.md, DTCG, Figma, image and site mappings, and matching notes in the `animate-short` and `vertical-deck` skills. Why: Claude, not the engine, translates input, so the mapping has to be written down where the skill reads it. Verify: `npm run validate` passes its link checks and `grep -c "theme" plugins/oncue/skills/storyboard/references/spec.md` counts 8 lines, up from 0.
+8. [x] Rebuild and run the example end to end: `npm run build`, `npm run example:check`, `npm run example:deck` and `npm run example:stills`, then compare the Gleaner stills and slides with ones rendered from main's `dist/` in a scratch folder. Why: `dist/` is committed, and the Gleaner example is the baseline that must not move. Verify: all 9 stills have 0 differing pixels against main's, the slide XML differs only in the three "you" bubble runs (decision 5), and the example prints no warnings.
+9. [x] Release 1.4.0: bump `version` in `plugins/oncue/.claude-plugin/plugin.json`, add a `theme` keyword, add the theme to the README's "How it works" and its brand bullet, and add a changelog entry to the README's Changelog. Why: `CLAUDE.md` asks for a bump when what the engine does changes. Verify: `npm run validate`, `npm run engine:typecheck` and `npm run engine:test` exit 0, with 67 tests passing and none skipped.
 
 ## Files
 
-- plugins/oncue/engine/src/spec.ts (modified) — `Theme` type, defaults, scale tables, `loadSpec` checks, 9:16 guard, `deckFonts.mono`
-- plugins/oncue/engine/src/scenes.ts (modified) — theme custom properties, background and header options
-- plugins/oncue/engine/src/deck.ts (modified) — radius, type, density, header, mono font, highlight text pair
-- plugins/oncue/engine/src/capture.ts (modified) — fit measurement
-- plugins/oncue/engine/src/cli.ts (modified) — fit and contrast warnings
+- plugins/oncue/engine/src/spec.ts (modified) — `Theme` type, `SCALES`, `HEADERS`, `look()`, theme checks, `contrast()` and `contrastWarnings()`, `deckFonts.mono`
+- plugins/oncue/engine/src/scenes.ts (modified) — theme-scaled sizes, background and header options
+- plugins/oncue/engine/src/deck.ts (modified) — radius, type, density, header, mono font, ground-on-highlight text
+- plugins/oncue/engine/src/cli.ts (modified) — contrast warnings in `check`
 - plugins/oncue/engine/dist/ (generated) — rebuilt with `npm run build` and committed
-- plugins/oncue/engine/test/theme-spec.test.mjs (new) — theme validation, format guard, contrast
-- plugins/oncue/engine/test/theme-render.test.mjs (new) — both renderers under each token
-- plugins/oncue/engine/test/theme-fit.test.mjs (new) — overflow warnings in headless Chromium
+- plugins/oncue/engine/test/theme.test.mjs (new) — validation, contrast, both renderers under each token
+- plugins/oncue/engine/test/deck.test.mjs (modified) — theme extremes keep every shape valid and on the slide
+- plugins/oncue/engine/test/fit.test.mjs (modified) — fit warnings for a long title, under `type: "large"`, and Gleaner at 9:16
 - plugins/oncue/skills/storyboard/SKILL.md (modified) — the "Look" bullet
-- plugins/oncue/skills/storyboard/references/spec.md (modified) — `theme` rows, `deckFonts.mono`, updated notes
+- plugins/oncue/skills/storyboard/references/spec.md (modified) — `theme` section, `deckFonts.mono`, contrast pairs, light-ground note
 - plugins/oncue/skills/storyboard/references/theme.md (new) — input-to-token mappings
-- plugins/oncue/.claude-plugin/plugin.json (modified) — version and `theme` keyword
-- README.md (modified) — "How it works" and changelog
-- plugins/oncue/engine/package.json (modified) — `test` script, only if the research plan's test setup has not landed
-- package.json (modified) — `engine:test` script, same condition
-- .github/workflows/validate.yml (modified) — `npm run engine:test` step, same condition
-- CLAUDE.md (modified) — `npm run engine:test` in Validate, same condition
+- plugins/oncue/skills/animate-short/SKILL.md (modified) — the look comes from `brand` and `theme`
+- plugins/oncue/skills/vertical-deck/SKILL.md (modified) — `deckFonts.mono` and the theme in the deck
+- plugins/oncue/.claude-plugin/plugin.json (modified) — version 1.4.0 and `theme` keyword
+- README.md (modified) — "How it works", the brand-and-look bullet, changelog
 
 ## Tests
 
@@ -173,37 +170,37 @@ Phase 1 only, assuming the recommended answers to the open decisions.
 
 ### Objective-Verification Test
 
-- **File:** `plugins/oncue/engine/test/theme-render.test.mjs`
+- **File:** `plugins/oncue/engine/test/theme.test.mjs`
 - **Type:** smoke test against the committed `dist/`
-- **Asserts:** the Gleaner spec with `theme: { radius: "sharp", header: "none", background: "flat" }` produces a scenes page with no `.blob` and no `.brand` element and `--radius:0.2`, and a deck whose slide 2 corner `adj` values are a fifth of the unthemed deck's and which holds no brand-name run; the same spec without `theme` produces slide XML identical to a spec whose `theme` lists every default.
+- **Asserts:** the Gleaner spec with `theme: { radius: "sharp", header: "none", background: "flat" }` produces a scenes page with no `.blob` and no `.brand` element and a `.card` corner of 7.2px (a fifth of 36px), and a deck whose list slide corner `adj` values are a fifth of the unthemed deck's and which holds no brand-name run or logo; the same spec without `theme` writes the same scenes page and slide XML as a spec whose `theme` lists every default.
 - **Run:** `npm run engine:test`
 
 ### Unit Tests
 
-- **File:** `plugins/oncue/engine/test/theme-spec.test.mjs`
-- **Targets:** `loadSpec`, the contrast function
-- **Key cases:** unknown theme key, unknown value (error names `theme.radius` and lists the values), a theme with every key accepted, no theme accepted, 1080 x 1080 and 1920 x 1080 rejected naming `format`, 720 x 1280 accepted, `muted` equal to `card` warns naming both keys, Gleaner's palette gives no warning.
+- **File:** `plugins/oncue/engine/test/theme.test.mjs`
+- **Targets:** `loadSpec`, `contrast`, `contrastWarnings`, `check`
+- **Key cases:** an unknown key (`shape`, `toString`, `__proto__`) and an unknown value for each key name the field and list the values, a theme that is not an object is rejected, every value and no theme are accepted, `deckFonts.mono` must be a non-empty string, the WCAG formula gives 21:1 and 4.54:1 on known pairs, Gleaner's palette gives no warning, `muted` equal to `card` warns naming both keys, accent and ink on panel are checked, 4.498:1 prints as 4.49, and `check` prints the warnings and exits 0.
 
 ### Integration Tests
 
-- **File:** `plugins/oncue/engine/test/theme-render.test.mjs`
+- **File:** `plugins/oncue/engine/test/theme.test.mjs`, `plugins/oncue/engine/test/deck.test.mjs`
 - **Targets:** `writeScenes`, `writeDeck`
-- **Key cases:** each enum value sets its custom property, `subtle` sets `--blob:0.22`, `logo` keeps the logo and drops the name in both outputs, `deckFonts.mono` reaches the mono runs, Courier New stays when it is absent, the extreme combinations produce no negative-height or off-slide shape.
+- **Key cases:** each value sets its scaled size (today's values pinned for the defaults), `subtle` sets the glow to 0.22 and `flat` removes it, `logo` keeps the logo and drops the name in both outputs, `type` scales point sizes, `density` spreads or closes up the list rows, `deckFonts.mono` reaches the mono runs and Courier New stays without it, the "you" bubble text is `ground`, the call-to-action pill ignores `radius`, and the extreme combinations produce no negative-height or off-slide shape at 9:16 and 16:9.
 
 ### E2E Tests
 
-- **File:** `plugins/oncue/engine/test/theme-fit.test.mjs`
-- **Targets:** `renderStills` and the fit warnings in headless Chromium
-- **Key cases:** a beat with a 92-character title and four list items warns naming its scene, both with no theme and under `type: "large"`; the Gleaner example warns for no scene; the test skips with a printed reason when Playwright or Chromium is missing, which counts as unverified, not passed.
+- **File:** `plugins/oncue/engine/test/fit.test.mjs`
+- **Targets:** `stills` and the fit warnings in headless Chromium
+- **Key cases:** a beat with a 92-character title and four list items is shrunk and named, both with no theme and under `type: "large"`, which shrinks it further; the Gleaner example at 9:16 warns for no scene; the tests skip with a printed reason when Playwright or Chromium is missing, which counts as unverified, not passed.
 
 ## Acceptance Criteria
 
-- [ ] A spec without `theme` renders Gleaner's stills with 0 differing pixels and its slide XML unchanged, apart from the decided highlight text pair.
-- [ ] Each of the five tokens visibly changes both the stills and the deck.
-- [ ] `node dist/cli.js check` rejects an unknown theme value, and a non-9:16 `format`, naming the field.
-- [ ] `stills` names every scene whose content overflows its box.
-- [ ] `check` warns on any drawn text pair under 4.5:1 and prints none for Gleaner.
-- [ ] Given "playful, light, rounded" or a DESIGN.md, the storyboard skill writes a palette and `theme` that pass `check`, and shows stills before locking the beats.
+- [x] A spec without `theme` renders Gleaner's stills with 0 differing pixels and its slide XML unchanged, apart from the decided highlight text pair.
+- [x] Each of the five tokens visibly changes the stills, and every token but `background` changes the deck (the deck has always had a flat ground, as the Dimensions table says).
+- [x] `node dist/cli.js check` rejects an unknown theme key or value, naming the field. The non-9:16 `format` guard was dropped: 1.3.0 renders 16:9 and custom sizes, and `format.test.mjs` still covers the sizes it rejects.
+- [x] `stills` names every scene whose content overflows its box.
+- [x] `check` warns on any drawn text pair under 4.5:1 and prints none for Gleaner.
+- [x] Given "playful, light, rounded" or a DESIGN.md, the storyboard skill writes a palette and `theme` that pass `check`, and shows stills before locking the beats.
 
 ## Verification
 

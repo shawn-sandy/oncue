@@ -13,7 +13,7 @@ Turn a topic into a locked set of beats: what the narrator says, what the viewer
 - What it is, who it is for, and the one thing a viewer should do at the end (install, follow, visit).
 - Real facts only: features, commands, names, links. Read the product's README, docs or code when they are available. Never invent numbers, quotes or results; mark a missing fact as `[YOUR FACT]` and say so.
 - Where it will be posted, which sets `format`: 1080×1920 (9:16) for YouTube Shorts, Reels and TikTok; 1920×1080 (16:9) for a YouTube video or a landscape presentation. Square and 4:5 sizes (1080×1080, 1080×1350) render, but with the portrait layout and its Shorts inset, so dense scenes shrink; say so before choosing one. Ask when it isn't clear; one spec renders one size.
-- The brand: a design system the person names or has (colours, fonts, logo), else the product's logo and site. With none, pick a dark ground, one accent and one highlight from the subject and say what you chose.
+- The look: logo, colours, fonts and an optional `theme` (corners, type size, spacing, background, header). Take it from what the person gives: plain words ("playful, light, rounded"), a DESIGN.md, design tokens (W3C DTCG or Style Dictionary JSON), Figma tokens, a reference image or screenshot, a reference site's CSS custom properties, or an installed design system; else the product's logo and site. With none, pick a dark ground, one accent and one highlight from the subject and say what you chose. [The theme guide](references/theme.md) maps each route to `short.json`. A theme changes no `vo`, so it is safe to change after the voiceover.
 
 ## 2. Shape the beats
 
@@ -31,11 +31,11 @@ Write `short.json` in a project folder with the logo beside it. Then check it wi
 node dist/cli.js check <folder>/short.json
 ```
 
-`check` validates every field and prints the beats with an estimated length. Fix what it names.
+`check` validates every field and prints the beats with an estimated length. Fix what it names, contrast warnings included.
 
 ## 4. Show the storyboard
 
-Show the beats so the person can change them before audio is recorded. Pick what the session supports:
+Show the beats and the look so the person can change them before audio is recorded. Only the stills show the palette and `theme` as the video will, so include them whenever they render. Pick what the session supports:
 
 - **Silent preview stills (always available):** `node dist/cli.js stills <folder>/short.json` renders one frame per beat with estimated timing into `build/stills/`. Combine them into one contact sheet and show it with the beat list.
 - **Design canvas (when the Artifact tool offers the Design type):** one 420×1080 artboard per beat, each with a frame sketch in the spec's aspect (9:16 or 16:9) on top, then the voiceover line, a motion note, and a timing chip. For a portrait frame, draw a dashed line over the bottom ~15% marking where the Shorts captions and buttons sit. Use the person's design system when one is installed.

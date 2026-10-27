@@ -2,7 +2,7 @@
 /**
  * oncue engine.
  *
- *   node dist/cli.js check    <short.json>                     validate; print the layout, beats, VO script and estimated length
+ *   node dist/cli.js check    <short.json>                     validate; print the layout, beats, VO script, estimated length and low-contrast colour pairs
  *   node dist/cli.js script   <short.json>                     print the voiceover script, one line per beat
  *   node dist/cli.js deck     <short.json> [--out deck.pptx]    native, editable PowerPoint, 9:16 or 16:9 (VO in speaker notes)
  *   node dist/cli.js stills   <short.json> [--words w.json --audio vo.mp3] [--at 1,5,9]   QA frames (default: one per scene)
@@ -19,7 +19,7 @@ import { join, resolve } from "node:path";
 import { renderStills, renderVideo, type Fit, type Size } from "./capture";
 import { deckSize, writeDeck } from "./deck";
 import { writeScenes } from "./scenes";
-import { loadSpec, stageFor, type LoadedSpec, type Spec } from "./spec";
+import { contrastWarnings, loadSpec, stageFor, type LoadedSpec, type Spec } from "./spec";
 import { buildTimeline, estimateWords, readWords, type Timeline } from "./timeline";
 
 const ENGINE = resolve(__dirname, "..");
@@ -83,6 +83,7 @@ async function main(): Promise<void> {
       console.log(`format ${spec.format.width}×${spec.format.height}: ${wide ? "landscape" : "portrait"} layout\n`);
       spec.lines.forEach((l, i) => console.log(`${String(i + 1).padStart(2)} ${l.scene.kind.padEnd(5)}  ${l.vo}`));
       console.log(`\n${spec.lines.length} beats, about ${Math.round(est.seconds)}s of voiceover. OK.`);
+      for (const w of contrastWarnings(spec.brand.colors)) console.warn("warning:", w);
       if (!wide && est.seconds > 170) console.warn("warning: YouTube Shorts allow up to 3 minutes; this is close to or over the limit.");
       return;
     }

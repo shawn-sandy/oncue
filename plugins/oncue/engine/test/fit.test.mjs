@@ -5,7 +5,7 @@
  */
 import { after, before, test } from "node:test";
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -29,18 +29,20 @@ before(async () => {
 });
 
 /**
- * Runs `stills` on a spec in its own folder and returns build/fit.json.
+ * Runs `stills` on a spec in its own folder and returns build/fit.json and what it printed to stderr.
  * @param {string} name @param {Record<string, unknown>} short
- * @returns {{ scene: number, scale: number, fits: boolean }[]}
+ * @returns {{ fit: { scene: number, scale: number, fits: boolean }[], stderr: string }}
  */
-function fitFor(name, short) {
+function stills(name, short) {
   const folder = join(dir, name);
   mkdirSync(folder);
   copyFileSync(new URL("logo.png", example), join(folder, "logo.png"));
   writeFileSync(join(folder, "short.json"), JSON.stringify(short));
-  execFileSync(process.execPath, ["dist/cli.js", "stills", join(folder, "short.json")], { cwd: engine, stdio: "pipe" });
-  return JSON.parse(readFileSync(join(folder, "build", "fit.json"), "utf8"));
+  const run = spawnSync(process.execPath, ["dist/cli.js", "stills", join(folder, "short.json")], { cwd: engine, encoding: "utf8" });
+  assert.equal(run.status, 0, run.stderr);
+  return { fit: JSON.parse(readFileSync(join(folder, "build", "fit.json"), "utf8")), stderr: run.stderr };
 }
+const fitFor = (/** @type {string} */ name, /** @type {Record<string, unknown>} */ short) => stills(name, short).fit;
 
 test("the Gleaner example at 1920×1080 needs no shrinking", (t) => {
   if (skip) { t.skip(skip); return; }
@@ -71,4 +73,37 @@ test("every scene of the Gleaner example fits at 1080×1080", (t) => {
   const fit = fitFor("gleaner-1x1", { ...gleaner, format: { width: 1080, height: 1080 } });
   assert.equal(fit.length, gleaner.lines.length);
   assert.deepEqual(fit.filter((f) => !f.fits), []);
+});
+
+test("the Gleaner example at 1080×1920 needs no shrinking and prints no fit warning", (t) => {
+  if (skip) { t.skip(skip); return; }
+  const { fit, stderr } = stills("gleaner-9x16", gleaner);
+  assert.equal(fit.length, gleaner.lines.length);
+  assert.deepEqual(fit.filter((f) => f.scale !== 1 || !f.fits), []);
+  assert.doesNotMatch(stderr, /warning: scene/);
+});
+
+// A 92-character title over four list items runs past its portrait box with today's sizes, and further
+// under type large: stills must shrink it, name it, and leave the scene before it alone.
+const list = gleaner.lines[1].scene;
+const long = {
+  vo: "Saving is easy. Finding it again is not.",
+  scene: {
+    ...list,
+    title: "Saving things is easy. Finding the page you meant to keep, a week later, is {the hard part.}",
+    items: [...list.items, { icon: "FiClock", title: "Lost time", desc: "Searching history for the one page you meant to keep" }].map((it) => ({ ...it, cue: undefined })),
+  },
+};
+test("stills names a list with a long title and four items, and type large shrinks it further", (t) => {
+  if (skip) { t.skip(skip); return; }
+  const lines = [gleaner.lines[0], long];
+  const plain = stills("long-plain", { ...gleaner, lines });
+  const large = stills("long-large", { ...gleaner, theme: { type: "large" }, lines });
+  for (const { fit, stderr } of [plain, large]) {
+    assert.equal(fit[0]?.scale, 1);
+    assert.ok(fit[1] && fit[1].scale < 1 && fit[1].fits, JSON.stringify(fit[1]));
+    assert.match(stderr, /warning: scene 2 \(list\)/);
+    assert.doesNotMatch(stderr, /warning: scene 1 /);
+  }
+  assert.ok((large.fit[1]?.scale ?? 1) < (plain.fit[1]?.scale ?? 0), `large ${large.fit[1]?.scale} vs regular ${plain.fit[1]?.scale}`);
 });

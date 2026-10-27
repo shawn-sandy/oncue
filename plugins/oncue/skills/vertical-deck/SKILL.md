@@ -23,7 +23,7 @@ From the engine folder (set up as in `../explainer-video/SKILL.md`):
 node dist/cli.js deck <folder>/short.json --out <folder>/deck.pptx
 ```
 
-Fonts written into the deck are `brand.deckFonts`; PowerPoint renders them on the viewer's machine, so keep them to fonts that ship with Office (Arial, Calibri, Cambria).
+Fonts written into the deck are `brand.deckFonts`; PowerPoint renders them on the viewer's machine, so keep them to fonts that ship with Office (Arial, Calibri, Cambria). `deckFonts.mono` (default Courier New) sets kickers, code, tags and timestamps. The deck follows `theme` too: corners, point sizes, gaps and the brand row; `background` is video only.
 
 ## Check
 
