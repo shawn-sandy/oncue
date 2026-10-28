@@ -19,6 +19,7 @@ A Claude Code plugin marketplace (`oncue`) shipping one plugin, `oncue`, with si
 ```bash
 npm run validate
 npm run engine:typecheck
+npm run engine:test
 ```
 
 Before calling an engine change done, run the example end to end in the engine folder: `npm run example:deck` and `npm run example:stills`, and look at the output.

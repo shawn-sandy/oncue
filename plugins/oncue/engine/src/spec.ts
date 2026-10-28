@@ -2,7 +2,7 @@
  * short.json — the single source of truth for one explainer.
  * The storyboard, the deck, the voiceover script and the animated video all read it.
  */
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
 /** Word in the voiceover that triggers an element. Matched as a prefix, case- and punctuation-insensitive. */
@@ -79,9 +79,11 @@ export interface ChatScene { kind: "chat"; kicker: string; title: Rich; turns: {
 export interface StepsScene { kind: "steps"; kicker: string; title: Rich; steps: { title: string; desc?: Rich; cue?: Cue }[]; result?: { text: string; cue?: Cue } }
 export interface GridScene { kind: "grid"; kicker: string; title: Rich; tiles: { icon: string; label: string; cue?: Cue }[] }
 export interface MediaScene { kind: "media"; kicker: string; title: Rich; mediaCue?: Cue; moments: { time: string; label: string; cue?: Cue }[] }
+/** A picture (PNG or JPEG, path relative to short.json) framed under the title (beside it in the landscape layout), letterboxed on the card colour. */
+export interface ImageScene { kind: "image"; kicker: string; title: Rich; src: string; alt: string; imageCue?: Cue; caption?: Rich; captionCue?: Cue }
 export interface CtaScene { kind: "cta"; headline: Rich; sub?: Rich; subCue?: Cue; pill?: { icon: string; text: string; cue?: Cue }; follow?: Rich; followCue?: Cue }
 
-export type Scene = HookScene | ListScene | CardScene | ChatScene | StepsScene | GridScene | MediaScene | CtaScene;
+export type Scene = HookScene | ListScene | CardScene | ChatScene | StepsScene | GridScene | MediaScene | ImageScene | CtaScene;
 export type SceneKind = Scene["kind"];
 
 export interface Line {
@@ -109,7 +111,7 @@ export interface Spec {
 
 export interface LoadedSpec { spec: Spec; dir: string; logoPath: string }
 
-const KINDS: ReadonlySet<string> = new Set<SceneKind>(["hook", "list", "card", "chat", "steps", "grid", "media", "cta"]);
+const KINDS: ReadonlySet<string> = new Set<SceneKind>(["hook", "list", "card", "chat", "steps", "grid", "media", "image", "cta"]);
 const HEX = /^#[0-9a-fA-F]{6}$/;
 
 function fail(path: string, msg: string): never { throw new Error(`short.json ${path}: ${msg}`); }
@@ -144,7 +146,7 @@ export function stageFor(format: Format): Stage {
  */
 export type Arrangement = "side" | "top" | "stack";
 export const WIDE: { [K in SceneKind]: K extends "hook" | "cta" ? "stack" | "side" : "side" | "top" } = {
-  hook: "stack", list: "side", card: "side", chat: "side", steps: "side", grid: "top", media: "top", cta: "stack",
+  hook: "stack", list: "side", card: "side", chat: "side", steps: "side", grid: "top", media: "top", image: "side", cta: "stack",
 };
 
 /** theme is optional; each key it has must be a known key with one of its listed values. */
@@ -205,11 +207,20 @@ export function loadSpec(file: string): LoadedSpec {
   if (b.deckFonts.mono !== undefined) str(b.deckFonts.mono, "brand.deckFonts.mono");
   checkTheme(spec.theme);
   if (!Array.isArray(spec.lines) || spec.lines.length === 0) fail("lines", "needs at least one line");
+  const dir = dirname(resolve(file));
   spec.lines.forEach((l, i) => {
     str(l.vo, `lines[${i}].vo`);
     if (!l.scene || !KINDS.has(l.scene.kind)) fail(`lines[${i}].scene.kind`, `must be one of ${[...KINDS].join(", ")}`);
+    if (l.scene.kind === "image") {
+      const at = `lines[${i}].scene`;
+      str(l.scene.src, `${at}.src`);
+      // Chromium and PowerPoint both render these; SVG and WebP behave inconsistently in PowerPoint.
+      if (!/\.(png|jpe?g)$/i.test(l.scene.src)) fail(`${at}.src`, `must be a PNG or JPEG file (.png, .jpg or .jpeg), got "${l.scene.src}"`);
+      const picture = resolve(dir, l.scene.src);
+      if (!existsSync(picture) || !statSync(picture).isFile()) fail(`${at}.src`, `file not found: ${picture} (paths are relative to short.json)`);
+      str(l.scene.alt, `${at}.alt`);
+    }
   });
-  const dir = dirname(resolve(file));
   return { spec, dir, logoPath: resolve(dir, b.logo) };
 }
 

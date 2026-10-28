@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: visuals-no-fake-ui
+context:
+  scaffold_script: fixture.sh

@@ -86,7 +86,9 @@ Say "go ahead without stopping" to skip the check-ins.
 oncue-engine/        Claude's copy of the engine; every command runs from here
 my-short/
   short.json         the spec: beats, scenes, cue words, brand
+  research.md        sources, facts, topic ideas and visual ideas (research skill; the engine never reads it)
   logo.png
+  images/            pictures for image beats (visuals skill): beat-03.png, ...
   voiceover.mp3      the chosen take (voiceover-take1.mp3, words-take1.json, ... while you choose)
   words.json         word timestamps for that take
   deck.pptx          editable 9:16 or 16:9 deck, voiceover in the speaker notes
@@ -116,14 +118,16 @@ Each stage is its own skill, so you can stop after any of them or start from an 
 | --- | --- | --- |
 | [setup](plugins/oncue/skills/setup/SKILL.md) | "set up OnCue", "update OnCue" | The plugin version and how to update or share it; Node, ffmpeg, Playwright and ElevenLabs checked, the engine installed, and which outputs are ready |
 | [explainer-video](plugins/oncue/skills/explainer-video/SKILL.md) | "make an explainer short about our CLI" | The whole pipeline, with check-ins at the beats and the voice |
+| [research](plugins/oncue/skills/research/SKILL.md) | "suggest three Shorts about this tool", "fact-check the storyboard", "make beat 2 punchier" | `research.md` with ranked topics, sourced facts and visual ideas; narration rewrites shown before and after, applied only on your approval and never to recorded lines without naming the re-record cost |
 | [storyboard](plugins/oncue/skills/storyboard/SKILL.md) | "storyboard a 60-second Short for this plugin" | `short.json`, a beat list, preview stills or a Design canvas |
+| [visuals](plugins/oncue/skills/visuals/SKILL.md) | "add a diagram of how it works to beat 3", "use my screenshot in beat 4" | `image` beats from your screenshots, drawn diagrams, a generation tool or licensed pictures, with alt text, a cue word and credits; safe after the voiceover |
 | [voiceover](plugins/oncue/skills/voiceover/SKILL.md) | "voice it with ElevenLabs" | Two takes as MP3, each with a word-level transcript |
 | [vertical-deck](plugins/oncue/skills/vertical-deck/SKILL.md) | "make the 9:16 slides" or "make a 16:9 deck" | An editable .pptx, voiceover in the speaker notes |
 | [animate-short](plugins/oncue/skills/animate-short/SKILL.md) | "render it, and animate the slides" | The final MP4, or a silent preview before audio exists |
 
 ## How it works
 
-1. **Storyboard.** Claude writes the beats into `short.json`: each beat's voiceover line, a scene (`hook`, `list`, `card`, `chat`, `steps`, `grid`, `media` or `cta`), and for each element the word it should enter on. It also sets the look: brand colours and fonts, and an optional `theme` for corners, type size, spacing, background and header, taken from your words, a DESIGN.md, design tokens, Figma, a reference image or a site. See [the spec reference](plugins/oncue/skills/storyboard/references/spec.md).
+1. **Storyboard.** Claude writes the beats into `short.json`: each beat's voiceover line, a scene (`hook`, `list`, `card`, `chat`, `steps`, `grid`, `media`, `image` or `cta`), and for each element the word it should enter on. It also sets the look: brand colours and fonts, and an optional `theme` for corners, type size, spacing, background and header, taken from your words, a DESIGN.md, design tokens, Figma, a reference image or a site. See [the spec reference](plugins/oncue/skills/storyboard/references/spec.md).
 2. **Voiceover.** The ElevenLabs connector reads the whole script in one take for a consistent voice, then transcribes it with word timestamps.
 3. **Deck.** The engine writes real PowerPoint text and shapes in your brand colours, on a 9:16 or 16:9 slide by the spec's orientation.
 4. **Video.** Each scene is an HTML page stepped frame by frame in headless Chromium at the spec's size; a scene too big for its frame is shrunk to fit, with a warning, with entrances on cue words, a typing effect, spotlight glows, drawn lines, scene transitions and a progress bar. ffmpeg encodes the frames and lays in the voice.
@@ -170,11 +174,29 @@ To work on the engine, run `npm install` and then `npm run build` in its folder.
 npm run validate          # manifests, skill frontmatter, links, shipped engine build, claude plugin validate
 npm run engine:typecheck  # strict TypeScript check of the engine
 npm run engine:test       # node:test suites; the browser ones skip without Chromium, as in CI
+claude plugin eval plugins/oncue --scaffold --allow-tools Write Edit --trust-plugin   # scored skill evals; run locally before a PR
 ```
+
+The skill evals in `plugins/oncue/evals/` run real Claude sessions against fixed project folders and a model grades them, so they spend usage and need a Claude login: run them locally, not in CI. `--scaffold` copies each case's fixtures into its workspace; results land in `plugins/oncue/evals/results/`, which git ignores.
 
 The plugin version lives only in `plugins/oncue/.claude-plugin/plugin.json`.
 
 ## Changelog
+
+### 1.6.0 (2026-10-28)
+
+- New `image` scene kind: a PNG or JPEG under the title (beside it in the landscape layout), letterboxed on the `card` colour and never cropped, and never smaller than a third of the frame's short side (a frame too short for that, such as a square one, shrinks the scene to fit, with a warning), with required `alt`, an optional one-line `caption`, and `imageCue` and `captionCue`. It pops in on its cue with the spotlight glow, in the portrait and landscape layouts and the deck. `check` rejects a missing file, an extension other than `.png`, `.jpg` or `.jpeg`, and an empty `alt`, naming the field. Specs without image beats render as before: the Gleaner example's stills and slide XML are byte-identical to 1.5.0.
+- The video uses an upright copy of each picture, at most 2160 px on the long side, in `build/scenes/images/beat-<n>.<ext>`; the deck places a full-size copy at its own aspect ratio with `alt` as its alt text. Both copies are upright and carry no metadata, so a phone photo's location never reaches a shared deck.
+- New visuals skill: places the person's screenshots and photos, draws diagrams, charts and timelines as PNG with `npx playwright screenshot`, uses an image-generation tool only when the session has one, and records openly licensed images under Credits in `research.md`, flagging any licence it could not confirm. It never generates or draws a product's interface, a real person, a logo or a chart of real data; asked for one with nothing supplied, it asks for the real picture or offers a labelled diagram.
+- The storyboard, research, animate-short and explainer-video skills and the spec reference point at the image kind and the visuals skill.
+- New engine tests for image beats (`image-spec`, `image-scene`, `image-stills`), and a fourth skill eval, visuals-no-fake-ui.
+
+### 1.5.0 (2026-10-28)
+
+- New research skill. It joins at any stage and works out the stage from the files in the project folder: no `short.json`, a storyboard, any recorded take (unchosen ones such as `voiceover-take1.mp3` included) or a rendered `short.mp4`. It suggests 3 to 5 ranked topics with a hook line, an audience and sources; fact-checks a storyboard; rewrites narration before and after with sources, keeping each line's first word and cue words; and recommends icons and pictures per beat. Everything goes into `research.md` beside `short.json`.
+- Once a take exists, the research skill changes no `vo` without asking, and names the re-record cost first (about 1,100 ElevenLabs credits a take, two takes by default, plus about 600 to transcribe).
+- The explainer-video stage table, the storyboard skill's first step and the setup report now point at research.
+- Skill evals in `plugins/oncue/evals/` (`claude plugin eval`): research-topics, research-narration and research-voiced-lock, each scoring 1.0 over 3 runs.
 
 ### 1.4.0 (2026-10-26)
 

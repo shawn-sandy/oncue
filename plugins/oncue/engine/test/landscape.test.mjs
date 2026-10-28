@@ -34,13 +34,13 @@ async function launch() {
  * Writes the Gleaner example at 1920×1080 into its own folder and returns its scenes page and timeline.
  * @param {string} name
  */
-function build(name) {
+async function build(name) {
   const folder = join(dir, name);
   mkdirSync(folder);
   writeFileSync(join(folder, "short.json"), JSON.stringify({ ...src, format: { width: 1920, height: 1080 } }));
   copyFileSync(new URL("logo.png", example), join(folder, "logo.png"));
   const loaded = spec.loadSpec(join(folder, "short.json"));
-  const html = scenes.writeScenes(loaded, join(folder, "scenes"), engine);
+  const html = await scenes.writeScenes(loaded, join(folder, "scenes"), engine);
   const est = timeline.estimateWords(loaded.spec);
   return { html, tl: timeline.buildTimeline(loaded.spec, est.words, est.seconds) };
 }
@@ -61,7 +61,7 @@ test("every scene of the Gleaner example at 1920×1080 stays inside the frame", 
   const browser = await launch();
   if (typeof browser === "string") { t.skip(browser); return; }
   try {
-    const { html, tl } = build("frame");
+    const { html, tl } = await build("frame");
     const page = await open(browser, html, tl);
     const outside = [];
     for (const [i, s] of tl.scenes.entries()) {
@@ -90,7 +90,7 @@ test("the scenes page still starts when a font fails to load", async (t) => {
   const browser = await launch();
   if (typeof browser === "string") { t.skip(browser); return; }
   try {
-    const { html, tl } = build("bad-font");
+    const { html, tl } = await build("bad-font");
     writeFileSync(join(dir, "bad-font", "scenes", "fonts", "mono-600.woff2"), "not a font");
     const page = await open(browser, html, tl);
     assert.equal(await page.evaluate(() => /** @type {any} */ (window).FIT?.length), src.lines.length);

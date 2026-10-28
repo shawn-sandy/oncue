@@ -10,7 +10,9 @@ Run the whole pipeline. Each stage has its own skill; this one sets up the engin
 
 | Stage | Skill | Output |
 | --- | --- | --- |
+| Research (optional, any stage) | [research](../research/SKILL.md) | `research.md`: ranked topic ideas, sourced facts, narration rewrites and visual ideas |
 | 1. Storyboard | [storyboard](../storyboard/SKILL.md) | `short.json`, a beat list, preview stills or a Design canvas |
+| Visuals (optional, any stage) | [visuals](../visuals/SKILL.md) | `images/` and `image` beats: the person's screenshots, drawn diagrams or licensed pictures, safe to add after the voiceover |
 | 2. Voiceover | [voiceover](../voiceover/SKILL.md) | `voiceover.mp3`, `words.json` (word timings) |
 | 3. Deck | [vertical-deck](../vertical-deck/SKILL.md) | `deck.pptx`, 9:16 or 16:9, voiceover in the speaker notes |
 | 4. Video | [animate-short](../animate-short/SKILL.md) | `short.mp4` at the spec's size (1080×1920, 1920×1080 or custom), every element entering on its word |

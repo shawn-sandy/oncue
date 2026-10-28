@@ -2,3 +2,4 @@ node_modules/
 build/
 plugins/oncue/engine/tsconfig.local.json
 .DS_Store
+plugins/oncue/evals/results/
