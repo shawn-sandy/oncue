@@ -79,7 +79,7 @@ export interface ChatScene { kind: "chat"; kicker: string; title: Rich; turns: {
 export interface StepsScene { kind: "steps"; kicker: string; title: Rich; steps: { title: string; desc?: Rich; cue?: Cue }[]; result?: { text: string; cue?: Cue } }
 export interface GridScene { kind: "grid"; kicker: string; title: Rich; tiles: { icon: string; label: string; cue?: Cue }[] }
 export interface MediaScene { kind: "media"; kicker: string; title: Rich; mediaCue?: Cue; moments: { time: string; label: string; cue?: Cue }[] }
-/** A picture (PNG or JPEG, path relative to short.json) framed under the title, letterboxed on the card colour. */
+/** A picture (PNG or JPEG, path relative to short.json) framed under the title (beside it in the landscape layout), letterboxed on the card colour. */
 export interface ImageScene { kind: "image"; kicker: string; title: Rich; src: string; alt: string; imageCue?: Cue; caption?: Rich; captionCue?: Cue }
 export interface CtaScene { kind: "cta"; headline: Rich; sub?: Rich; subCue?: Cue; pill?: { icon: string; text: string; cue?: Cue }; follow?: Rich; followCue?: Cue }
 

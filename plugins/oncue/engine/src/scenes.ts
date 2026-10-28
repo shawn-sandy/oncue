@@ -190,7 +190,7 @@ h2{font-size:${t(80)}}.hookline{font-size:${t(104)}}.cta{font-size:${t(120)}}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:${d(30)};margin-top:${d(10)}}
 .tile{display:flex;flex-direction:column;gap:${d(30)};padding:${d(40)} ${d(36)};border-radius:${r(36)};background:var(--card);border:2px solid var(--rule)}.tile>span:last-child{font-size:${t(40)};font-weight:700;line-height:1.15}
 .body:has(>.photo){flex:1;min-height:0}
-/* The picture takes the height left under the title, but never under a third of the short side: in a frame too
+/* The picture takes the height the title leaves, but never under a third of the short side: in a frame too
    short for that (a square one), the scene overflows and the fit guard shrinks it and warns. */
 .photo{position:relative;flex:1;min-height:360px;background:var(--card);border:2px solid var(--rule);border-radius:${r(36)};overflow:hidden}
 .photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
