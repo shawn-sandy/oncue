@@ -1,4 +1,7 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.plain = exports.WIDE = exports.HEADERS = exports.SCALES = void 0;
 exports.look = look;
@@ -7,6 +10,7 @@ exports.stageFor = stageFor;
 exports.contrast = contrast;
 exports.contrastWarnings = contrastWarnings;
 exports.loadSpec = loadSpec;
+exports.checkPictures = checkPictures;
 exports.runs = runs;
 /**
  * short.json — the single source of truth for one explainer.
@@ -14,6 +18,7 @@ exports.runs = runs;
  */
 const node_fs_1 = require("node:fs");
 const node_path_1 = require("node:path");
+const sharp_1 = __importDefault(require("sharp"));
 /**
  * Each theme value and its multiplier on today's design: radius on card corners, type on font sizes, density on
  * gaps and paddings, background on the glow's opacity. The default (×1) is today's look.
@@ -108,7 +113,7 @@ function contrastWarnings(c) {
         return r < 4.5 ? [`brand.colors.${text} on brand.colors.${fill} is ${(Math.floor(r * 100) / 100).toFixed(2)}:1; text needs 4.5:1 or more.`] : [];
     });
 }
-/** Reads and checks short.json; every error names the field to fix. */
+/** Reads and checks short.json; every error names the field to fix. Pictures' contents are checked by checkPictures. */
 function loadSpec(file) {
     const spec = JSON.parse((0, node_fs_1.readFileSync)(file, "utf8"));
     str(spec.title, "title");
@@ -152,6 +157,24 @@ function loadSpec(file) {
         }
     });
     return { spec, dir, logoPath: (0, node_path_1.resolve)(dir, b.logo) };
+}
+/**
+ * Decodes each image beat's picture in full, after loadSpec: a truncated download fails `check` naming its field
+ * instead of failing mid-render, and a renamed WebP fails because the rule is a real PNG or JPEG, not the name.
+ * Separate because decoding is async and loadSpec is not.
+ */
+async function checkPictures({ spec, dir }) {
+    for (const [i, l] of spec.lines.entries()) {
+        if (l.scene.kind !== "image")
+            continue;
+        const file = (0, node_path_1.resolve)(dir, l.scene.src), at = `lines[${i}].scene.src`;
+        const unreadable = (e) => fail(at, `cannot be read as a picture (${e instanceof Error ? e.message.split("\n")[0] : e}); export it again as a PNG or JPEG, smaller if it is very large: ${file}`);
+        const { format } = await (0, sharp_1.default)(file).metadata().catch(unreadable);
+        if (format !== "png" && format !== "jpeg")
+            fail(at, `is a ${format} picture named like a PNG or JPEG; convert it, renaming is not enough: ${file}`);
+        // metadata() reads only the header; stats() decodes every pixel, as the renderers will.
+        await (0, sharp_1.default)(file).stats().catch(unreadable);
+    }
 }
 function runs(rich) {
     const out = [];

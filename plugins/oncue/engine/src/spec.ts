@@ -4,6 +4,7 @@
  */
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, resolve } from "node:path";
+import sharp from "sharp";
 
 /** Word in the voiceover that triggers an element. Matched as a prefix, case- and punctuation-insensitive. */
 export interface Cue {
@@ -191,7 +192,7 @@ export function contrastWarnings(c: Colors): string[] {
   });
 }
 
-/** Reads and checks short.json; every error names the field to fix. */
+/** Reads and checks short.json; every error names the field to fix. Pictures' contents are checked by checkPictures. */
 export function loadSpec(file: string): LoadedSpec {
   const spec = JSON.parse(readFileSync(file, "utf8")) as Spec;
   str(spec.title, "title");
@@ -222,6 +223,23 @@ export function loadSpec(file: string): LoadedSpec {
     }
   });
   return { spec, dir, logoPath: resolve(dir, b.logo) };
+}
+
+/**
+ * Decodes each image beat's picture in full, after loadSpec: a truncated download fails `check` naming its field
+ * instead of failing mid-render, and a renamed WebP fails because the rule is a real PNG or JPEG, not the name.
+ * Separate because decoding is async and loadSpec is not.
+ */
+export async function checkPictures({ spec, dir }: LoadedSpec): Promise<void> {
+  for (const [i, l] of spec.lines.entries()) {
+    if (l.scene.kind !== "image") continue;
+    const file = resolve(dir, l.scene.src), at = `lines[${i}].scene.src`;
+    const unreadable = (e: unknown): never => fail(at, `cannot be read as a picture (${e instanceof Error ? e.message.split("\n")[0] : e}); export it again as a PNG or JPEG, smaller if it is very large: ${file}`);
+    const { format } = await sharp(file).metadata().catch(unreadable);
+    if (format !== "png" && format !== "jpeg") fail(at, `is a ${format} picture named like a PNG or JPEG; convert it, renaming is not enough: ${file}`);
+    // metadata() reads only the header; stats() decodes every pixel, as the renderers will.
+    await sharp(file).stats().catch(unreadable);
+  }
 }
 
 /** Splits rich text into plain, accent ({…}) and code (`…`) runs. */

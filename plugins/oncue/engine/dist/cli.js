@@ -79,6 +79,7 @@ async function main() {
         process.exit(cmd ? 1 : 0);
     }
     const loaded = (0, spec_1.loadSpec)((0, node_path_1.resolve)(specFile));
+    await (0, spec_1.checkPictures)(loaded);
     const { spec } = loaded;
     switch (cmd) {
         case "check": {
