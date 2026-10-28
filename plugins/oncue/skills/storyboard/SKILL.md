@@ -12,6 +12,7 @@ Turn a topic into a locked set of beats: what the narrator says, what the viewer
 
 - What it is, who it is for, and the one thing a viewer should do at the end (install, follow, visit).
 - Real facts only: features, commands, names, links. Read the product's README, docs or code when they are available. Never invent numbers, quotes or results; mark a missing fact as `[YOUR FACT]` and say so.
+- Read `research.md` beside `short.json` when it exists. When the subject is not the person's own product, or the facts are thin, run the research skill (`../research/SKILL.md`) first for sourced facts and topic ideas.
 - Where it will be posted, which sets `format`: 1080×1920 (9:16) for YouTube Shorts, Reels and TikTok; 1920×1080 (16:9) for a YouTube video or a landscape presentation. Square and 4:5 sizes (1080×1080, 1080×1350) render, but with the portrait layout and its Shorts inset, so dense scenes shrink; say so before choosing one. Ask when it isn't clear; one spec renders one size.
 - The look: logo, colours, fonts and an optional `theme` (corners, type size, spacing, background, header). Take it from what the person gives: plain words ("playful, light, rounded"), a DESIGN.md, design tokens (W3C DTCG or Style Dictionary JSON), Figma tokens, a reference image or screenshot, a reference site's CSS custom properties, or an installed design system; else the product's logo and site. With none, pick a dark ground, one accent and one highlight from the subject and say what you chose. [The theme guide](references/theme.md) maps each route to `short.json`. A theme changes no `vo`, so it is safe to change after the voiceover.
 
@@ -21,6 +22,7 @@ Turn a topic into a locked set of beats: what the narrator says, what the viewer
 - Classic arc: hook (the pain or promise) → problem → what it is → how it works (1–3 beats) → where it fits → call to action.
 - One idea per beat, one sentence or two per `vo`. Write for the ear: short words, active verbs, things people type in quotes.
 - Pick the scene `kind` that shows the idea (spec reference, Scene kinds), and give each element a `cue`: the word in that beat's `vo` that names it.
+- A beat that needs a real picture (a screenshot, photo or diagram) uses the `image` kind; the pictures themselves come from the visuals skill (`../visuals/SKILL.md`), which can add them now or after the voiceover.
 - Keep on-screen text shorter than the voiceover. A title says the point; the narrator explains it.
 
 ## 3. Write short.json

@@ -47,10 +47,10 @@ function timeline(loaded: LoadedSpec, opt: Record<string, string>): { tl: Timeli
   return { tl: buildTimeline(loaded.spec, est.words, est.seconds), audio: null };
 }
 
-function prepare(loaded: LoadedSpec, opt: Record<string, string>): { html: string; tl: Timeline; audio: string | null; build: string; size: Size } {
+async function prepare(loaded: LoadedSpec, opt: Record<string, string>): Promise<{ html: string; tl: Timeline; audio: string | null; build: string; size: Size }> {
   const build = join(loaded.dir, "build");
   mkdirSync(build, { recursive: true });
-  const html = writeScenes(loaded, join(build, "scenes"), ENGINE);
+  const html = await writeScenes(loaded, join(build, "scenes"), ENGINE);
   const { tl, audio } = timeline(loaded, opt);
   writeFileSync(join(build, "timeline.json"), JSON.stringify(tl, null, 2));
   for (const w of tl.warnings) console.warn("warning:", w);
@@ -100,7 +100,7 @@ async function main(): Promise<void> {
       return;
     }
     case "stills": {
-      const p = prepare(loaded, opt);
+      const p = await prepare(loaded, opt);
       const times = opt["at"] ? opt["at"].split(",").map(Number)
         : p.tl.scenes.map((s) => Number((s.start + 0.85 * (s.end - s.start)).toFixed(2)));
       const dir = join(p.build, "stills");
@@ -111,7 +111,7 @@ async function main(): Promise<void> {
       return;
     }
     case "video": {
-      const p = prepare(loaded, opt);
+      const p = await prepare(loaded, opt);
       const out = resolve(opt["out"] ?? join(p.build, p.audio ? "short.mp4" : "preview-silent.mp4"));
       reportFit(p.build, spec, await renderVideo(p.html, p.tl, p.size, out, p.audio));
       return;

@@ -1,0 +1,101 @@
+{
+  "title": "Gleaner in 75 seconds",
+  "format": { "width": 1080, "height": 1920 },
+  "brand": {
+    "name": "Gleaner",
+    "logo": "logo.png",
+    "colors": {
+      "ground": "#0e1d1a", "card": "#152b27", "chip": "#234240", "rule": "#2b4842",
+      "ink": "#e4efeb", "muted": "#a3bab3", "accent": "#9ed9c8", "highlight": "#d98a62", "you": "#eba67f",
+      "panel": "#185c53", "panelInk": "#ffffff", "panelMuted": "#cfe5de", "panelRule": "#3e7a70"
+    },
+    "fonts": { "sans": "plus-jakarta-sans", "mono": "jetbrains-mono" },
+    "deckFonts": { "head": "Arial", "body": "Calibri" }
+  },
+  "lines": [
+    {
+      "vo": "Ever read something great online, then couldn't find it a week later? This is Gleaner, a plugin for Claude that fixes that.",
+      "motion": "Logo pops; headline builds word by word; name card on \"This is Gleaner\".",
+      "scene": { "kind": "hook", "headline": "Stop losing the best parts of the {web.}", "headlineCue": { "word": "ever" },
+        "sub": "{Gleaner} · a plugin for Claude", "subCue": { "word": "this" } }
+    },
+    {
+      "vo": "Tabs pile up, bookmarks lose their context, and notes turn into a pile of pasted text with no source.",
+      "scene": { "kind": "list", "kicker": "The problem", "title": "Saving things is easy. {Finding them isn't.}",
+        "items": [
+          { "icon": "FiLayers", "title": "Too many tabs", "desc": "Kept open \"for later\" until the browser crashes", "cue": { "word": "tabs" } },
+          { "icon": "FiBookmark", "title": "Dead bookmarks", "desc": "A link with no idea why you saved it", "cue": { "word": "bookmarks" } },
+          { "icon": "FiFileText", "title": "Messy notes", "desc": "Pasted text with no source or summary", "cue": { "word": "notes" } }
+        ] }
+    },
+    {
+      "vo": "Gleaner reads the page, skips the ads and navigation, and saves a short clip: a TL;DR, key points, takeaways, a category and tags.",
+      "scene": { "kind": "card", "kicker": "Meet Gleaner", "title": "Every page becomes a {tagged, summarized clip.}",
+        "card": { "title": "Native view transitions", "cue": { "word": "saves" },
+          "meta": "Saved today · Category: Web dev", "metaCue": { "word": "category" },
+          "rows": [
+            { "label": "TL;DR", "value": "One-line summary of the page", "cue": { "word": "tldr" } },
+            { "label": "Key points", "value": "What matters, in plain language", "cue": { "word": "key" } },
+            { "label": "Takeaways", "value": "What to do with it", "cue": { "word": "takeaways" } }
+          ],
+          "tags": ["#css", "#animation", "#ux"], "tagsCue": { "word": "tags" } } }
+    },
+    {
+      "vo": "No commands to memorize. Open a page and say \"save this page.\" Add a reason after it, and Gleaner keeps that as the clip's note.",
+      "scene": { "kind": "chat", "kicker": "How it works", "title": "Just ask in {plain words.}",
+        "turns": [
+          { "from": "you", "text": "save this page", "cue": { "word": "save" } },
+          { "from": "app", "text": "Saved: TL;DR, key points, 3 tags.", "cue": { "word": "page", "nth": 2, "offset": 0.35 } },
+          { "from": "you", "text": "keep this, good intro to view transitions", "cue": { "word": "reason" } },
+          { "from": "app", "text": "Saved, with your note attached.", "cue": { "word": "keeps" } }
+        ] }
+    },
+    {
+      "vo": "Researching across sites? Highlight a part and say \"add this.\" Keep going across tabs, then say \"done, save them.\" You get one clip with every source linked.",
+      "scene": { "kind": "steps", "kicker": "Collect parts", "title": "Grab bits from many tabs, {save once.}",
+        "steps": [
+          { "title": "Highlight", "desc": "Select a part and say `add this`", "cue": { "word": "highlight" } },
+          { "title": "Keep going", "desc": "Add parts from other tabs and sites", "cue": { "word": "keep" } },
+          { "title": "Save", "desc": "Say `done, save them`", "cue": { "word": "done" } }
+        ],
+        "result": { "text": "One clip · every source linked", "cue": { "word": "you" } } }
+    },
+    {
+      "vo": "It works on YouTube too. Gleaner reads the transcript and saves key moments that link to the exact second.",
+      "scene": { "kind": "media", "kicker": "Videos too", "title": "Clip YouTube with {timestamped moments.}", "mediaCue": { "word": "youtube" },
+        "moments": [
+          { "time": "0:42", "label": "The core idea", "cue": { "word": "key" } },
+          { "time": "3:10", "label": "Live demo", "cue": { "word": "moments" } },
+          { "time": "5:40", "label": "Gotchas to watch for", "cue": { "word": "exact" } }
+        ] }
+    },
+    {
+      "vo": "Keep clips in the chat, or save them to Google Drive, Notion, a private Claude artifact, a Cowork project, or your Claude Code project.",
+      "scene": { "kind": "grid", "kicker": "Your choice", "title": "Save clips where {you already work.}",
+        "tiles": [
+          { "icon": "FiMessageSquare", "label": "This chat", "cue": { "word": "chat" } },
+          { "icon": "FiHardDrive", "label": "Google Drive", "cue": { "word": "google" } },
+          { "icon": "FiBookOpen", "label": "Notion", "cue": { "word": "notion" } },
+          { "icon": "FiGlobe", "label": "Claude artifact", "cue": { "word": "artifact" } },
+          { "icon": "FiFolder", "label": "Cowork project", "cue": { "word": "cowork" } },
+          { "icon": "FiTerminal", "label": "Claude Code project", "cue": { "word": "code" } }
+        ] }
+    },
+    {
+      "vo": "Not sure what to do with a clip? Ask \"what should I follow up on?\" and Gleaner suggests three next steps and saves them into the clip.",
+      "scene": { "kind": "chat", "kicker": "What next?", "title": "Turn a clip into {three next steps.}",
+        "turns": [
+          { "from": "you", "text": "what should I follow up on?", "cue": { "word": "ask" } },
+          { "from": "app", "text": "1 · Read the linked spec", "cue": { "word": "three" } },
+          { "from": "app", "text": "2 · Try it in a demo", "cue": { "word": "next" } },
+          { "from": "app", "text": "3 · Draft a post about it", "cue": { "word": "steps" } }
+        ] }
+    },
+    {
+      "vo": "Gleaner is open source on GitHub. Link in the description. Follow for more tools like this.",
+      "scene": { "kind": "cta", "headline": "Get Gleaner.", "sub": "Open source plugin for Claude", "subCue": { "word": "open" },
+        "pill": { "icon": "FiGithub", "text": "shawn-sandy/gleaner", "cue": { "word": "github" } },
+        "follow": "Follow for more design-engineering tools", "followCue": { "word": "follow" } }
+    }
+  ]
+}

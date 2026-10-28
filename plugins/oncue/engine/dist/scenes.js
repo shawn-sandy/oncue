@@ -1,13 +1,17 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.writeScenes = writeScenes;
 /**
- * Writes the animated scenes page for a spec: <out>/scenes.html plus its fonts, logo and render.js.
+ * Writes the animated scenes page for a spec: <out>/scenes.html plus its fonts, logo, pictures and render.js.
  * Layout is designed on a stage whose short side is 1080 px (1080×1920 for 9:16, 1920×1080 for 16:9) and scaled
  * to spec.format. Frames wider than tall get the landscape layout (#stage.wide), arranged per scene kind by WIDE.
  */
 const node_fs_1 = require("node:fs");
 const node_path_1 = require("node:path");
+const sharp_1 = __importDefault(require("sharp"));
 const icons_1 = require("./icons");
 const spec_1 = require("./spec");
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -26,7 +30,9 @@ function fx(kind, cue, extra = {}) {
 }
 /** A content scene: kicker and title in .head, the rest in .body, so the landscape layout can place them side by side or stacked. */
 const content = (kicker, title, inner) => `<div class="content"><div class="head"><div class="kicker" ${fx("up", undefined, { delay: 0.1 })}>${esc(kicker)}</div>\n<h2 ${fx("up", undefined, { delay: 0.2 })}>${rich(title)}</h2></div><div class="body">${inner}</div></div>`;
-function body(scene, c) {
+/** Where beat i's picture is copied, relative to the scenes page: numbered by beat, so names never collide or need escaping. */
+const imageFile = (i, src) => `images/beat-${i + 1}${(0, node_path_1.extname)(src).toLowerCase()}`;
+function body(scene, c, i) {
     const ico = (name, color = c.accent) => `<span class="svg">${(0, icons_1.iconSvg)(name, color)}</span>`;
     switch (scene.kind) {
         case "hook": {
@@ -66,6 +72,9 @@ ${scene.result ? `<div class="result" ${fx("up", "result", { spot: true })}><spa
             return content(scene.kicker, scene.title, `
 <div class="player" ${fx("pop", "media", { dur: 0.6 })}><div class="play" ${fx("pop", "media", { delay: 0.25, spot: true })}><span class="svg lg">${(0, icons_1.iconSvg)("FiPlay", c.ground)}</span></div><div class="scrub" ${fx("drawX", "media", { delay: 0.4, dur: 5 })}></div></div>
 <div class="moments">${scene.moments.map((m, i) => `<div class="moment" ${fx("left", `moment${i}`, { spot: true })}><span class="ts">${esc(m.time)}</span><span class="ml">${esc(m.label)}</span></div>`).join("")}</div>`);
+        case "image":
+            return content(scene.kicker, scene.title, `<div class="photo" ${fx("pop", "image", { spot: true })}><img src="${imageFile(i, scene.src)}" alt=""></div>
+${scene.caption ? `<div class="caption" ${fx("up", "caption")}>${rich(scene.caption)}</div>` : ""}`);
         case "cta":
             return `<div class="center"><div data-float><img class="logo-lg" src="logo.png" alt="" ${fx("pop", undefined, { delay: 0.05, dur: 0.7 })}></div>
 <h1 class="cta" ${fx("up", undefined, { delay: 0.25 })}>${rich(scene.headline)}</h1>
@@ -81,7 +90,7 @@ function fontFile(pkg, weight, root) {
         throw new Error(`Font file missing: ${f}. Run: npm install @fontsource/${pkg} (in the engine folder).`);
     return f;
 }
-function writeScenes(loaded, outDir, engineRoot) {
+async function writeScenes(loaded, outDir, engineRoot) {
     const { spec, logoPath } = loaded;
     const c = spec.brand.colors;
     BRAND_LABEL = spec.brand.name.toLowerCase();
@@ -97,6 +106,12 @@ function writeScenes(loaded, outDir, engineRoot) {
     }
     (0, node_fs_1.copyFileSync)(logoPath, (0, node_path_1.join)(outDir, "logo.png"));
     (0, node_fs_1.copyFileSync)((0, node_path_1.resolve)(engineRoot, "dist", "render.js"), (0, node_path_1.join)(outDir, "render.js"));
+    // Pictures are copied upright and at most 2160 px on the long side, never enlarged, so a large phone photo
+    // doesn't slow every captured frame. The deck uses the original.
+    (0, node_fs_1.mkdirSync)((0, node_path_1.join)(outDir, "images"), { recursive: true });
+    await Promise.all(spec.lines.map((l, i) => l.scene.kind === "image"
+        ? (0, sharp_1.default)((0, node_path_1.resolve)(loaded.dir, l.scene.src)).autoOrient().resize(2160, 2160, { fit: "inside", withoutEnlargement: true }).toFile((0, node_path_1.join)(outDir, imageFile(i, l.scene.src)))
+        : undefined));
     const stage = (0, spec_1.stageFor)(spec.format);
     // Theme scales on today's design px: every default is ×1, so a spec without a theme writes the same page.
     const L = (0, spec_1.look)(spec);
@@ -105,7 +120,7 @@ function writeScenes(loaded, outDir, engineRoot) {
     const o = (v) => String(Math.round(v * L.background * 1000) / 1000);
     const brandRow = L.header === "none" ? "" : `<div class="brand"><img src="logo.png" alt="">${L.header === "brand" ? esc(spec.brand.name) : ""}</div>`;
     const blobs = L.background ? `<div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>` : "";
-    const sceneHtml = spec.lines.map((l, i) => `<!-- ${i + 1} · ${l.scene.kind} -->\n<section class="scene${stage.wide ? ` is-${spec_1.WIDE[l.scene.kind]}` : ""}">${l.scene.kind === "hook" || l.scene.kind === "cta" ? "" : brandRow}\n${body(l.scene, c)}\n</section>`).join("\n\n");
+    const sceneHtml = spec.lines.map((l, i) => `<!-- ${i + 1} · ${l.scene.kind} -->\n<section class="scene${stage.wide ? ` is-${spec_1.WIDE[l.scene.kind]}` : ""}">${l.scene.kind === "hook" || l.scene.kind === "cta" ? "" : brandRow}\n${body(l.scene, c, i)}\n</section>`).join("\n\n");
     const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>${esc(spec.title)}</title>
 <style>
@@ -163,6 +178,10 @@ h2{font-size:${t(80)}}.hookline{font-size:${t(104)}}.cta{font-size:${t(120)}}
 .ts{font-family:"Mono",monospace;font-size:${t(36)};font-weight:600;padding:${d(12)} ${d(32)};border-radius:999px;background:var(--chip);color:var(--accent)}.ml{font-size:${t(40)}}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:${d(30)};margin-top:${d(10)}}
 .tile{display:flex;flex-direction:column;gap:${d(30)};padding:${d(40)} ${d(36)};border-radius:${r(36)};background:var(--card);border:2px solid var(--rule)}.tile>span:last-child{font-size:${t(40)};font-weight:700;line-height:1.15}
+.body:has(>.photo){flex:1;min-height:0}
+.photo{position:relative;flex:1;min-height:0;background:var(--card);border:2px solid var(--rule);border-radius:${r(36)};overflow:hidden}
+.photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.caption{font-size:${t(36)};color:var(--muted);line-height:1.3}
 .pill{display:flex;align-items:center;gap:${d(24)};padding:${d(34)} ${d(52)};border-radius:999px;background:var(--accent);color:var(--ground)}.pill>span:last-child{font-family:"Mono",monospace;font-size:${t(44)};font-weight:600}
 /* Landscape: a 1080 px tall canvas with no Shorts safe zone (YouTube overlays only captions and the progress bar). */
 .wide .b2{top:240px}
@@ -173,7 +192,7 @@ h2{font-size:${t(80)}}.hookline{font-size:${t(104)}}.cta{font-size:${t(120)}}
 .wide .player{height:380px}
 /* Content "side": kicker and title in a column beside the body. */
 .wide .is-side .content{flex-direction:row;align-items:center;gap:${d(100)}}
-.wide .is-side .head{flex:0 0 36%}.wide .is-side .body{flex:1;min-width:0}
+.wide .is-side .head{flex:0 0 36%}.wide .is-side .body{flex:1;min-width:0}.wide .is-side .body:has(>.photo){align-self:stretch}
 /* Content "top": kicker and title above a body laid out across the width. */
 .wide .is-top .stack,.wide .is-top .steps{flex-direction:row;gap:${d(30)}}
 .wide .is-top .stack>*,.wide .is-top .step{flex:1;min-width:0}

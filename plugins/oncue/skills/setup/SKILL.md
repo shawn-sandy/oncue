@@ -109,6 +109,7 @@ A short table of each check (the plugin's version and scope, Node, ffmpeg and ff
 
 | Output | Needs |
 | --- | --- |
+| Research | Web search for outside subjects; without it, the person's own files |
 | Storyboard, deck | Node and the engine |
 | Preview stills | and Playwright with Chromium |
 | Silent preview video | and ffmpeg |

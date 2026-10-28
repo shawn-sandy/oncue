@@ -43,8 +43,8 @@ function write(short) {
 const themed = (theme, brand = {}) => ({ ...gleaner, theme, brand: { ...gleaner.brand, ...brand } });
 
 /** Writes the scenes page for a spec and returns its HTML. @param {Record<string, any>} short */
-function page(short) {
-  return readFileSync(scenes.writeScenes(spec.loadSpec(write(short)), join(dir, `scenes-${n++}`), engine), "utf8");
+async function page(short) {
+  return readFileSync(await scenes.writeScenes(spec.loadSpec(write(short)), join(dir, `scenes-${n++}`), engine), "utf8");
 }
 /** One property of one CSS rule in the scenes page, e.g. prop(html, ".card", "border-radius") → "36px". */
 function prop(/** @type {string} */ html, /** @type {string} */ selector, /** @type {string} */ name) {
@@ -156,62 +156,62 @@ test("check prints contrast warnings for a weak palette and none for Gleaner", (
 // Scenes page
 
 test("no theme and a theme listing every default write the same scenes page and deck", async () => {
-  assert.equal(page(themed(DEFAULTS)), page(gleaner));
+  assert.equal(await page(themed(DEFAULTS)), await page(gleaner));
   assert.deepEqual(await slides(themed(DEFAULTS)), await slides(gleaner));
 });
 
-test("radius scales card corners and leaves pills round", () => {
-  assert.equal(prop(page(gleaner), ".card", "border-radius"), "36px");
-  assert.equal(prop(page(themed({ radius: "soft" })), ".card", "border-radius"), "19.8px");
-  const sharp = page(themed({ radius: "sharp" }));
+test("radius scales card corners and leaves pills round", async () => {
+  assert.equal(prop(await page(gleaner), ".card", "border-radius"), "36px");
+  assert.equal(prop(await page(themed({ radius: "soft" })), ".card", "border-radius"), "19.8px");
+  const sharp = await page(themed({ radius: "sharp" }));
   assert.equal(prop(sharp, ".card", "border-radius"), "7.2px");
   assert.equal(prop(sharp, ".panel", "border-radius"), "8.8px");
   assert.equal(prop(sharp, ".pill", "border-radius"), "999px");
 });
 
-test("type scales every font size", () => {
-  assert.equal(prop(page(gleaner), "h2", "font-size"), "80px");
-  const large = page(themed({ type: "large" }));
+test("type scales every font size", async () => {
+  assert.equal(prop(await page(gleaner), "h2", "font-size"), "80px");
+  const large = await page(themed({ type: "large" }));
   assert.equal(prop(large, "h2", "font-size"), "88px");
   assert.equal(prop(large, ".kicker", "font-size"), "35.2px");
-  assert.equal(prop(page(themed({ type: "small" })), "h2", "font-size"), "72px");
+  assert.equal(prop(await page(themed({ type: "small" })), "h2", "font-size"), "72px");
 });
 
-test("density scales gaps and paddings, not the frame margins", () => {
-  assert.equal(prop(page(gleaner), ".stack", "gap"), "30px");
-  const airy = page(themed({ density: "airy" }));
+test("density scales gaps and paddings, not the frame margins", async () => {
+  assert.equal(prop(await page(gleaner), ".stack", "gap"), "30px");
+  const airy = await page(themed({ density: "airy" }));
   assert.equal(prop(airy, ".stack", "gap"), "39px");
   assert.equal(prop(airy, ".content", "left"), "90px");
-  assert.equal(prop(page(themed({ density: "compact" })), ".stack", "gap"), "22.5px");
+  assert.equal(prop(await page(themed({ density: "compact" })), ".stack", "gap"), "22.5px");
 });
 
-test("background: glow keeps three lights, subtle dims them, flat has none", () => {
+test("background: glow keeps three lights, subtle dims them, flat has none", async () => {
   const count = (/** @type {string} */ html) => (html.match(/class="blob /g) ?? []).length;
-  const glow = page(gleaner);
+  const glow = await page(gleaner);
   assert.equal(count(glow), 3);
   assert.equal(prop(glow, ".blob", "opacity"), "0.55");
-  const subtle = page(themed({ background: "subtle" }));
+  const subtle = await page(themed({ background: "subtle" }));
   assert.equal(count(subtle), 3);
   assert.equal(prop(subtle, ".blob", "opacity"), "0.22");
-  assert.equal(count(page(themed({ background: "flat" }))), 0);
+  assert.equal(count(await page(themed({ background: "flat" }))), 0);
 });
 
-test("header: brand shows logo and name, logo drops the name, none drops the row", () => {
+test("header: brand shows logo and name, logo drops the name, none drops the row", async () => {
   const rows = (/** @type {string} */ html) => [...html.matchAll(/<div class="brand">(.*?)<\/div>/g)].map((m) => m[1] ?? "");
-  const brand = rows(page(gleaner));
+  const brand = rows(await page(gleaner));
   assert.equal(brand.length, CONTENT_SCENES);
   assert.ok(brand.every((r) => r.includes("<img") && r.includes(gleaner.brand.name)));
-  const logo = rows(page(themed({ header: "logo" })));
+  const logo = rows(await page(themed({ header: "logo" })));
   assert.equal(logo.length, CONTENT_SCENES);
   assert.ok(logo.every((r) => r.includes("<img") && !r.includes(gleaner.brand.name)));
-  assert.equal(rows(page(themed({ header: "none" }))).length, 0);
+  assert.equal(rows(await page(themed({ header: "none" }))).length, 0);
 });
 
 // Deck
 
 test("objective: sharp, no header and flat change both outputs", async () => {
   const theme = { radius: "sharp", header: "none", background: "flat" };
-  const html = page(themed(theme));
+  const html = await page(themed(theme));
   assert.doesNotMatch(html, /class="blob /);
   assert.doesNotMatch(html, /class="brand"/);
   assert.equal(prop(html, ".card", "border-radius"), "7.2px");

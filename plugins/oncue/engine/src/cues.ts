@@ -16,6 +16,7 @@ export function slots(scene: Scene): Slot[] {
     case "steps": return [...scene.steps.map((s, i) => ({ id: `step${i}`, cue: s.cue })), { id: "result", cue: scene.result?.cue }];
     case "grid": return scene.tiles.map((t, i) => ({ id: `tile${i}`, cue: t.cue }));
     case "media": return [{ id: "media", cue: scene.mediaCue }, ...scene.moments.map((m, i) => ({ id: `moment${i}`, cue: m.cue }))];
+    case "image": return [{ id: "image", cue: scene.imageCue }, { id: "caption", cue: scene.captionCue }];
     case "cta": return [{ id: "sub", cue: scene.subCue }, { id: "pill", cue: scene.pill?.cue }, { id: "follow", cue: scene.followCue }];
   }
 }

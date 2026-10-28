@@ -99,7 +99,7 @@ Any element with a `cue` enters on that word of its own line:
 
 Content kinds share `kicker` (small mono label) and `title` (rich, 1–2 lines; keep under about 45 characters).
 
-In the landscape layout, `list`, `card`, `chat` and `steps` put the kicker and title in a column beside the body, `grid` and `media` put them above a body laid out across the width, and `hook` and `cta` stay centred.
+In the landscape layout, `list`, `card`, `chat`, `steps` and `image` put the kicker and title in a column beside the body, `grid` and `media` put them above a body laid out across the width, and `hook` and `cta` stay centred.
 
 | kind | Fields | Good for |
 | --- | --- | --- |
@@ -110,6 +110,7 @@ In the landscape layout, `list`, `card`, `chat` and `steps` put the kicker and t
 | `steps` | `steps[]`: `title`, `desc?`, `cue?` (2–4), `result?`: `text`, `cue?` | A how-to. |
 | `grid` | `tiles[]`: `icon`, `label`, `cue?` (2–6; two columns, three in landscape) | Integrations, destinations, options. |
 | `media` | `mediaCue?`, `moments[]`: `time`, `label`, `cue?` (2–4) | Video or audio features. |
+| `image` | `src`, `alt`, `imageCue?`, `caption?`, `captionCue?` | A real picture: a screenshot, photo or drawn diagram. `src` is a PNG or JPEG (`.png`, `.jpg`, `.jpeg`; SVG and WebP are rejected, so turn a diagram into a PNG first), relative to `short.json`; `check` fails naming the field when the file is missing. `alt` is required: it says what the picture shows and becomes the deck's alt text. `caption` is one line of about 40 characters. The picture fills the space under the title, letterboxed on the `card` colour and never cropped, and pops in on its cue; the video uses a copy at most 2160 px on the long side, the deck the original. Pictures come from the visuals skill. |
 | `cta` | `headline`, `sub?`, `subCue?`, `pill?` (`icon`, `text`, `cue?`), `follow?`, `followCue?` | Last beat: where to get it, follow prompt. |
 
 Icons are Feather names from `react-icons/fi`: `FiLayers`, `FiBookmark`, `FiFileText`, `FiFolder`, `FiGithub`, `FiTerminal`, `FiGlobe`, `FiHardDrive`, `FiBookOpen`, `FiMessageSquare`, `FiSearch`, `FiCode`, `FiEdit3`, `FiPlay`, `FiZap`, `FiShield`, `FiClock`, `FiUsers`, and the rest of the set.

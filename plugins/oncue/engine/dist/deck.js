@@ -10,7 +10,9 @@ exports.writeDeck = writeDeck;
  * voiceover in the speaker notes. The slide snaps to the two sizes its layouts are drawn for: 5.625×10 in
  * for portrait and square specs, 10×5.625 in for landscape ones, arranged per scene kind like the video (WIDE).
  */
+const node_path_1 = require("node:path");
 const pptxgenjs_1 = __importDefault(require("pptxgenjs"));
+const sharp_1 = __importDefault(require("sharp"));
 const icons_1 = require("./icons");
 const spec_1 = require("./spec");
 const M = 0.5;
@@ -205,6 +207,23 @@ async function writeDeck(loaded, outFile) {
                     text(s, m.time, { x: mx, y, w: 1.0, h: mh, fontSize: 14, bold: true, color: hex(c.accent), align: "center", valign: "middle", fontFace: mono });
                     text(s, m.label, { x: mx + 1.2, y, w: mw - 1.2, h: mh, fontSize: 16, valign: "middle" });
                 });
+                return;
+            }
+            case "image": {
+                // The picture keeps its aspect ratio inside a card that fills the body, the caption below it, as in the video.
+                const file = (0, node_path_1.resolve)(loaded.dir, scene.src);
+                const meta = await (0, sharp_1.default)(file).metadata();
+                const { width: pw, height: ph } = meta.autoOrient;
+                const ch = scene.caption ? 0.5 : 0, fh = bh - ch, pad = 0.12;
+                card(s, M, top, CW, fh, c.card, "image");
+                const k = Math.min((CW - 2 * pad) / pw, (fh - 2 * pad) / ph), w = pw * k, h = ph * k;
+                // PowerPoint may ignore an EXIF orientation tag, so a rotated photo goes in upright.
+                const src = (meta.orientation ?? 1) > 1
+                    ? { data: `image/${meta.format === "png" ? "png" : "jpeg"};base64,${(await (0, sharp_1.default)(file).autoOrient().toBuffer()).toString("base64")}` }
+                    : { path: file };
+                s.addImage({ ...src, x: M + (CW - w) / 2, y: top + (fh - h) / 2, w, h, altText: scene.alt });
+                if (scene.caption)
+                    text(s, rt(scene.caption, { color: hex(c.muted) }), { x: M, y: top + fh + 0.1, w: CW, h: ch - 0.1, fontSize: 15, valign: "middle" });
                 return;
             }
             case "cta": {

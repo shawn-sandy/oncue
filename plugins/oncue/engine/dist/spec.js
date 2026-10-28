@@ -34,7 +34,7 @@ function look(spec) {
         header: t.header ?? "brand",
     };
 }
-const KINDS = new Set(["hook", "list", "card", "chat", "steps", "grid", "media", "cta"]);
+const KINDS = new Set(["hook", "list", "card", "chat", "steps", "grid", "media", "image", "cta"]);
 const HEX = /^#[0-9a-fA-F]{6}$/;
 function fail(path, msg) { throw new Error(`short.json ${path}: ${msg}`); }
 function str(v, path) { if (typeof v !== "string" || !v.trim())
@@ -63,7 +63,7 @@ function stageFor(format) {
     return { wide, width: format.width / scale, height: format.height / scale, scale };
 }
 exports.WIDE = {
-    hook: "stack", list: "side", card: "side", chat: "side", steps: "side", grid: "top", media: "top", cta: "stack",
+    hook: "stack", list: "side", card: "side", chat: "side", steps: "side", grid: "top", media: "top", image: "side", cta: "stack",
 };
 /** theme is optional; each key it has must be a known key with one of its listed values. */
 function checkTheme(theme) {
@@ -134,12 +134,22 @@ function loadSpec(file) {
     checkTheme(spec.theme);
     if (!Array.isArray(spec.lines) || spec.lines.length === 0)
         fail("lines", "needs at least one line");
+    const dir = (0, node_path_1.dirname)((0, node_path_1.resolve)(file));
     spec.lines.forEach((l, i) => {
         str(l.vo, `lines[${i}].vo`);
         if (!l.scene || !KINDS.has(l.scene.kind))
             fail(`lines[${i}].scene.kind`, `must be one of ${[...KINDS].join(", ")}`);
+        if (l.scene.kind === "image") {
+            const at = `lines[${i}].scene`;
+            str(l.scene.src, `${at}.src`);
+            // Chromium and PowerPoint both render these; SVG and WebP behave inconsistently in PowerPoint.
+            if (!/\.(png|jpe?g)$/i.test(l.scene.src))
+                fail(`${at}.src`, `must be a PNG or JPEG file (.png, .jpg or .jpeg), got "${l.scene.src}"`);
+            if (!(0, node_fs_1.existsSync)((0, node_path_1.resolve)(dir, l.scene.src)))
+                fail(`${at}.src`, `file not found: ${(0, node_path_1.resolve)(dir, l.scene.src)} (paths are relative to short.json)`);
+            str(l.scene.alt, `${at}.alt`);
+        }
     });
-    const dir = (0, node_path_1.dirname)((0, node_path_1.resolve)(file));
     return { spec, dir, logoPath: (0, node_path_1.resolve)(dir, b.logo) };
 }
 function runs(rich) {
