@@ -117,3 +117,35 @@ for (const [w, h] of [[1080, 1920], [1920, 1080]]) {
     assert.deepEqual(d.outside, []);
   });
 }
+
+// A phone photo is often stored sideways with an EXIF orientation tag. Both outputs must show it upright: the
+// video's copy is rotated with no tag left, and the deck gets an upright picture in a tall box.
+test("a photo stored sideways with EXIF orientation 6 comes out upright in the scenes copy and the deck", async () => {
+  await solid(2000, 1000).jpeg().withMetadata({ orientation: 6 }).toFile(join(dir, "sideways.jpg"));
+  const stored = await sharp(join(dir, "sideways.jpg")).metadata();
+  assert.deepEqual([stored.width, stored.height, stored.orientation], [2000, 1000, 6]);
+
+  const alt = "A phone photo stored sideways";
+  const short = { ...gleaner, lines: [gleaner.lines[0], { vo: "Here is the photo.", scene: { kind: "image", kicker: "Photo", title: "A {photo}", src: "sideways.jpg", alt } }] };
+  const out = join(dir, "scenes-exif");
+  await scenes.writeScenes(write("exif", short), out, engine);
+  const copy = await sharp(join(out, "images", "beat-2.jpg")).metadata();
+  assert.deepEqual([copy.width, copy.height], [1000, 2000]);
+  assert.ok((copy.orientation ?? 1) === 1, `copy still tagged ${copy.orientation}`);
+
+  const pptx = join(dir, "exif.pptx");
+  await deck.writeDeck(write("exif-deck", short), pptx);
+  const zip = await JSZip.loadAsync(readFileSync(pptx));
+  const slide = (await zip.file("ppt/slides/slide2.xml")?.async("string")) ?? "";
+  const pic = new RegExp(`descr="${alt}"[\\s\\S]*?r:embed="(rId\\d+)"[\\s\\S]*?<a:ext cx="(\\d+)" cy="(\\d+)"\\/>`).exec(slide);
+  assert.ok(pic, "the photo is not on slide 2");
+  assert.ok(Number(pic[3]) > Number(pic[2]), `picture box is ${pic[2]}×${pic[3]} EMU, not tall`);
+  // The embedded file itself must be upright and untagged, since PowerPoint may ignore the tag.
+  const rels = (await zip.file("ppt/slides/_rels/slide2.xml.rels")?.async("string")) ?? "";
+  const target = new RegExp(`Id="${pic[1]}"[^>]*Target="\\.\\./media/([^"]+)"`).exec(rels)?.[1];
+  assert.ok(target, `no media for ${pic[1]}`);
+  const media = await zip.file(`ppt/media/${target}`)?.async("nodebuffer");
+  assert.ok(media);
+  const embedded = await sharp(media).metadata();
+  assert.deepEqual([embedded.width, embedded.height, embedded.orientation ?? 1], [1000, 2000, 1]);
+});

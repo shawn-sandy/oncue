@@ -82,7 +82,7 @@ For each beat you would change, show the current line, the proposed line and the
 - Keep every cue word of that beat (the `word` of each `cue`, `headlineCue` and so on), or change that cue to a word in the new line and say which.
 - Stay one or two sentences, written for the ear, with every fact sourced.
 
-Apply a rewrite only when the person approves it, and only at the Storyboard stage, or later if they accepted the re-record and its cost. Then edit `vo` and any changed cues in `short.json` and run `node dist/cli.js check <folder>/short.json` from the engine folder (set up as in the explainer-video skill, `../explainer-video/SKILL.md`); fix any cue warning it prints. If the engine is not set up, say that `check` was not run.
+Apply a rewrite only when the person approves it, and only at the Storyboard stage, or later if they accepted the re-record and its cost. Then edit `vo` and any changed cues in `short.json`. From the engine folder (set up as in the explainer-video skill, `../explainer-video/SKILL.md`), run `node dist/cli.js check <folder>/short.json` to validate it, then `node dist/cli.js stills <folder>/short.json` without `--words` and `--audio`: cue warnings come from `stills`, not `check`, and estimated timing is enough to show a cue word missing from its line. Fix every cue warning. If the engine is not set up, say that neither was run.
 
 ## 7. Recommend visuals
 
