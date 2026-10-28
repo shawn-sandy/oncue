@@ -69,6 +69,11 @@ test("a src with spaces is accepted", () => {
   assert.doesNotThrow(() => load({ src: "my picture.jpg" }));
 });
 
+test("a src naming a folder is rejected, naming lines[1].scene.src", () => {
+  mkdirSync(join(dir, "folder.png"), { recursive: true });
+  assert.throws(() => load({ src: "folder.png" }), /lines\[1\]\.scene\.src/);
+});
+
 test("src resolves relative to short.json, not the working directory", (t) => {
   const project = join(dir, "project");
   mkdirSync(join(project, "images"), { recursive: true });

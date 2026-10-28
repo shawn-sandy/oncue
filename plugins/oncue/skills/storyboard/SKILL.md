@@ -22,7 +22,7 @@ Turn a topic into a locked set of beats: what the narrator says, what the viewer
 - Classic arc: hook (the pain or promise) → problem → what it is → how it works (1–3 beats) → where it fits → call to action.
 - One idea per beat, one sentence or two per `vo`. Write for the ear: short words, active verbs, things people type in quotes.
 - Pick the scene `kind` that shows the idea (spec reference, Scene kinds), and give each element a `cue`: the word in that beat's `vo` that names it.
-- A beat that needs a real picture (a screenshot, photo or diagram) uses the `image` kind; the pictures themselves come from the visuals skill (`../visuals/SKILL.md`), which can add them now or after the voiceover.
+- A beat that needs a real picture (a screenshot, photo or diagram) becomes an `image` beat only once its picture exists, because `check` fails on an `image` beat whose file is missing. Storyboard it with another kind for now; the visuals skill (`../visuals/SKILL.md`) sources the picture and switches the beat to `image`, now or after the voiceover.
 - Keep on-screen text shorter than the voiceover. A title says the point; the narrator explains it.
 
 ## 3. Write short.json

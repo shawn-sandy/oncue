@@ -149,3 +149,26 @@ test("a photo stored sideways with EXIF orientation 6 comes out upright in the s
   const embedded = await sharp(media).metadata();
   assert.deepEqual([embedded.width, embedded.height, embedded.orientation ?? 1], [1000, 2000, 1]);
 });
+
+// A photo's EXIF can hold where it was taken. The deck is the file people share, so every picture goes in
+// without its metadata, upright ones included.
+test("the deck embeds an upright photo without its EXIF metadata", async () => {
+  await solid(1200, 800).jpeg().withExif({ IFD0: { Artist: "Someone", Copyright: "Private" } }).toFile(join(dir, "tagged.jpg"));
+  const stored = await sharp(join(dir, "tagged.jpg")).metadata();
+  assert.ok(stored.exif && (stored.orientation ?? 1) === 1, "fixture needs EXIF and no rotation");
+
+  const alt = "A photo with EXIF metadata";
+  const pptx = join(dir, "tagged.pptx");
+  await deck.writeDeck(write("tagged", { ...gleaner, lines: [gleaner.lines[0], { vo: "Here is the photo.", scene: { kind: "image", kicker: "Photo", title: "A {photo}", src: "tagged.jpg", alt } }] }), pptx);
+  const zip = await JSZip.loadAsync(readFileSync(pptx));
+  const slide = (await zip.file("ppt/slides/slide2.xml")?.async("string")) ?? "";
+  const rid = new RegExp(`descr="${alt}"[\\s\\S]*?r:embed="(rId\\d+)"`).exec(slide)?.[1];
+  const rels = (await zip.file("ppt/slides/_rels/slide2.xml.rels")?.async("string")) ?? "";
+  const target = new RegExp(`Id="${rid}"[^>]*Target="\\.\\./media/([^"]+)"`).exec(rels)?.[1];
+  assert.ok(target, "the photo is not on slide 2");
+  const media = await zip.file(`ppt/media/${target}`)?.async("nodebuffer");
+  assert.ok(media);
+  const embedded = await sharp(media).metadata();
+  assert.equal(embedded.exif, undefined, "the embedded photo still carries EXIF");
+  assert.deepEqual([embedded.width, embedded.height], [1200, 800]);
+});

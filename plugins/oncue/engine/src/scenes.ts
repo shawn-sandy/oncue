@@ -115,7 +115,7 @@ export async function writeScenes(loaded: LoadedSpec, outDir: string, engineRoot
   copyFileSync(logoPath, join(outDir, "logo.png"));
   copyFileSync(resolve(engineRoot, "dist", "render.js"), join(outDir, "render.js"));
   // Pictures are copied upright and at most 2160 px on the long side, never enlarged, so a large phone photo
-  // doesn't slow every captured frame. The deck uses the original.
+  // doesn't slow every captured frame. The deck writes its own full-size copy.
   mkdirSync(join(outDir, "images"), { recursive: true });
   await Promise.all(spec.lines.map((l, i) => l.scene.kind === "image"
     ? sharp(resolve(loaded.dir, l.scene.src)).autoOrient().resize(2160, 2160, { fit: "inside", withoutEnlargement: true }).toFile(join(outDir, imageFile(i, l.scene.src)))

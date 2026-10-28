@@ -107,7 +107,7 @@ async function writeScenes(loaded, outDir, engineRoot) {
     (0, node_fs_1.copyFileSync)(logoPath, (0, node_path_1.join)(outDir, "logo.png"));
     (0, node_fs_1.copyFileSync)((0, node_path_1.resolve)(engineRoot, "dist", "render.js"), (0, node_path_1.join)(outDir, "render.js"));
     // Pictures are copied upright and at most 2160 px on the long side, never enlarged, so a large phone photo
-    // doesn't slow every captured frame. The deck uses the original.
+    // doesn't slow every captured frame. The deck writes its own full-size copy.
     (0, node_fs_1.mkdirSync)((0, node_path_1.join)(outDir, "images"), { recursive: true });
     await Promise.all(spec.lines.map((l, i) => l.scene.kind === "image"
         ? (0, sharp_1.default)((0, node_path_1.resolve)(loaded.dir, l.scene.src)).autoOrient().resize(2160, 2160, { fit: "inside", withoutEnlargement: true }).toFile((0, node_path_1.join)(outDir, imageFile(i, l.scene.src)))

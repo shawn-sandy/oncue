@@ -145,8 +145,9 @@ function loadSpec(file) {
             // Chromium and PowerPoint both render these; SVG and WebP behave inconsistently in PowerPoint.
             if (!/\.(png|jpe?g)$/i.test(l.scene.src))
                 fail(`${at}.src`, `must be a PNG or JPEG file (.png, .jpg or .jpeg), got "${l.scene.src}"`);
-            if (!(0, node_fs_1.existsSync)((0, node_path_1.resolve)(dir, l.scene.src)))
-                fail(`${at}.src`, `file not found: ${(0, node_path_1.resolve)(dir, l.scene.src)} (paths are relative to short.json)`);
+            const picture = (0, node_path_1.resolve)(dir, l.scene.src);
+            if (!(0, node_fs_1.existsSync)(picture) || !(0, node_fs_1.statSync)(picture).isFile())
+                fail(`${at}.src`, `file not found: ${picture} (paths are relative to short.json)`);
             str(l.scene.alt, `${at}.alt`);
         }
     });

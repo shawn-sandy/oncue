@@ -224,11 +224,12 @@ export async function writeDeck(loaded: LoadedSpec, outFile: string): Promise<st
         const ch = scene.caption ? 0.5 : 0, fh = bh - ch, pad = 0.12;
         card(s, M, top, CW, fh, c.card, "image");
         const k = Math.min((CW - 2 * pad) / pw, (fh - 2 * pad) / ph), w = pw * k, h = ph * k;
-        // PowerPoint may ignore an EXIF orientation tag, so a rotated photo goes in upright.
-        const src = (meta.orientation ?? 1) > 1
-          ? { data: `image/${meta.format === "png" ? "png" : "jpeg"};base64,${(await sharp(file).autoOrient().toBuffer()).toString("base64")}` }
-          : { path: file };
-        s.addImage({ ...src, x: M + (CW - w) / 2, y: top + (fh - h) / 2, w, h, altText: scene.alt });
+        // Re-encoded at full size through sharp, which writes no metadata: the deck is the file people share, and a
+        // phone photo's EXIF can say where it was taken. autoOrient puts a rotated photo upright, since PowerPoint may
+        // ignore the tag.
+        const png = meta.format === "png", upright = sharp(file).autoOrient();
+        const bytes = await (png ? upright.png() : upright.jpeg({ quality: 95 })).toBuffer();
+        s.addImage({ data: `image/${png ? "png" : "jpeg"};base64,${bytes.toString("base64")}`, x: M + (CW - w) / 2, y: top + (fh - h) / 2, w, h, altText: scene.alt });
         if (scene.caption) text(s, rt(scene.caption, { color: hex(c.muted) }), { x: M, y: top + fh + 0.1, w: CW, h: ch - 0.1, fontSize: 15, valign: "middle" });
         return;
       }

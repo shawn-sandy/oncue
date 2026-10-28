@@ -2,7 +2,7 @@
  * short.json — the single source of truth for one explainer.
  * The storyboard, the deck, the voiceover script and the animated video all read it.
  */
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
 /** Word in the voiceover that triggers an element. Matched as a prefix, case- and punctuation-insensitive. */
@@ -216,7 +216,8 @@ export function loadSpec(file: string): LoadedSpec {
       str(l.scene.src, `${at}.src`);
       // Chromium and PowerPoint both render these; SVG and WebP behave inconsistently in PowerPoint.
       if (!/\.(png|jpe?g)$/i.test(l.scene.src)) fail(`${at}.src`, `must be a PNG or JPEG file (.png, .jpg or .jpeg), got "${l.scene.src}"`);
-      if (!existsSync(resolve(dir, l.scene.src))) fail(`${at}.src`, `file not found: ${resolve(dir, l.scene.src)} (paths are relative to short.json)`);
+      const picture = resolve(dir, l.scene.src);
+      if (!existsSync(picture) || !statSync(picture).isFile()) fail(`${at}.src`, `file not found: ${picture} (paths are relative to short.json)`);
       str(l.scene.alt, `${at}.alt`);
     }
   });

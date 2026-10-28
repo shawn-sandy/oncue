@@ -44,7 +44,7 @@ Use the first source that fits:
 ## 4. Picture rules
 
 - PNG or JPEG only (`.png`, `.jpg`, `.jpeg`). `check` rejects SVG, WebP and GIF, so convert first.
-- At least 1080 px on the long side. Bigger is fine: the video uses a copy at most 2160 px on the long side, and the deck uses the original.
+- At least 1080 px on the long side. Bigger is fine: the video uses a copy at most 2160 px on the long side, and the deck a full-size copy. Neither keeps the picture's metadata, such as where a phone photo was taken.
 - No text inside generated pictures, which models misspell. Words go in the title and caption; a drawn diagram may carry short labels.
 - Put the brand colours in the generation prompt or the SVG.
 - `alt` says what the picture shows, in one sentence: "Diagram: a web page becomes a clip with a summary, tags and its source link."
@@ -74,7 +74,7 @@ node dist/cli.js check <folder>/short.json
 node dist/cli.js stills <folder>/short.json --words <folder>/words.json --audio <folder>/voiceover.mp3
 ```
 
-Leave out `--words` and `--audio` before a voiceover exists. Fix every cue warning by choosing an `imageCue` or `captionCue` word that is in that beat's `vo`, and look at the beat's still: the picture is in its frame, uncropped, with nothing in the bottom ~350 px of a portrait frame. Only then report done.
+Pass the take being timed: `words.json` and `voiceover.mp3`, or a matching pair such as `words-take1.json` and `voiceover-take1.mp3` while the person is still choosing. Leave out `--words` and `--audio` when there is no pair. Fix every cue warning by choosing an `imageCue` or `captionCue` word that is in that beat's `vo`, and look at the beat's still: the picture is in its frame, uncropped, with nothing in the bottom ~350 px of a portrait frame. Only then report done.
 
 ## 6. Deliver
 
