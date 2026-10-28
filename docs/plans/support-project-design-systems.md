@@ -6,6 +6,7 @@ repo-name: oncue
 effort: medium
 workflow: never
 artifact-url: https://claude.ai/artifact/7DSFWx5xR2YXub5xVnMZJq
+issue: https://github.com/shawn-sandy/oncue/issues/17
 glance: Today OnCue uses a design system only when someone hands one over, so a brand's second Short starts from scratch and any look Claude invents is lost once that Short is done. After this change the storyboard skill finds the design system itself, copies an earlier Short's look exactly, and saves a new look as a DESIGN.md. We will know it works when a scratch Short picks up the Gleaner Design System and writes the same 13 colours as the Gleaner example, a second Short matches the first, and a saved DESIGN.md gives back the same look.
 ---
 
