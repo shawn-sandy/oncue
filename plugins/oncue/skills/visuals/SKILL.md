@@ -43,7 +43,7 @@ Use the first source that fits:
 
 ## 4. Picture rules
 
-- PNG or JPEG only (`.png`, `.jpg`, `.jpeg`). `check` rejects SVG, WebP and GIF, so convert first.
+- PNG or JPEG only (`.png`, `.jpg`, `.jpeg`). `check` rejects SVG, WebP and GIF, so convert first; it reads the file itself, so renaming `.webp` to `.png` fails too.
 - At least 1080 px on the long side. Bigger is fine: the video uses a copy at most 2160 px on the long side, and the deck a full-size copy. Neither keeps the picture's metadata, such as where a phone photo was taken.
 - No text inside generated pictures, which models misspell. Words go in the title and caption; a drawn diagram may carry short labels.
 - Put the brand colours in the generation prompt or the SVG.

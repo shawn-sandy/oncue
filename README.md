@@ -183,6 +183,12 @@ The plugin version lives only in `plugins/oncue/.claude-plugin/plugin.json`.
 
 ## Changelog
 
+### 1.6.1 (2026-10-28)
+
+- `check` now reads each image beat's picture, not just its name. A text file or a truncated download named `.png` or `.jpg` fails `check` naming `lines[i].scene.src`, instead of passing and then failing inside `stills`, `video` or `deck` with sharp's decode error.
+- A WebP, GIF or other format renamed to `.png` or `.jpg` now fails `check` too, naming the same field. Those used to render, so a spec that passed before can now fail: convert the picture instead of renaming it.
+- Every command runs the check, `script` included. Real PNG and JPEG files pass as before.
+
 ### 1.6.0 (2026-10-28)
 
 - New `image` scene kind: a PNG or JPEG under the title (beside it in the landscape layout), letterboxed on the `card` colour and never cropped, and never smaller than a third of the frame's short side (a frame too short for that, such as a square one, shrinks the scene to fit, with a warning), with required `alt`, an optional one-line `caption`, and `imageCue` and `captionCue`. It pops in on its cue with the spotlight glow, in the portrait and landscape layouts and the deck. `check` rejects a missing file, an extension other than `.png`, `.jpg` or `.jpeg`, and an empty `alt`, naming the field. Specs without image beats render as before: the Gleaner example's stills and slide XML are byte-identical to 1.5.0.

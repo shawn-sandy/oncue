@@ -19,7 +19,7 @@ import { join, resolve } from "node:path";
 import { renderStills, renderVideo, type Fit, type Size } from "./capture";
 import { deckSize, writeDeck } from "./deck";
 import { writeScenes } from "./scenes";
-import { contrastWarnings, loadSpec, stageFor, type LoadedSpec, type Spec } from "./spec";
+import { checkPictures, contrastWarnings, loadSpec, stageFor, type LoadedSpec, type Spec } from "./spec";
 import { buildTimeline, estimateWords, readWords, type Timeline } from "./timeline";
 
 const ENGINE = resolve(__dirname, "..");
@@ -74,6 +74,7 @@ async function main(): Promise<void> {
   const specFile = pos[0];
   if (!cmd || !specFile) { console.log(readHelp()); process.exit(cmd ? 1 : 0); }
   const loaded = loadSpec(resolve(specFile));
+  await checkPictures(loaded);
   const { spec } = loaded;
 
   switch (cmd) {

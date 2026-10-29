@@ -1,10 +1,15 @@
 // @ts-check
-/** The image scene kind in the contract: loadSpec checks src and alt, naming the field, and slots() gives its cues. */
+/**
+ * The image scene kind in the contract: loadSpec checks src and alt, naming the field, `check` decodes the picture,
+ * and slots() gives its cues.
+ */
+import { spawnSync } from "node:child_process";
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 import spec from "../dist/spec.js";
 import cues from "../dist/cues.js";
@@ -24,17 +29,29 @@ await tiny().jpeg().toFile(join(dir, "my picture.jpg"));
 await tiny().webp().toFile(join(dir, "pic.webp"));
 await tiny().gif().toFile(join(dir, "pic.gif"));
 writeFileSync(join(dir, "pic.svg"), '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="36"/>');
+// The right extension on the wrong bytes, so a rejection can only come from reading the file.
+await tiny().webp().toFile(join(dir, "webp.png"));
+writeFileSync(join(dir, "text.jpg"), "not a picture\n");
+const jpeg = await sharp({ create: { width: 640, height: 360, channels: 3, background: "#336699" } }).jpeg().toBuffer();
+writeFileSync(join(dir, "truncated.jpg"), jpeg.subarray(0, jpeg.length >> 1));
+// Cut after its header, so only a full decode finds the damage.
+assert.equal((await sharp(join(dir, "truncated.jpg")).metadata()).format, "jpeg");
 
 /** @param {Record<string, unknown>} scene */
 const image = (scene) => ({ kind: "image", kicker: "How it works", title: "One clip, {every source}", src: "pic.png", alt: "A diagram of a saved clip", ...scene });
 
-/** Writes a spec whose second beat is the given image scene and loads it. @param {Record<string, unknown>} scene @param {string} [folder] */
-function load(scene, folder = dir) {
+/** Writes a spec whose second beat is the given image scene; returns its path. @param {Record<string, unknown>} scene @param {string} [folder] */
+function write(scene, folder = dir) {
   const file = join(folder, "short.json");
   const short = { ...gleaner, brand: { ...gleaner.brand, logo: join(dir, "logo.png") }, lines: [gleaner.lines[0], { vo: "This is how a clip gets saved.", scene: image(scene) }] };
   writeFileSync(file, JSON.stringify(short));
-  return spec.loadSpec(file);
+  return file;
 }
+/** @param {Record<string, unknown>} scene @param {string} [folder] */
+const load = (scene, folder = dir) => spec.loadSpec(write(scene, folder));
+const cli = fileURLToPath(new URL("../dist/cli.js", import.meta.url));
+/** Runs `check` on a spec whose second beat is the given image scene. @param {Record<string, unknown>} scene */
+const check = (scene) => spawnSync(process.execPath, [cli, "check", write(scene)], { encoding: "utf8" });
 
 test("an image beat with a PNG and alt text loads", () => {
   assert.equal(load({}).spec.lines[1]?.scene.kind, "image");
@@ -83,6 +100,21 @@ test("src resolves relative to short.json, not the working directory", (t) => {
   t.after(() => process.chdir(cwd));
   assert.doesNotThrow(() => load({ src: "images/beat-02.png" }, project));
   assert.throws(() => load({ src: "beat-02.png" }, project), /lines\[1\]\.scene\.src/);
+});
+
+for (const [src, what] of [["webp.png", "a WebP named .png"], ["text.jpg", "a text file named .jpg"], ["truncated.jpg", "a truncated JPEG"]]) {
+  test(`check rejects ${what}, naming lines[1].scene.src`, () => {
+    const run = check({ src });
+    assert.equal(run.status, 1, run.stdout);
+    assert.match(run.stderr, /^short\.json lines\[1\]\.scene\.src: /);
+  });
+}
+
+test("check passes a real PNG and JPEG", () => {
+  for (const src of ["pic.png", "pic.jpeg"]) {
+    const run = check({ src });
+    assert.equal(run.status, 0, run.stderr);
+  }
 });
 
 test("slots() gives an image beat image then caption, with their cues", () => {
