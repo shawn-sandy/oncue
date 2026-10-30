@@ -75,7 +75,7 @@ Say "go ahead without stopping" to skip the check-ins.
 - **The subject and its sources:** a repo, README, docs page or notes. Claude uses real facts only and marks anything missing as `[YOUR FACT]`.
 - **Length and audience.** Without them, Claude aims for 45–80 seconds in 6–10 beats.
 - **The call to action:** install, follow, visit.
-- **The brand and look:** a design system, a DESIGN.md or design tokens, a reference image or site, a few words such as "light, playful, rounded", colours, or a square PNG logo. Without one, Claude uses the product's logo and site; with neither, it picks a dark ground, one accent and one highlight from the subject and tells you.
+- **The brand and look:** a design system, a DESIGN.md or design tokens, a reference image or site, a few words such as "light, playful, rounded", colours, or a square PNG logo. Without one, Claude first looks for an earlier Short, a DESIGN.md, design tokens, the project's stylesheets or one of your claude.ai Design Systems, and asks when it finds more than one. With nothing to use, it takes the product's logo and site, or picks a ground, one accent and one highlight from the subject and tells you. A new look can be saved as a DESIGN.md, which later Shorts find; Claude offers once you approve the stills.
 - **The voice,** such as "a warm, unhurried narrator". Without one, Claude picks a clear voice suited to a product explainer.
 - **Where it will be posted.** Shorts, Reels and TikTok get 1080×1920; a YouTube video or a landscape deck gets 1920×1080; name any other size you need.
 - **The outputs,** if you want less than the whole pipeline: only the storyboard, only the deck, or a silent preview.
@@ -127,7 +127,7 @@ Each stage is its own skill, so you can stop after any of them or start from an 
 
 ## How it works
 
-1. **Storyboard.** Claude writes the beats into `short.json`: each beat's voiceover line, a scene (`hook`, `list`, `card`, `chat`, `steps`, `grid`, `media`, `image` or `cta`), and for each element the word it should enter on. It also sets the look: brand colours and fonts, and an optional `theme` for corners, type size, spacing, background and header, taken from your words, a DESIGN.md, design tokens, Figma, a reference image or a site. See [the spec reference](plugins/oncue/skills/storyboard/references/spec.md).
+1. **Storyboard.** Claude writes the beats into `short.json`: each beat's voiceover line, a scene (`hook`, `list`, `card`, `chat`, `steps`, `grid`, `media`, `image` or `cta`), and for each element the word it should enter on. It also sets the look: brand colours and fonts, and an optional `theme` for corners, type size, spacing, background and header, taken from your words, a DESIGN.md, design tokens, Figma, a reference image or a site, or found in an earlier Short, the project's stylesheets or your claude.ai Design Systems. See [the spec reference](plugins/oncue/skills/storyboard/references/spec.md).
 2. **Voiceover.** The ElevenLabs connector reads the whole script in one take for a consistent voice, then transcribes it with word timestamps.
 3. **Deck.** The engine writes real PowerPoint text and shapes in your brand colours, on a 9:16 or 16:9 slide by the spec's orientation.
 4. **Video.** Each scene is an HTML page stepped frame by frame in headless Chromium at the spec's size; a scene too big for its frame is shrunk to fit, with a warning, with entrances on cue words, a typing effect, spotlight glows, drawn lines, scene transitions and a progress bar. ffmpeg encodes the frames and lays in the voice.
@@ -182,6 +182,15 @@ The skill evals in `plugins/oncue/evals/` run real Claude sessions against fixed
 The plugin version lives only in `plugins/oncue/.claude-plugin/plugin.json`.
 
 ## Changelog
+
+### 1.7.0 (2026-10-30)
+
+- The storyboard skill now looks for a design system before inventing a look. It searches for an earlier Short, a DESIGN.md, token files, local stylesheets (`:root` custom properties, a Tailwind `@theme` block or `tailwind.config.*`), your claude.ai Design Systems (when the session has the Artifact tool) and the product's site, and stops at the first source with a hit. One hit is named and used; several are listed with "none of these"; a Design System marked as your default is used without asking. Any words you gave adjust what it finds and win where they conflict, and a file, image or site you name turns the search off.
+- A later Short copies an earlier Short's `brand` and `theme` exactly, along with its logo, including a logo in a subfolder such as `assets/logo.png`, so a brand's Shorts match.
+- The bundled Gleaner Shorts are never treated as yours: the search skips `oncue-engine*` and any `engine/examples/`, `evals/` or `fixtures/` folder.
+- The theme guide now reads claude.ai Design System artifacts: dark values by default, light ones for a light look, 3-digit hex expanded, the brand layer ahead of the base layer, and an SVG logo turned into a square PNG with `sharp`. It no longer says an installed design system's `tokens.json` reads like W3C design tokens, which was wrong.
+- After you approve the stills, the skill offers to save a new look as a DESIGN.md at the project root. It writes the file only on a yes and never over an existing one. An `oncue:` block holds `type`, `background` and `deckFonts`, so a later Short reads the same look back.
+- Skills only: the engine and `short.json` are unchanged.
 
 ### 1.6.1 (2026-10-28)
 
