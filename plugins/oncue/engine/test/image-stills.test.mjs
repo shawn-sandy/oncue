@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
@@ -39,10 +39,11 @@ async function blue(file) {
 }
 
 /**
- * Writes a two-beat spec (hook, then an image beat with a 3000×2000 #336699 picture) and runs `stills` on it.
+ * Writes a spec (hook, then an image beat with a 3000×2000 #336699 picture, then `next`) and runs `stills` on it.
  * @param {string} name @param {number} w @param {number} h @param {string} title
+ * @param {{ vo?: string, word?: string, next?: unknown[] }} [beat] the image beat's line and cue word, and the beats after it
  */
-async function stills(name, w, h, title) {
+async function stills(name, w, h, title, { vo = "Here is the picture of a saved clip.", word = "picture", next = [] } = {}) {
   const folder = join(dir, name);
   mkdirSync(folder);
   copyFileSync(new URL("logo.png", example), join(folder, "logo.png"));
@@ -50,7 +51,7 @@ async function stills(name, w, h, title) {
   writeFileSync(join(folder, "short.json"), JSON.stringify({
     ...gleaner,
     format: { width: w, height: h },
-    lines: [gleaner.lines[0], { vo: "Here is the picture of a saved clip.", scene: { kind: "image", kicker: "Saved", title, src: "photo.jpg", alt: "A blue test card", imageCue: { word: "picture" }, caption: "Solid test colour" } }],
+    lines: [gleaner.lines[0], { vo, scene: { kind: "image", kicker: "Saved", title, src: "photo.jpg", alt: "A blue test card", imageCue: { word }, caption: "Solid test colour" } }, ...next],
   }));
   const run = spawnSync(process.execPath, ["dist/cli.js", "stills", join(folder, "short.json")], { cwd: engine, encoding: "utf8" });
   assert.equal(run.status, 0, run.stderr);
@@ -72,6 +73,24 @@ for (const [w, h] of [[1080, 1920], [1920, 1080]]) {
     assert.ok(n > 100_000, `only ${n} pixels of the picture's colour in ${still}`);
   });
 }
+
+// The image beat needs a beat after it: the last beat's tail would hold the picture on screen at any fixed point.
+test("a picture cued late in its line shows in the default still, and --at still picks exact seconds", async (t) => {
+  if (skip) { t.skip(skip); return; }
+  const { folder, run } = await stills("late", 1080, 1920, "A {real} picture", {
+    vo: "Three of these arrive early, and the last waits patiently for the very closing word.",
+    word: "closing",
+    next: [gleaner.lines[1]],
+  });
+  const still = run.stdout.trim().split("\n")[1];
+  assert.ok(still, run.stdout);
+  const n = await blue(still);
+  assert.ok(n > 100_000, `only ${n} pixels of the picture's colour in ${still}`);
+
+  const at = spawnSync(process.execPath, ["dist/cli.js", "stills", join(folder, "short.json"), "--at", "0.5,1.25"], { cwd: engine, encoding: "utf8" });
+  assert.equal(at.status, 0, at.stderr);
+  assert.deepEqual(at.stdout.trim().split("\n").map((f) => basename(f)), ["frame-0.50s.png", "frame-1.25s.png"]);
+});
 
 // A square frame leaves the portrait layout under 500 px for the title and picture. The picture keeps a minimum
 // size, so the scene overflows and the fit guard shrinks it and warns, instead of squeezing the picture to a sliver.

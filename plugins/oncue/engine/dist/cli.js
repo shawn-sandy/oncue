@@ -7,7 +7,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  *   node dist/cli.js check    <short.json>                     validate; print the layout, beats, VO script, estimated length, low-contrast colour pairs and beats that would start too early
  *   node dist/cli.js script   <short.json>                     print the voiceover script, one line per beat
  *   node dist/cli.js deck     <short.json> [--out deck.pptx]    native, editable PowerPoint, 9:16 or 16:9 (VO in speaker notes)
- *   node dist/cli.js stills   <short.json> [--words w.json --audio vo.mp3] [--at 1,5,9]   QA frames (default: one per scene)
+ *   node dist/cli.js stills   <short.json> [--words w.json --audio vo.mp3] [--at 1,5,9]   QA frames (default: one per scene, just before it fades out)
  *   node dist/cli.js video    <short.json> [--words w.json --audio vo.mp3] [--out short.mp4]
  *
  * The size comes from short.json's format: wider than tall renders the landscape layout, anything else the portrait one.
@@ -108,8 +108,7 @@ async function main() {
         }
         case "stills": {
             const p = await prepare(loaded, opt);
-            const times = opt["at"] ? opt["at"].split(",").map(Number)
-                : p.tl.scenes.map((s) => Number((s.start + 0.85 * (s.end - s.start)).toFixed(2)));
+            const times = opt["at"] ? opt["at"].split(",").map(Number) : (0, timeline_1.stillTimes)(p.tl);
             const dir = (0, node_path_1.join)(p.build, "stills");
             (0, node_fs_1.mkdirSync)(dir, { recursive: true });
             const { files, fit } = await (0, capture_1.renderStills)(p.html, p.tl, p.size, dir, times);

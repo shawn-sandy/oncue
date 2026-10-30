@@ -183,6 +183,12 @@ The plugin version lives only in `plugins/oncue/.claude-plugin/plugin.json`.
 
 ## Changelog
 
+### 1.7.2 (2026-10-30)
+
+- `stills` now takes each beat's default frame just before the beat fades out, instead of 85% of the way through it. An element cued late in its line used to be missing or half faded in, such as the fourth tile of a `grid`, the third item of a `list` or the last row of a `media` scene; now it shows in the frame you approve the beat from.
+- The default frames move, so `stills` and `example:stills` output changes: new times, new file names, and a late-cued element can show its highlight ring, as the video does at that moment. Old frames stay in `build/stills/`, so clear it before making a contact sheet from a project rendered with an earlier version.
+- An element cued on a line's very last word, typed chat text and the slow progress lines in `chat`, `steps` and `media` scenes can still be moving when the beat ends, in the still and in the video. `--at` works as before.
+
 ### 1.7.1 (2026-10-30)
 
 - `check` now warns when the split would start a beat inside an earlier beat, usually because its first word also starts a sentence there, naming both beats. A beat is found by its first word at a sentence start, so a beat opening "Fernleaf is a phone app" after one ending "yesterday? Fernleaf reminds you." started inside that earlier beat, and the only sign was a misleading `cue word ... not heard in this line` from `stills`.
