@@ -35,7 +35,7 @@ Run this search for a new `short.json` when the person gave no look, gave only w
 Look in this order from the folder you are working in, most exact source first, and stop at the first source with a hit:
 
 1. An earlier Short, `**/short.json`, by [An earlier Short](#an-earlier-short). Shorts with the same `brand` and `theme` count as one hit.
-2. A `DESIGN.md`.
+2. A DESIGN.md: `**/DESIGN.md`.
 3. Token files: `**/tokens.json`, `**/*.tokens.json`.
 4. Local stylesheets that define colours: `**/*.css` or `**/*.scss` with custom properties on `:root` or a Tailwind `@theme` block, or a `tailwind.config.*` file. [Reference site](#reference-site) maps them.
 5. The person's claude.ai Design System artifacts: the Artifact tool's `list` action with `type: "Design System"`. Skip this stop when the session has no Artifact tool.
@@ -46,12 +46,12 @@ Skip `node_modules`, `build`, `dist`, hidden folders, the engine copy (`oncue-en
 - **One hit:** name it and use it.
 - **Several hits in one source:** name them and ask which to use, offering "none of these". The same goes for Design System artifacts, unless the listing marks one as the default, always in its first row: use that one without asking, and name it.
 - **A hit or a list turned down:** move on to the next source.
-- **Nothing accepted:** use the fallback in step 1 of the storyboard skill. Never force a pick.
+- **Nothing accepted:** use the fallback in step 1 of the storyboard skill, leaving out anything turned down. Never force a pick.
 - **Told to go ahead without stopping:** do not ask. With several hits, use the fallback and name what you found, because a look can change later without touching the `vo`.
 
 ## An earlier Short
 
-Copy its `brand` and `theme` blocks into the new `short.json` exactly, and change only what the person asks for. Never map the colours again: `card`, `panelRule` and other derived colours come from judgement, so a second mapping can give a second look.
+Copy its `brand` and `theme` blocks into the new `short.json` exactly, and change only what the person asks for. Unless they ask for a different look, such as a light one, never map the colours again: `card`, `panelRule` and other derived colours come from judgement, so a second mapping can give a second look.
 
 Copy the logo file to the path `brand.logo` names, resolved from the new `short.json`, creating any folders. The engine resolves `brand.logo` from the spec's own folder, so a logo at `assets/logo.png` must land at `<new folder>/assets/logo.png`. Skip the copy when that path already holds the same file (`cmp` exits 0), and ask before replacing a different one.
 
@@ -75,13 +75,14 @@ Read the YAML frontmatter between the first two `---` lines:
 
 | Key | Becomes |
 | --- | --- |
+| `name` | `brand.name`, unless the Short is about a different product |
 | `colors` | `brand.colors`, by role; keys that are OnCue role names map one to one |
 | `typography` | `fonts.sans` from the body or heading family, `fonts.mono` from the code family, and the nearest Office fonts for `deckFonts` unless `oncue` sets them |
 | `rounded` | `theme.radius`, from the radius cards use, by the buckets below; with only a size scale (`sm`, `md`, `lg`), the middle step |
 | `spacing` | `theme.density`, from the gap between cards or list items, by the buckets below; with only a size scale, the middle step |
 | `oncue` | `theme.type`, `theme.background` and `brand.deckFonts`, set as written. [Saving the look as DESIGN.md](#saving-the-look-as-designmd) writes this block. |
 
-Frontmatter values win. The prose body only fills a key the frontmatter leaves open, through the words table, and never sets `header`: dropping the brand name from every scene is the person's call, not the design system's.
+Frontmatter values win. The prose body only fills a key the frontmatter leaves open, through the words table, and never sets `header`: dropping the brand name from every scene is the person's call, not the design system's. A DESIGN.md has no logo slot, so take the logo from the person or the product.
 
 ## Saving the look as DESIGN.md
 
@@ -121,7 +122,7 @@ oncue:
 
 ## Design tokens
 
-Read W3C DTCG or Style Dictionary JSON by `$type` (plain `type` in older Style Dictionary files), following aliases such as `{color.brand.primary}` to their value.
+Read W3C DTCG or Style Dictionary JSON by `$type` (plain `type` in older Style Dictionary files), following aliases such as `{color.brand.primary}` to their value. A file with `color.tokens[]` and no `$type` is a Design System export: read it by [Design System artifacts](#design-system-artifacts).
 
 - `color`: colour roles, by token path and description.
 - `fontFamily`: `fonts` and `deckFonts`.
@@ -139,10 +140,10 @@ A claude.ai Design System has no `$type`, so it does not read as design tokens. 
 - **Logo.** Take it from `assetGroups.Logos` in `project/design-system.json`, preferring a file named for a square, symbol or icon, else the first in `order`. Download it with the Artifact tool's `read` action, passing its `blob` id as `path`. Turn it into the square PNG the engine needs, in the engine folder:
 
   ```bash
-  node -e "require('sharp')(process.argv[1],{density:600}).resize(512,512,{fit:'contain',background:{r:0,g:0,b:0,alpha:0}}).png().toFile(process.argv[2])" <logo-file> <folder>/logo.png
+  mkdir -p <folder> && node -e "require('sharp')(process.argv[1],{density:600}).resize(512,512,{fit:'contain',background:{r:0,g:0,b:0,alpha:0}}).png().toFile(process.argv[2])" <logo-file> <folder>/logo.png
   ```
 
-  With no `Logos` group, use the product's logo or ask for one.
+  Then set `brand.logo` to `logo.png`. With no `Logos` group, use the product's logo or ask for one.
 
 ## Figma
 

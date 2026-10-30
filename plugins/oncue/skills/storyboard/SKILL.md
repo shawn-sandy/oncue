@@ -33,7 +33,7 @@ Write `short.json` in a project folder with the logo at the path `brand.logo` na
 node dist/cli.js check <folder>/short.json
 ```
 
-`check` validates every field and prints the beats with an estimated length. Fix what it names, contrast warnings included.
+`check` validates every field and prints the beats with an estimated length. Fix what it names, contrast warnings included. It does not open the logo, so confirm that file exists.
 
 ## 4. Show the storyboard
 
@@ -49,6 +49,6 @@ Say plainly which details are placeholders (example titles, timestamps, numbers)
 
 Ask the person to change, cut or reorder beats now: after the voiceover is recorded, a wording change means recording again. When they approve, the spec is locked.
 
-If the project has no DESIGN.md and the look came from neither an earlier Short nor a design system (a DESIGN.md, token files, the project's stylesheets or a Design System artifact), offer once the stills are approved to save it as a DESIGN.md at the project root, by "Saving the look as DESIGN.md" in [the theme guide](references/theme.md). Write it only on a yes.
+If the project has no DESIGN.md and the look came from neither an earlier Short nor a design system (a DESIGN.md, token files, the project's stylesheets or a Design System artifact), offer once the stills are approved (or the beats, where stills cannot render) to save it as a DESIGN.md at the project root, by "Saving the look as DESIGN.md" in [the theme guide](references/theme.md). Write it only on a yes. When told to go ahead without stopping, skip the offer and mention it at the end.
 
 Then hand off to the voiceover skill (`../voiceover/SKILL.md`) or the vertical-deck skill (`../vertical-deck/SKILL.md`).

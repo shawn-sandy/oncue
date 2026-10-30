@@ -51,7 +51,7 @@ Risks and how the plan handles them:
 - **Radius from two layers:** when a design system's base layer and brand layer both have a card radius, the brand layer's token wins, and Claude names the token it used. For Gleaner that is 14px, so `round`, OnCue's default. Chosen by the person. The same rule applies to colours and spacing, because Gleaner's base `ink` and `rule` differ from its brand tokens.
 - **Another token before a computed shade:** a colour that fails `check` is first swapped for another token that fills the role and passes. A light look cannot keep Gleaner's fixed dark panel, because `check` also tests `ink` and `accent` on `panel`, and the Design System has light tokens for those roles, so no palette is invented.
 - **One hit is used and named.** Several hits in that source are listed, and the person picks one or chooses "none of these". Turning a hit or a list down moves the search on to the next source. With nothing accepted, the existing fallback applies: the product's logo and site, else a look Claude picks. A Design System the person has marked as default is used without asking, matching how the Artifact tool treats defaults.
-- **Reuse means copying.** `brand` and `theme` are copied exactly. The logo file is copied to the path `brand.logo` names, resolved from the new `short.json` (creating any folders, and skipping the copy when that path already holds the file), because the engine resolves `brand.logo` from the spec's own folder. A logo at `assets/logo.png` therefore keeps working. Colours are never mapped again. A shared look file that the engine reads is left as a next step.
+- **Reuse means copying.** `brand` and `theme` are copied exactly. The logo file is copied to the path `brand.logo` names, resolved from the new `short.json` (creating any folders, skipping the copy when that path already holds the same file, and asking before replacing a different one), because the engine resolves `brand.logo` from the spec's own folder. A logo at `assets/logo.png` therefore keeps working. Colours are never mapped again unless the person asks for a different look. A shared look file that the engine reads is left as a next step.
 - **Light or dark from a Design System:** dark values by default, which matches OnCue's default dark ground. Light values when the person asks for a light or bright look. A token with only one value is used for both.
 - **Logo:** an SVG logo becomes a 512×512 transparent PNG through `sharp`, with `fit: "contain"` padding it to a square.
 - **Where a new DESIGN.md goes:** the project root (the folder Claude is working in), offered after the person approves the stills, and written only on a yes. Chosen by the person.
@@ -98,7 +98,7 @@ Tier 2 — This plan doesn't change application code
 ## Completion Report
 
 - Not exercised by any run — a Design System marked as default, because this account has none; the session with no Artifact tool; and "go ahead without stopping". The text for all three is in theme.md, and none is a check in this plan.
-- "Never overwrites" shown indirectly — Run C3 left an existing DESIGN.md byte-identical, and the skill only offers to save when the project has none. No run tried to save over one.
+- "Never overwrites" shown indirectly — the Short started from only the saved DESIGN.md left that file byte-identical, and the skill only offers to save when the project has none. No run tried to save over one.
 
 ## Verification
 
