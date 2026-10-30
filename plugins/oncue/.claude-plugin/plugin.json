@@ -1,7 +1,7 @@
 {
   "name": "oncue",
   "displayName": "OnCue",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "description": "Explainer Shorts where every word lands on cue. Storyboard a topic into beats, record an ElevenLabs voiceover with word timestamps, and render a native PowerPoint deck and an animated MP4 in which every element enters on the word that names it: vertical 9:16 for Shorts, Reels and TikTok, widescreen 16:9 for YouTube, or a custom size. One short.json spec drives the deck, the script and the video.",
   "author": {
     "name": "Shawn Sandy",

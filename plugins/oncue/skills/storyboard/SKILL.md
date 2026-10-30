@@ -14,7 +14,7 @@ Turn a topic into a locked set of beats: what the narrator says, what the viewer
 - Real facts only: features, commands, names, links. Read the product's README, docs or code when they are available. Never invent numbers, quotes or results; mark a missing fact as `[YOUR FACT]` and say so.
 - Read `research.md` beside `short.json` when it exists. When the subject is not the person's own product, or the facts are thin, run the research skill (`../research/SKILL.md`) first for sourced facts and topic ideas.
 - Where it will be posted, which sets `format`: 1080×1920 (9:16) for YouTube Shorts, Reels and TikTok; 1920×1080 (16:9) for a YouTube video or a landscape presentation. Square and 4:5 sizes (1080×1080, 1080×1350) render, but with the portrait layout and its Shorts inset, so dense scenes shrink; say so before choosing one. Ask when it isn't clear; one spec renders one size.
-- The look: logo, colours, fonts and an optional `theme` (corners, type size, spacing, background, header). Take it from what the person gives: plain words ("playful, light, rounded"), a DESIGN.md, design tokens (W3C DTCG or Style Dictionary JSON), Figma tokens, a reference image or screenshot, a reference site's CSS custom properties, or an installed design system; else the product's logo and site. With none, pick a dark ground, one accent and one highlight from the subject and say what you chose. [The theme guide](references/theme.md) maps each route to `short.json`. A theme changes no `vo`, so it is safe to change after the voiceover.
+- The look: logo, colours, fonts and an optional `theme` (corners, type size, spacing, background, header). Take it from what the person gives: plain words ("playful, light, rounded"), a DESIGN.md, design tokens (W3C DTCG or Style Dictionary JSON), Figma tokens, a reference image or screenshot, a reference site's CSS custom properties, or a Design System they name. When they give no look, only a few words such as "light", or ask to use their design system, search for one by "Spotting a look" in [the theme guide](references/theme.md), say what you found, and copy an earlier Short's look exactly. With nothing accepted, use the product's logo and site. With neither, pick a ground (dark unless their words say otherwise), one accent and one highlight from the subject and say what you chose. The theme guide maps each route to `short.json`. A theme changes no `vo`, so it is safe to change after the voiceover.
 
 ## 2. Shape the beats
 
@@ -27,7 +27,7 @@ Turn a topic into a locked set of beats: what the narrator says, what the viewer
 
 ## 3. Write short.json
 
-Write `short.json` in a project folder with the logo beside it. Then check it with the engine (set up as in the explainer-video skill, `../explainer-video/SKILL.md`):
+Write `short.json` in a project folder with the logo at the path `brand.logo` names, usually beside it. Then check it with the engine (set up as in the explainer-video skill, `../explainer-video/SKILL.md`):
 
 ```bash
 node dist/cli.js check <folder>/short.json
@@ -47,4 +47,8 @@ Say plainly which details are placeholders (example titles, timestamps, numbers)
 
 ## 5. Lock the beats
 
-Ask the person to change, cut or reorder beats now: after the voiceover is recorded, a wording change means recording again. When they approve, the spec is locked; hand off to the voiceover skill (`../voiceover/SKILL.md`) or the vertical-deck skill (`../vertical-deck/SKILL.md`).
+Ask the person to change, cut or reorder beats now: after the voiceover is recorded, a wording change means recording again. When they approve, the spec is locked.
+
+If the project has no DESIGN.md and the look came from neither an earlier Short nor a design system (a DESIGN.md, token files, the project's stylesheets or a Design System artifact), offer once the stills are approved to save it as a DESIGN.md at the project root, by "Saving the look as DESIGN.md" in [the theme guide](references/theme.md). Write it only on a yes.
+
+Then hand off to the voiceover skill (`../voiceover/SKILL.md`) or the vertical-deck skill (`../vertical-deck/SKILL.md`).
