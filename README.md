@@ -183,6 +183,11 @@ The plugin version lives only in `plugins/oncue/.claude-plugin/plugin.json`.
 
 ## Changelog
 
+### 1.6.2 (2026-10-30)
+
+- `check` now warns when the split would start a beat inside an earlier beat, usually because its first word also starts a sentence there, naming both beats. A beat is found by its first word at a sentence start, so a beat opening "Fernleaf is a phone app" after one ending "yesterday? Fernleaf reminds you." started inside that earlier beat, and the only sign was a misleading `cue word ... not heard in this line` from `stills`.
+- The warning runs the same split the timeline uses, on the script, so a repeat the split walks past stays silent, as in the Gleaner example. It is a warning, not an error, because a transcript punctuated differently may still place the beat.
+
 ### 1.6.1 (2026-10-28)
 
 - `check` now reads each image beat's picture, not just its name. A text file or a truncated download named `.png` or `.jpg` fails `check` naming `lines[i].scene.src`, instead of passing and then failing inside `stills`, `video` or `deck` with sharp's decode error.
