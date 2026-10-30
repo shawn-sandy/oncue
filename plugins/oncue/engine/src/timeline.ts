@@ -39,6 +39,17 @@ export function estimateWords(spec: Spec): { words: Word[]; seconds: number } {
   return { words, seconds: t };
 }
 
+/** render.ts starts fading a scene out this long before its end. */
+const EXIT = 0.12;
+
+/**
+ * The default still for each beat: its last moment before the fade out. Entrances only move forward in time,
+ * so no earlier frame in the beat shows more of it, however late its last cue lands.
+ */
+export function stillTimes(tl: Timeline): number[] {
+  return tl.scenes.map((s) => Number(Math.max(s.start, s.end - EXIT).toFixed(2)));
+}
+
 export function buildTimeline(spec: Spec, words: Word[], audioSeconds: number): Timeline {
   const warnings: string[] = [];
   // Split the transcript at the first word of each line, which must begin a sentence.

@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TAIL = exports.LEAD = void 0;
 exports.readWords = readWords;
 exports.estimateWords = estimateWords;
+exports.stillTimes = stillTimes;
 exports.buildTimeline = buildTimeline;
 /**
  * Turns short.json + a word-timestamped transcript into timeline.json:
@@ -34,6 +35,15 @@ function estimateWords(spec) {
         }
     }
     return { words, seconds: t };
+}
+/** render.ts starts fading a scene out this long before its end. */
+const EXIT = 0.12;
+/**
+ * The default still for each beat: its last moment before the fade out. Entrances only move forward in time,
+ * so no earlier frame in the beat shows more of it, however late its last cue lands.
+ */
+function stillTimes(tl) {
+    return tl.scenes.map((s) => Number(Math.max(s.start, s.end - EXIT).toFixed(2)));
 }
 function buildTimeline(spec, words, audioSeconds) {
     const warnings = [];
