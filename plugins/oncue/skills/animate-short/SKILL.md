@@ -21,7 +21,7 @@ Set up the engine as in `../explainer-video/SKILL.md`. Video needs Playwright wi
 node dist/cli.js stills <folder>/short.json --words <folder>/words.json --audio <folder>/voiceover.mp3
 ```
 
-This writes one frame per scene, taken just before it fades out so everything in it has entered, to `build/stills/`; pass `--at 3.5,12,20` for specific seconds. Combine them into a contact sheet and look at it:
+This writes one frame per scene, taken just before it fades out, to `build/stills/`; pass `--at 3.5,12,20` for specific seconds. Everything cued earlier in the line has entered by then, but typed text and the slow progress lines in chat, steps and media scenes can still be moving, as they are in the video at that moment. Combine them into a contact sheet and look at it:
 
 - Text fits its card. In a portrait frame, nothing sits in the bottom ~350px (Shorts UI).
 - No `warning: scene N (...) shrunk to ...` lines. The engine shrinks a scene that overflows its frame, which happens most at sizes other than 9:16 and 16:9, and records every scene in `build/fit.json`. A shrunk scene still shows everything, smaller; cut its copy (fewer items, shorter titles) to show it full size. Read `build/fit.json` and each shrunk scene's copy before suggesting a fix. At a square or 4:5 size, the portrait layout's Shorts inset leaves less room, so a scene may shrink that would fit at 1080×1920 or 1920×1080; suggest one of those when the post allows it, and cut copy otherwise.

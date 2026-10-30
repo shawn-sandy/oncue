@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * Where the default stills land: after each beat's last entrance and inside the beat, however late the cue.
+ * Where the default stills land: after a late cue's entrance and inside the beat.
  * The pixels are checked in image-stills.test.mjs; this file needs no browser, so it also runs in CI.
  */
 import { test } from "node:test";
@@ -12,8 +12,8 @@ const ENTRANCE = 0.55, EXIT = 0.12;
 
 const icon = "FiCheck";
 const head = { kicker: "Kicker", title: "Title" };
-const before = { vo: "Every clip you save lands here first.", scene: { kind: "hook", headline: [{ text: "Save" }] } };
-const after = { vo: "One more line follows it.", scene: { kind: "hook", headline: [{ text: "After" }] } };
+const before = { vo: "Every clip you save lands here first.", scene: { kind: "hook", headline: "Save" } };
+const after = { vo: "One more line follows it.", scene: { kind: "hook", headline: "After" } };
 const vo = "Three of these arrive early, and the last waits patiently for the very closing word.";
 const late = { word: "closing" };
 
@@ -46,8 +46,8 @@ for (const [kind, scene] of Object.entries(beats)) {
   });
 }
 
-test("every default still stays inside its beat, even when the last word is the cue", () => {
-  const tl = timed({ vo, scene: { ...beats.grid, tiles: beats.grid.tiles.map((t) => ({ ...t, cue: { word: "word" } })) } });
+test("every default still stays inside its beat, before the fade out", () => {
+  const tl = timed({ vo, scene: beats.grid });
   const times = timeline.stillTimes(tl);
   assert.equal(times.length, 3);
   tl.scenes.forEach((s, i) => {

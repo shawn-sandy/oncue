@@ -5,7 +5,7 @@
  *   node dist/cli.js check    <short.json>                     validate; print the layout, beats, VO script, estimated length and low-contrast colour pairs
  *   node dist/cli.js script   <short.json>                     print the voiceover script, one line per beat
  *   node dist/cli.js deck     <short.json> [--out deck.pptx]    native, editable PowerPoint, 9:16 or 16:9 (VO in speaker notes)
- *   node dist/cli.js stills   <short.json> [--words w.json --audio vo.mp3] [--at 1,5,9]   QA frames (default: one per scene, after everything in it has entered)
+ *   node dist/cli.js stills   <short.json> [--words w.json --audio vo.mp3] [--at 1,5,9]   QA frames (default: one per scene, just before it fades out)
  *   node dist/cli.js video    <short.json> [--words w.json --audio vo.mp3] [--out short.mp4]
  *
  * The size comes from short.json's format: wider than tall renders the landscape layout, anything else the portrait one.
