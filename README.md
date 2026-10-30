@@ -183,6 +183,11 @@ The plugin version lives only in `plugins/oncue/.claude-plugin/plugin.json`.
 
 ## Changelog
 
+### 1.7.1 (2026-10-30)
+
+- `check` now warns when the split would start a beat inside an earlier beat, usually because its first word also starts a sentence there, naming both beats. A beat is found by its first word at a sentence start, so a beat opening "Fernleaf is a phone app" after one ending "yesterday? Fernleaf reminds you." started inside that earlier beat, and the only sign was a misleading `cue word ... not heard in this line` from `stills`.
+- The warning runs the same split the timeline uses, on the script, so a repeat the split walks past stays silent, as in the Gleaner example. It is a warning, not an error, because a transcript punctuated differently may still place the beat.
+
 ### 1.7.0 (2026-10-30)
 
 - The storyboard skill now looks for a design system before inventing a look. It searches for an earlier Short, a DESIGN.md, token files, local stylesheets (`:root` custom properties, a Tailwind `@theme` block or `tailwind.config.*`), your claude.ai Design Systems (when the session has the Artifact tool) and the product's site, and stops at the first source with a hit. One hit is named and used; several are listed with "none of these"; a Design System marked as your default is used without asking. Any words you gave adjust what it finds and win where they conflict, and a file, image or site you name turns the search off.

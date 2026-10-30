@@ -39,21 +39,46 @@ export function estimateWords(spec: Spec): { words: Word[]; seconds: number } {
   return { words, seconds: t };
 }
 
-export function buildTimeline(spec: Spec, words: Word[], audioSeconds: number): Timeline {
-  const warnings: string[] = [];
-  // Split the transcript at the first word of each line, which must begin a sentence.
+/**
+ * Splits the transcript at the first word of each line, which must begin a sentence; returns those word indexes.
+ * Stops at the first line it cannot find, so a short result means that line is missing.
+ */
+function lineStarts(spec: Spec, words: Word[]): number[] {
   const starts: number[] = [];
   let from = 0;
-  spec.lines.forEach((line, li) => {
+  for (const line of spec.lines) {
     const first = norm(line.vo.split(/\s+/)[0] ?? "");
     const ok = (k: number): boolean => k >= from && norm(words[k]!.text) === first && (k === 0 || /[.?!]["”']?$/.test(words[k - 1]!.text));
     let i = words.findIndex((_, k) => ok(k));
     if (i < 0) i = words.findIndex((w, k) => k >= from && norm(w.text) === first);
-    if (i < 0) throw new Error(`Line ${li + 1} ("${line.vo.slice(0, 40)}…") not found in the transcript. Re-transcribe, or make lines[${li}].vo match what was said.`);
+    if (i < 0) break;
     starts.push(i);
     from = i + 1;
-  });
+  }
+  return starts;
+}
 
+/**
+ * One warning per beat the split would start inside an earlier beat, found by running the split on the script itself:
+ * only a sentence the split can still reach matters, not every repeat of the word. A warning, not an error, because a
+ * transcript punctuated differently may still place the beat. A line it cannot find at all is left for stills to report.
+ */
+export function splitWarnings(spec: Spec): string[] {
+  const starts = lineStarts(spec, estimateWords(spec).words);
+  const beatOf = spec.lines.flatMap((l, b) => l.vo.split(/\s+/).filter(Boolean).map(() => b));
+  return starts.flatMap((word, b) => {
+    const host = beatOf[word]!;
+    if (host >= b) return [];
+    const first = spec.lines[b]!.vo.split(/\s+/)[0];
+    return [`beat ${b + 1}'s first word "${first}" is also heard inside beat ${host + 1}, so beat ${b + 1} may start there, too early; reword one of them.`];
+  });
+}
+
+export function buildTimeline(spec: Spec, words: Word[], audioSeconds: number): Timeline {
+  const warnings: string[] = [];
+  const starts = lineStarts(spec, words);
+  const li = starts.length, missing = spec.lines[li];
+  if (missing) throw new Error(`Line ${li + 1} ("${missing.vo.slice(0, 40)}…") not found in the transcript. Re-transcribe, or make lines[${li}].vo match what was said.`);
   const duration = audioSeconds + LEAD + TAIL;
   const scenes: SceneTiming[] = starts.map((wi, s) => {
     const endIdx = s + 1 < starts.length ? starts[s + 1]! : words.length;

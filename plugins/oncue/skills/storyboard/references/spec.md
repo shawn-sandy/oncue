@@ -75,6 +75,8 @@ A theme changes no `vo`, so restyling after the voiceover is recorded is safe: r
 | `motion` | Optional production note for the storyboard. Not rendered. |
 | `scene` | What appears, by `kind`. |
 
+`check` warns, naming both beats, when the split would start a beat inside an earlier beat, usually because its first word also starts a sentence there; reword one of them. It is a warning, not an error, because a transcript punctuated differently may still place the beat.
+
 ## Rich text
 
 Titles, headlines, `desc` and `value` fields accept two marks:
