@@ -35,18 +35,27 @@ Setting them up:
 
 ## Install
 
-In Claude Code:
+In a Claude Code terminal session:
 
 ```text
 /plugin marketplace add shawn-sandy/oncue
 /plugin install oncue@oncue
 ```
 
+These `/plugin` commands run only in a terminal session. Elsewhere, such as the desktop app's Code tab, run these in a shell instead (they need the `claude` CLI on your `PATH`), then start a new session:
+
+```bash
+claude plugin marketplace add shawn-sandy/oncue
+claude plugin install oncue@oncue
+```
+
+Once the marketplace is added, the desktop app's plugin browser lists OnCue too: in a local or SSH session, click **+** next to the prompt box and choose **Add plugins** (or **Plugins**, then **Browse plugins**). Cloud sessions have no plugin browser and don't load plugins you install on your own machine.
+
 To try it locally from a clone, run `claude --plugin-dir ./plugins/oncue`.
 
 Then ask Claude to "set up OnCue" (or run `/oncue:setup`). The setup skill reports the installed version and scope, checks Node, ffmpeg and ffprobe, the engine, Playwright with Chromium and the ElevenLabs connector listed under [Requirements](#requirements), installs what it can, and tells you which outputs are ready.
 
-OnCue's marketplace does not auto-update by default. To update, run `claude plugin update oncue@oncue` (or choose **Update now** on the **Installed** tab of `/plugin`), then `/reload-plugins` and set up again: that replaces any engine copy the old version made. To turn OnCue on for everyone in a repository, install it with `--scope project` and commit `.claude/settings.json`; each collaborator still runs the install once. Ask Claude to "share OnCue with my team" for the exact commands.
+OnCue's marketplace does not auto-update by default. To update, run `claude plugin update oncue@oncue` (or, in a terminal session, choose **Update now** on the **Installed** tab of `/plugin`), then `/reload-plugins` and set up again: that replaces any engine copy the old version made. To turn OnCue on for everyone in a repository, install it with `--scope project` and commit `.claude/settings.json`; each collaborator still runs the install once. Ask Claude to "share OnCue with my team" for the exact commands.
 
 ## Usage
 
