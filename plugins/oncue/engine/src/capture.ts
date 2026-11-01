@@ -10,15 +10,21 @@ export interface Size { width: number; height: number }
 /** The fit guard's result per scene (render.ts): scale < 1 means the scene was shrunk to fit its frame. */
 export interface Fit { scene: number; scale: number; fits: boolean }
 
+/** Select a host-provided browser without changing Playwright's default when no override is set. */
+export function launchOptions(env: NodeJS.ProcessEnv = process.env): { executablePath?: string } {
+  const executablePath = env.ONCUE_CHROMIUM_PATH;
+  return executablePath ? { executablePath } : {};
+}
+
 async function loadPlaywright(): Promise<typeof import("playwright")> {
   try { return await import("playwright"); } catch {
-    throw new Error("Playwright is not installed. Run: npm install --save-dev playwright && npx playwright install chromium (in the engine folder).");
+    throw new Error("Playwright is not installed. Run npm install --save-dev playwright in the engine folder, then use ONCUE_CHROMIUM_PATH for an installed Chromium or run npx playwright install chromium.");
   }
 }
 
 async function open(scenesHtml: string, tl: Timeline, size: Size): Promise<{ page: Page; fit: Fit[]; close: () => Promise<void> }> {
   const { chromium } = await loadPlaywright();
-  const browser = await chromium.launch();
+  const browser = await chromium.launch(launchOptions());
   const page = await browser.newPage({ viewport: size, deviceScaleFactor: 1 });
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
