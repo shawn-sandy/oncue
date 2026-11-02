@@ -26,7 +26,7 @@ function validate({ compatibility = "compatibility: 'Node.js 22+.'", body = "Use
 }
 
 test("accepts valid requirements, including the 500-character limit", () => {
-  for (const text of ["'Node.js 22+.'", `'${"x".repeat(500)}'`, "'Node''s engine'", '"Node.js \\"22\\"+"']) {
+  for (const text of ["'Node.js 22+.'", `'${"x".repeat(500)}'`, "'Node''s engine'"]) {
     const run = validate({ compatibility: `compatibility: ${text}` });
     assert.equal(run.status, 0, run.stdout + run.stderr);
   }
@@ -45,6 +45,7 @@ for (const [label, compatibility] of [
   ["unquoted", "compatibility: Node.js 22+."],
   ["YAML mapping", "compatibility: Requirements: Node.js 22+"],
   ["unescaped apostrophe", "compatibility: 'Node's engine'"],
+  ["invalid YAML escape", 'compatibility: "Browser at C:\\Users\\me\\chrome.exe"'],
 ]) {
   test(`rejects ${label} compatibility`, () => {
     const run = validate({ compatibility });

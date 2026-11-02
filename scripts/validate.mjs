@@ -38,8 +38,8 @@ function frontmatter(src) {
       if (previous === "compatibility") {
         need(!(previous in out), "compatibility must appear only once");
         need(!/^[>|]/.test(kv[2]), "compatibility must be single-line");
-        // Require quotes so this reader never has to apply YAML's plain-scalar rules.
-        need(/^'(?:[^']|'')*'$|^"(?:[^"\\]|\\.)*"$/.test(kv[2]), "compatibility must be a quoted string");
+        // Single quotes have no escapes beyond '', so this reader never applies YAML's plain or double-quoted rules.
+        need(/^'(?:[^']|'')*'$/.test(kv[2]), "compatibility must be a single-quoted string");
       }
       out[kv[1]] = kv[2].replace(/^'(.*)'$/, "$1").replace(/^"(.*)"$/, "$1");
     }
