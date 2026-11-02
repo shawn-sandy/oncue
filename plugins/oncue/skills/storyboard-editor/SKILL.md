@@ -1,6 +1,6 @@
 ---
 name: storyboard-editor
-description: Open a visual storyboard editor for OnCue. Edit scene text, colors, theme, narration and cue words; reorder or duplicate beats; export short.json for vertical or widescreen videos. Use when someone wants to design their storyboard interactively before rendering.
+description: Open a visual storyboard editor for OnCue. Edit scene text, colors, theme, narration and cue words; reorder or duplicate beats; export short.json for vertical or widescreen videos. Use when someone says "design my storyboard", wants to edit it interactively, or requests a hosted or local storyboard editor before rendering.
 compatibility: 'A browser and file downloads. Optional Sites tools for a hosted editor; filesystem access for a local HTML editor. Engine validation and exact previews require Node.js 22+, engine dependencies and launchable Chromium.'
 argument-hint: '[project folder or short.json]'
 ---
@@ -17,9 +17,11 @@ Provide the editor and the project's JSON as separate files. Import the JSON thr
 
 ## Choose the available surface
 
-When the person requests a hosted editor and Sites tools are available, use the installed Sites skill and its current creation, source and publication workflow. Copy the editor to the static site's index.html. Keep the initial editor empty: do not embed the person's spec, images, narration or credentials in hosted source. Imports stay in the browser's memory. Preserve access settings for an existing site. Never change an existing marketing site into an editor unless explicitly asked.
+First apply [storyboard surface routing](../setup/SKILL.md#storyboard-surface-routing). Use the explicit choice, existing project editor, or capability-checked host default in that order. If it selects a Design canvas or text output, return to [storyboard](../storyboard/SKILL.md) for that surface rather than forcing the browser editor.
 
-Otherwise copy the HTML into the person's project as `storyboard-editor.html` and open it with the host's file/browser preview. If that preview cannot load local HTML, provide the downloadable HTML and explain how to open it in a browser. Do not require a hosted service to use the editor. Do not claim publication succeeded without the host's confirmation.
+When routing selects a hosted editor and Sites tools are available, use the installed Sites skill and its current creation, source and publication workflow. Copy the editor to the static site's index.html. Keep the initial editor empty: do not embed the person's spec, images, narration or credentials in hosted source. Imports stay in the browser's memory. Preserve access settings for an existing site. Never change an existing marketing site into an editor unless explicitly asked.
+
+When routing selects a local editor, copy the HTML into the person's project as `storyboard-editor.html` and open it with the host's file/browser preview. If that preview cannot load local HTML, provide the downloadable HTML and explain how to open it in a browser. Do not require a hosted service to use the editor. Do not claim publication succeeded without the host's confirmation. Retain the editor reference in project notes as described by the routing instructions so future sessions reuse it.
 
 ## Edit and return to rendering
 

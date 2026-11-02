@@ -195,16 +195,19 @@ The plugin version lives only in `plugins/oncue/.claude-plugin/plugin.json`.
 
 ## Visual storyboard editing
 
-Ask “open a visual storyboard editor for this Short.” The new `storyboard-editor` skill provides a self-contained HTML editor you can open locally. In ChatGPT sessions with Sites available, ask for a hosted storyboard editor; the skill follows the installed Sites workflow. Hosting is optional and does not require embedding your storyboard in a public page.
+Ask “design my storyboard” or “open a visual storyboard editor for this Short.” Explicit surface choices come first, followed by an existing project editor. Otherwise the workflow defaults to Sites in ChatGPT, local HTML in Codex, or a Design canvas in Claude, only when the corresponding capabilities are available. Missing capabilities fall back to local HTML or a beat table and JSON, with the limitation stated. Planning-only requests do not create an editor.
+
+The new `storyboard-editor` skill provides a self-contained HTML editor you can open locally. In ChatGPT sessions with Sites available, ask for a hosted storyboard editor; the skill follows the installed Sites workflow. Hosting is optional and does not require embedding your storyboard in a public page.
 
 Import `short.json`, select a scene, and edit its existing fields, brand colors, format and theme. Unlock narration and beat order to reorder, duplicate or delete beats; recorded narration may then need re-recording or re-alignment. Export JSON to save: edits stay in browser memory, with no autosave or server storage. Pictures selected for previews are not packaged with the export; retain their relative asset paths.
 
-The editor previews supported layouts approximately. It does not support arbitrary positioning, custom HTML scenes, or importing freeform designs. Run the engine's `check` and render stills from the exported spec before approving the design. Hosted Sites deployment has not been exercised in this release; the local editor is browser-tested.
+The editor previews supported layouts approximately. It does not support arbitrary positioning, custom HTML scenes, or importing freeform designs. Run the engine's `check` and render stills from the exported spec before approving the design. The local editor is browser-tested. A private Sites deployment succeeded, but hosted sign-in and import/edit/export testing remain incomplete.
 
 ## Changelog
 
 ### 1.9.0 (2026-11-02)
 
+- Automatically route interactive storyboard requests by explicit choice, existing editor and verified host capabilities; preserve editor references for reuse.
 - Add storyboard-editor: a portable browser editor with a capability-gated Sites workflow, JSON round trips, existing scene fields, brand/theme controls and narration/order locks.
 - Document the distinction between approximate editor previews and exact engine-rendered stills; preserve custom fields and require asset-aware validation on handoff.
 

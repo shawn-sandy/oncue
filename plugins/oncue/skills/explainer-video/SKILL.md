@@ -35,7 +35,7 @@ Video additionally needs ffmpeg; voice-timed stills and final audio need ffprobe
 
 ## Order of work
 
-1. Start with a one-line plan, then gather material and build the storyboard. Show it and ask the person to approve or change the beats. **Do not record audio before they approve**, unless they said to go ahead without stopping.
+1. Start with a one-line plan, then gather material and build the storyboard. For interactive design, apply [storyboard surface routing](../setup/SKILL.md#storyboard-surface-routing); choose from verified host capabilities and reuse the existing editor. Show it and ask the person to approve or change the beats. **Do not record audio before they approve**, unless they said to go ahead without stopping.
 2. Generate the voiceover. Tell them the voice you picked, give them both takes, and pick one for timing (ask which they prefer if they are present; otherwise take the first and say so).
 3. Build the deck if they want a presentation or an editable source; it is quick.
 4. Render the video when its required capabilities are ready; otherwise report which outputs are available. Run stills first and look at them, then the full render in the background.
