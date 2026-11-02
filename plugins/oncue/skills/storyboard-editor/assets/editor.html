@@ -307,6 +307,7 @@
         $("unlock").checked = false;
         for (const url of assets.values()) URL.revokeObjectURL(url);
         assets.clear();
+        $("pictures").value = "";
         render();
         message(
           "Imported. Narration and beat order are locked. Export to save edits.",

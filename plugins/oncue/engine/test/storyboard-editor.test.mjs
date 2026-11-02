@@ -33,13 +33,11 @@ test("storyboard editor preserves specs, edits scenes and protects narration", a
     original.custom = { keep: ["future", 42] };
     original.lines[0].scene.headline =
       '<img src=x onerror="window.injected=true">';
-    await page
-      .locator("#import")
-      .setInputFiles({
-        name: "short.json",
-        mimeType: "application/json",
-        buffer: Buffer.from(JSON.stringify(original)),
-      });
+    await page.locator("#import").setInputFiles({
+      name: "short.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(original)),
+    });
     assert.equal(
       await page.locator("#beats button").count(),
       original.lines.length,
@@ -61,7 +59,10 @@ test("storyboard editor preserves specs, edits scenes and protects narration", a
       const download = await waiting;
       const path = await download.path();
       assert.ok(path);
-      copyFileSync(new URL("../examples/gleaner/logo.png", import.meta.url),join(dirname(path),"logo.png"));
+      copyFileSync(
+        new URL("../examples/gleaner/logo.png", import.meta.url),
+        join(dirname(path), "logo.png"),
+      );
       engineSpec.loadSpec(path);
       return JSON.parse(readFileSync(path, "utf8"));
     };
@@ -121,14 +122,14 @@ test("storyboard editor preserves specs, edits scenes and protects narration", a
       },
     ];
     page.on("dialog", (dialog) => dialog.accept());
-    await page
-      .locator("#import")
-      .setInputFiles({
-        name: "short.json",
-        mimeType: "application/json",
-        buffer: Buffer.from(JSON.stringify(imageSpec)),
-      });
-    await page.waitForFunction(() => document.querySelector("#unlock").checked === false);
+    await page.locator("#import").setInputFiles({
+      name: "short.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(imageSpec)),
+    });
+    await page.waitForFunction(
+      () => document.querySelector("#unlock").checked === false,
+    );
     assert.equal(
       await page.getByLabel("Narration", { exact: true }).isDisabled(),
       true,
@@ -143,14 +144,31 @@ test("storyboard editor preserves specs, edits scenes and protects narration", a
       "Logo",
     );
     assert.deepEqual(await downloadSpec(), imageSpec);
+    await page.locator("#import").setInputFiles({
+      name: "short.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(imageSpec)),
+    });
+    await page.waitForFunction(() => !document.querySelector("#preview img"));
+    assert.equal(await page.locator("#pictures").inputValue(), "");
     await page
-      .locator("#import")
-      .setInputFiles({
-        name: "broken.json",
-        mimeType: "application/json",
-        buffer: Buffer.from("{}"),
-      });
-    await page.waitForFunction(() => document.querySelector("#status").textContent.startsWith("Import failed"));
+      .locator("#pictures")
+      .setInputFiles(
+        new URL("../examples/gleaner/logo.png", import.meta.url).pathname,
+      );
+    assert.equal(
+      await page.locator("#preview img").getAttribute("alt"),
+      "Logo",
+    );
+
+    await page.locator("#import").setInputFiles({
+      name: "broken.json",
+      mimeType: "application/json",
+      buffer: Buffer.from("{}"),
+    });
+    await page.waitForFunction(() =>
+      document.querySelector("#status").textContent.startsWith("Import failed"),
+    );
     assert.match(await page.locator("#status").innerText(), /Import failed/);
     assert.deepEqual(await downloadSpec(), imageSpec);
     assert.deepEqual(errors, []);
