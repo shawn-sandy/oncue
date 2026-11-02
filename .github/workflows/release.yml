@@ -1,0 +1,32 @@
+# Tag and release each new plugin version when it reaches main, with its README changelog entry as the notes.
+# On a pull request that touches the version it runs as a dry run, printing the release it would create.
+name: Release
+
+on:
+  pull_request:
+    paths:
+      - plugins/oncue/.claude-plugin/plugin.json
+      - scripts/release.sh
+      - .github/workflows/release.yml
+  push:
+    branches: [main]
+    paths:
+      - plugins/oncue/.claude-plugin/plugin.json
+      - scripts/release.sh
+      - .github/workflows/release.yml
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - run: scripts/release.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          DRY_RUN: ${{ github.event_name == 'pull_request' }}
