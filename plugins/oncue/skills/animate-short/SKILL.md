@@ -1,6 +1,7 @@
 ---
 name: animate-short
 description: Render a short.json explainer as an animated MP4, vertical 1080×1920 for Shorts, Reels and TikTok or widescreen landscape 1920×1080 (16:9) for a YouTube video, where every card, step, tile and timestamp enters on the word the voiceover says, with typing, spotlight glows, drawn lines, scene transitions and a progress bar. Use when the user wants the video rendered, animation added to slides "to keep interest", a silent preview, or the final Short, Reel, TikTok or YouTube video file.
+compatibility: 'Node.js 22+, bundled engine dependencies, Playwright and launchable Chromium, ffmpeg and writable outputs. Final audio also needs ffprobe and matching audio/word timestamps. ONCUE_CHROMIUM_PATH can select an installed browser.'
 argument-hint: '[path to short.json]'
 ---
 
@@ -13,7 +14,7 @@ Render `short.json` into an MP4 at its `format` size. Each scene is an HTML page
 - `short.json` and its logo (storyboard skill, `../storyboard/SKILL.md`).
 - For the final video: `voiceover.mp3` and its word-timestamped transcript `words.json` (voiceover skill, `../voiceover/SKILL.md`). Without them you get a **silent preview** with timing estimated from the script; label it as such.
 
-Set up the engine as in `../explainer-video/SKILL.md`. Video needs Playwright with Chromium and ffmpeg.
+Set up the engine as in `../explainer-video/SKILL.md`. Video needs Playwright with launchable Chromium and ffmpeg; voice-timed stills and final audio also need ffprobe. Setup documents `ONCUE_CHROMIUM_PATH` for an installed browser. If a requirement is missing, report it and offer the available storyboard, deck or stills instead; do not label a silent preview as final audio output.
 
 ## 1. Check stills first
 
@@ -40,7 +41,7 @@ The output is H.264 with AAC audio at the spec's size, starting 0.3s before the 
 
 ## 3. Verify and deliver
 
-Probe the file (`ffprobe` for the spec's `format` size, 30fps, an audio stream) and grab a frame from each scene with `ffmpeg -ss <t> -frames:v 1` to confirm the encoded video, not only the stills. Then send it, and copy it to the person's folder when their computer is linked.
+Probe the file (`ffprobe` for the spec's `format` size, 30fps, an audio stream) and grab a frame from each scene with `ffmpeg -ss <t> -frames:v 1` to confirm the encoded video, not only the stills. Then send it, and save a copy to the folder the person named when this session can write there.
 
 Say what is in it in a sentence or two, and offer one next step: burned-in captions (most Shorts are watched muted; the word timings are already there), a different take, or edits to the copy.
 

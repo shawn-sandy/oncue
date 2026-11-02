@@ -10,6 +10,7 @@ import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSy
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { launchBrowser } from "./helpers/browser.mjs";
 
 const engine = fileURLToPath(new URL("..", import.meta.url));
 const example = new URL("../examples/gleaner/", import.meta.url);
@@ -21,8 +22,7 @@ after(() => rmSync(dir, { recursive: true, force: true }));
 let skip = "";
 before(async () => {
   try {
-    const { chromium } = await import("playwright");
-    await (await chromium.launch()).close();
+    await (await launchBrowser()).close();
   } catch (e) {
     skip = `Chromium can't launch: ${String(e instanceof Error ? e.message : e).split("\n")[0]}`;
   }

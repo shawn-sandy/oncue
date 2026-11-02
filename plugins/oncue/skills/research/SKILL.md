@@ -1,12 +1,15 @@
 ---
 name: research
 description: Research the subject of an OnCue explainer at any stage, from a bare topic to a rendered video. Suggest ranked topics for Shorts or YouTube videos, gather sourced facts, fact-check or source a storyboard, rewrite the narration with sources, and recommend icons and pictures per beat, all written to research.md beside short.json. Use when the user wants to research a topic for a Short, suggest Short or video topics, fact-check, source or verify the storyboard or script, make the narration punchier, tighter or clearer, or recommend visuals. It reads the project folder to find the stage, so recorded narration never changes without asking.
+compatibility: 'Read supplied material; web search for outside claims; write access to save research.md. Node.js 22+ and the bundled engine only for spec checks; Playwright Chromium for preview stills. Text research works without rendering tools.'
 argument-hint: '[topic, or path to short.json]'
 ---
 
 # Research
 
-One skill owns the facts, the topic ideas and narration rewrites, so the `vo` lines have one editor besides the storyboard skill. It can join at any stage: the project folder says what may change, and everything it finds goes into `research.md`, which Claude reads and the engine never does.
+Without file access, return the research and sources in the reply, marking unverified claims. Do not claim to have saved research.md or run engine checks. Missing rendering tools do not block sourced text research or topic suggestions.
+
+One skill owns the facts, the topic ideas and narration rewrites, so the `vo` lines have one editor besides the storyboard skill. It can join at any stage: the project folder says what may change, and everything it finds goes into `research.md`, which the model reads and the engine never does.
 
 ## 1. Find the stage
 
@@ -23,7 +26,7 @@ An unchosen take locks `vo` too: the transcript is of that audio, so a changed l
 
 ## 2. Gather sources
 
-- In this order: the person's own files (README, docs, code, notes, an existing `research.md` and `short.json`), then official pages (product site, docs, changelog, release notes), then reputable secondary sources. Use WebSearch and WebFetch when the session has them; without them, work from the files and say what you could not check.
+- In this order: the person's own files (README, docs, code, notes, an existing `research.md` and `short.json`), then official pages (product site, docs, changelog, release notes), then reputable secondary sources. Use the host's web search and retrieval tools when available; without them, work from the files and say what you could not check.
 - Never invent a number, quote, date, name or result. Mark a missing fact `[YOUR FACT]` and list it under Open questions.
 - Keep every fact with its source: a URL, or a file path and section heading. Copy numbers and quotes exactly.
 
