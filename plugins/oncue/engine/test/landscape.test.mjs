@@ -13,6 +13,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import scenes from "../dist/scenes.js";
 import spec from "../dist/spec.js";
 import timeline from "../dist/timeline.js";
+import { launchBrowser } from "./helpers/browser.mjs";
 
 const engine = fileURLToPath(new URL("..", import.meta.url));
 const example = new URL("../examples/gleaner/", import.meta.url);
@@ -23,8 +24,7 @@ after(() => rmSync(dir, { recursive: true, force: true }));
 /** @returns {Promise<import("playwright").Browser | string>} the browser, or why it can't start */
 async function launch() {
   try {
-    const { chromium } = await import("playwright");
-    return await chromium.launch();
+    return await launchBrowser();
   } catch (e) {
     return `Chromium can't launch: ${String(e instanceof Error ? e.message : e).split("\n")[0]}`;
   }

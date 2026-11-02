@@ -1,6 +1,7 @@
 ---
 name: explainer-video
 description: OnCue end to end. Make a short explainer, vertical 9:16 or widescreen landscape 16:9, from a topic to a storyboard, an ElevenLabs voiceover, a native PowerPoint deck and a word-synced animated MP4 for YouTube Shorts, Reels, TikTok or a YouTube video. Use when the user asks to make an explainer video, a product short, a wide screen or 16:9 YouTube video, a presentation they can turn into a video, or "a video like the Gleaner one", or names this plugin.
+compatibility: 'Text planning can use supplied sources alone. Rendering needs Node.js 22+ and the bundled engine; stills/video need Playwright Chromium, video needs ffmpeg, audio timing needs ffprobe. Use ElevenLabs creative tools or supplied audio with matching timestamps.'
 argument-hint: '[topic, product, or path to short.json]'
 ---
 
@@ -21,26 +22,26 @@ The deck and the video both read `short.json`, so they always match. Its `format
 
 ## Set up the engine (once per session)
 
-The engine is a typed Node program in this plugin's `engine/` folder (`../../engine` from this skill's folder; `<plugin>` below is the absolute path of the folder holding `engine/`). If `oncue-engine/` already exists in the working directory (the setup skill, `../setup/SKILL.md`, makes it), check that this version of the plugin made it with `diff -rq <plugin>/engine/dist oncue-engine/dist`. If it prints nothing, reuse it with `cd oncue-engine && npm install`; copying over it would nest the engine inside it. When `diff` lists files, an older OnCue made the copy and it still runs the old engine: rename it with `mv oncue-engine oncue-engine.old` (pick another name if that one is taken: `mv` into an existing folder nests it), copy afresh as below, reinstall Playwright and any `@fontsource/*` package in the old copy's `package.json` but not the new one, and tell the person they can delete the old copy once the new one works. With no `oncue-engine/`, copy it into the working directory rather than running it inside the plugin, so installs never touch the plugin cache:
+Use the setup skill (`../setup/SKILL.md`) as the source of truth for this host: resolve the loaded plugin and version, then follow its Node, engine and browser checks (sections 2–5). Keep the person's existing installation and account settings unless they asked to change them. No generation or transcription is needed to check readiness.
 
-```bash
-cp -R <plugin>/engine ./oncue-engine && cd oncue-engine && npm install
-```
+Without shell execution, Node 22+ or a writable workspace, keep research and the text storyboard available, return drafts in the reply, and report engine checks as not run. Missing ffmpeg, ffprobe or a browser does not block spec checks or decks when their own requirements are ready.
 
-Requirements: Node 22+, `ffmpeg` and `ffprobe` on `PATH`, and Playwright with Chromium for the video and stills. If `node -p "require('playwright/package.json').version"` prints 1.40.0 or later (many sandboxes preinstall it), use that and do not install another version. Otherwise run `npm install --save-dev playwright && npx playwright install chromium` in `oncue-engine`; keep `--save-dev`, because npm 12 skips optional peers otherwise. The deck needs no browser.
+The engine is bundled at `../../engine` from this skill's folder. Setup copies it into a writable `oncue-engine/`, compares an existing copy against the loaded version before reusing it, and preserves an older copy when replacing it. Follow that procedure rather than copying into an existing folder or installing into the plugin cache. A failed comparison is a path/read error, not evidence that a copy is outdated.
 
-Run every command from `oncue-engine`. `npm run example:check` confirms the install on the bundled Gleaner example.
+Run engine commands from that writable copy. `npm run example:check` must print `OK.` before claiming the engine is ready. For stills or video, setup checks the Playwright package and tries the actual browser. Reuse a verified installed executable through `ONCUE_CHROMIUM_PATH`; download Playwright's matched Chromium only where that download is permitted and needed. The override still requires Playwright. Do not run a browser download merely because the package was missing when an installed executable is already selected.
+
+Video additionally needs ffmpeg; voice-timed stills and final audio need ffprobe plus matching audio and word timestamps. Report available outputs separately. The voiceover stage checks supported connector tools or accepts supplied files; do not connect an account or spend credits during engine setup.
 
 ## Order of work
 
 1. Start with a one-line plan, then gather material and build the storyboard. Show it and ask the person to approve or change the beats. **Do not record audio before they approve**, unless they said to go ahead without stopping.
 2. Generate the voiceover. Tell them the voice you picked, give them both takes, and pick one for timing (ask which they prefer if they are present; otherwise take the first and say so).
 3. Build the deck if they want a presentation or an editable source; it is quick.
-4. Render the video. Run stills first and look at them, then the full render in the background.
-5. Deliver: send the MP4 (and the deck), copy them to the folder the person named on their computer when one is linked, and say in one or two lines what they got, which take and voice, and what it cost in ElevenLabs credits.
+4. Render the video when its required capabilities are ready; otherwise report which outputs are available. Run stills first and look at them, then the full render in the background.
+5. Deliver: send the MP4 (and the deck), save copies to the folder the person named when this session can write there, and say in one or two lines what they got, which take and voice, and what it cost in ElevenLabs credits.
 
 ## Things that went wrong before
 
-- **Sandbox network.** Many sessions block downloads from ElevenLabs' file host `storage.googleapis.com`. If a download is refused, tell the person to add that domain under claude.ai Settings → Capabilities, or to attach the MP3. Do not retry through other tools.
+- **Sandbox network.** Many sessions block downloads from ElevenLabs' file host `storage.googleapis.com`. If a download is refused, use the recovery instructions for this host in the setup skill (`../setup/SKILL.md`), or ask the person to attach the MP3 and matching word timestamps. Do not retry through other tools.
 - **Transcribe, don't guess.** Pauses between lines are no longer than pauses inside them, so splitting audio on silence puts cuts mid-sentence. Always time from a word-level transcript (the voiceover skill gets one).
 - **Long renders.** Speed depends on the machine: on an Apple M4 Max the 75-second example rendered at about 30 frames a second, in 76 seconds, and slower machines take longer. Run it in the background and keep the person posted at milestones.

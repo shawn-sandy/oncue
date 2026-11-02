@@ -2,7 +2,7 @@
   "name": "oncue-marketplace",
   "private": true,
   "scripts": {
-    "validate": "node scripts/validate.mjs",
+    "validate": "node scripts/validate.mjs && node --test scripts/test/*.test.mjs",
     "engine:typecheck": "cd plugins/oncue/engine && npm ci && npm i --no-save --save-dev playwright && npx tsc -p . --noEmit",
     "engine:test": "cd plugins/oncue/engine && npm test"
   },

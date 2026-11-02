@@ -2,7 +2,7 @@
 
 **Explainer Shorts where every word lands on cue.**
 
-Give Claude a topic and get a finished explainer: storyboarded beats, an ElevenLabs voiceover, a native PowerPoint deck, and an animated MP4 where every card, step and tile appears on the exact word that names it. Make it vertical (1080×1920) for YouTube Shorts, Reels and TikTok, widescreen (1920×1080) for a YouTube video, or a custom size (even sides from 320 to 4096 px, the long side at most 2.4× the short one).
+Give your assistant a topic and get a finished explainer: storyboarded beats, an ElevenLabs voiceover, a native PowerPoint deck, and an animated MP4 where every card, step and tile appears on the exact word that names it. Make it vertical (1080×1920) for YouTube Shorts, Reels and TikTok, widescreen (1920×1080) for a YouTube video, or a custom size (even sides from 320 to 4096 px, the long side at most 2.4× the short one).
 
 One file, `short.json`, drives the storyboard, the voiceover script, the deck and the video, so they always match. Its `format` sets the size: frames wider than tall get a landscape layout, the rest the portrait one.
 
@@ -12,8 +12,9 @@ What you need depends on how far you go:
 
 | To make | You need |
 | --- | --- |
-| A storyboard (`short.json` and a beat list) | Node.js 22 or newer |
-| The deck (an editable 9:16 or 16:9 `.pptx`) | Node.js |
+| Research and a text storyboard | Supplied sources; web search for outside claims; write access to save files |
+| Spec validation and script extraction | Node.js 22+, the bundled engine and installed dependencies |
+| The deck (an editable 9:16 or 16:9 `.pptx`) | Node.js 22+, engine dependencies and readable spec/assets; no browser or voice connector |
 | Silent preview stills, or a silent preview video | Node.js and Playwright with Chromium; the video also needs ffmpeg |
 | The voiceover (`voiceover.mp3` and `words.json`) | The ElevenLabs connector and credits, or your own files (see [Without ElevenLabs](#without-elevenlabs)) |
 | Stills timed to the voiceover | Node.js, Playwright with Chromium, the voiceover files and `ffprobe` on `PATH` |
@@ -23,24 +24,21 @@ Setting them up:
 
 - **Node.js 22 or newer.** Check with `node --version`.
 - **ffmpeg and ffprobe.** One package installs both: `brew install ffmpeg` on macOS, `sudo apt install ffmpeg` on Debian or Ubuntu.
-- **Playwright with Chromium.** Claude installs it in its copy of the engine the first time it is needed (`npm install --save-dev playwright && npx playwright install chromium`; on npm 12, plain `npm install playwright` installs nothing, because Playwright is an optional peer dependency). Where Playwright is already installed, as in many sandboxes, Claude uses that one.
-- **ElevenLabs.** An ElevenLabs account with credits, connected to Claude. In Claude Code, add the server, then run `/mcp` in a session and sign in with your ElevenLabs account (OAuth; no API key):
+- **Playwright with Chromium.** The assistant installs it in its copy of the engine the first time it is needed (`npm install --save-dev playwright && npx playwright install chromium`; `--save-dev` keeps it installed through later installs without touching the shipped peer range, which a plain `npm install playwright` on npm 12 rewrites in `package.json`). Where Playwright is already installed, as in many sandboxes, setup reuses that one.
+- **ElevenLabs.** An ElevenLabs account with credits, connected through tools matching the documented `creative_*` workflow. In Claude Code, add the server, then run `/mcp` in a session and sign in with your ElevenLabs account (OAuth; no API key):
 
   ```bash
   claude mcp add --transport http elevenlabs https://api.elevenlabs.io/v1/mcp
   ```
 
-  In the Claude app, add it as a custom connector with the same URL. [ElevenLabs' MCP page](https://elevenlabs.io/mcp) has both. For reference, a 75-second script cost about 1,100 credits per take (Claude asks for two takes) and about 600 per transcription.
-- **Network, in sandboxed sessions.** Allow `storage.googleapis.com` (claude.ai Settings → Capabilities) so Claude can download the ElevenLabs audio.
+  In the Claude app, add it as a custom connector with the same URL. [ElevenLabs' MCP page](https://elevenlabs.io/mcp) has both. For reference, a 75-second script cost about 1,100 credits per take (two takes by default) and about 600 per transcription.
+- **Network.** Audio downloads can use `storage.googleapis.com`. Follow the current host’s network permissions. In a Claude sandbox with that setting, allow it under claude.ai Settings → Capabilities. In Codex or ChatGPT, setup uses the options actually available there; attach the MP3 and matching transcript when downloads are blocked.
 
 ## Install
 
-In a Claude Code terminal session:
+### Claude Code
 
-```text
-/plugin marketplace add shawn-sandy/oncue
-/plugin install oncue@oncue
-```
+In a Claude Code terminal session, run `/plugin marketplace add shawn-sandy/oncue`, then `/plugin install oncue@oncue`.
 
 These `/plugin` commands run only in a terminal session. Elsewhere, such as the desktop app's Code tab, run these in a shell instead (they need the `claude` CLI on your `PATH`), then start a new session:
 
@@ -57,12 +55,22 @@ Then ask Claude to "set up OnCue" (or run `/oncue:setup`). The setup skill repor
 
 OnCue's marketplace does not auto-update by default. To update, run `claude plugin update oncue@oncue` (or, in a terminal session, choose **Update now** on the **Installed** tab of `/plugin`), then `/reload-plugins` and set up again: that replaces any engine copy the old version made. To turn OnCue on for everyone in a repository, install it with `--scope project` and commit `.claude/settings.json`; each collaborator still runs the install once. Ask Claude to "share OnCue with my team" for the exact commands.
 
+### Codex
+
+Run `codex plugin marketplace add shawn-sandy/oncue`, then `codex plugin add oncue@oncue`. Ask to “set up OnCue”. For a Git marketplace, `codex plugin marketplace upgrade oncue` refreshes both the marketplace and the installed copy; confirm with `codex plugin list --json` and start a new session. Local-folder marketplaces refresh after updating that folder and running `codex plugin add oncue@oncue` again.
+
+### ChatGPT workspace import
+
+A workspace administrator can import `https://github.com/shawn-sandy/oncue` through **Admin → Plugins → Add → Import marketplace**, leaving Path empty. A branch, tag or commit can select a test candidate. Updates sync daily, or the administrator can use **Sync now** and inspect the import report. Importing does not connect external accounts or grant access to apps. See [OpenAI’s import instructions](https://learn.chatgpt.com/docs/enterprise/plugin-management).
+
+**ChatGPT import and rendering are untested for this release.** No test workspace was available. Setup checks the actual session’s Node, engine files, package installation, browser and media tools, and reports what works; it does not assume a particular container or network policy. Research and a text storyboard can use supplied sources even when rendering is unavailable. Single-skill uploads and public-directory submission are separate distribution routes.
+
 ## Usage
 
 ### Make your first Short
 
-1. Start Claude Code in the folder where the project should live.
-2. Ask for a Short, and point Claude at the facts to use:
+1. Start a session in the folder where the project should live, or select a writable working folder.
+2. Ask for a Short, and point the assistant at the facts to use:
 
    ```text
    Make a 60-second explainer short about this repo's CLI. Use the README for facts,
@@ -71,28 +79,28 @@ OnCue's marketplace does not auto-update by default. To update, run `claude plug
 
    For YouTube rather than Shorts, ask for a widescreen or 16:9 video instead.
 
-3. Claude copies the engine into `oncue-engine/` in that folder and installs it, once per session, then writes the storyboard.
-4. **Check-in 1: the beats.** Claude shows the beat list with preview stills (or a Design canvas). Change, cut or reorder beats now: once the voiceover is recorded, a wording change means paying for a new recording.
-5. **Check-in 2: the voice.** Claude names the voice it picked and gives you two takes. Pick one, or ask for another voice.
-6. Claude builds the deck if you asked for one, checks stills against the real word timings, and renders the video in the background. Render time depends on the machine: on an Apple M4 Max the 75-second example rendered at about 30 frames a second, in 76 seconds. Slower machines take longer.
+3. The assistant copies the engine into `oncue-engine/` in that folder and installs it, once per session, then writes the storyboard.
+4. **Check-in 1: the beats.** The assistant shows the beat list with preview stills (or a Design canvas). Change, cut or reorder beats now: once the voiceover is recorded, a wording change means paying for a new recording.
+5. **Check-in 2: the voice.** The assistant names the voice it picked and gives you two takes. Pick one, or ask for another voice.
+6. The assistant builds the deck if you asked for one, checks stills against the real word timings, and renders the video in the background. Render time depends on the machine: on an Apple M4 Max the 75-second example rendered at about 30 frames a second, in 76 seconds. Slower machines take longer.
 7. You get the MP4, plus the deck if you asked for one, with the take and voice used and the ElevenLabs credits spent.
 
 Say "go ahead without stopping" to skip the check-ins.
 
-### What to tell Claude
+### What to provide
 
-- **The subject and its sources:** a repo, README, docs page or notes. Claude uses real facts only and marks anything missing as `[YOUR FACT]`.
-- **Length and audience.** Without them, Claude aims for 45–80 seconds in 6–10 beats.
+- **The subject and its sources:** a repo, README, docs page or notes. The assistant uses real facts only and marks anything missing as `[YOUR FACT]`.
+- **Length and audience.** Without them, the assistant aims for 45–80 seconds in 6–10 beats.
 - **The call to action:** install, follow, visit.
-- **The brand and look:** a design system, a DESIGN.md or design tokens, a reference image or site, a few words such as "light, playful, rounded", colours, or a square PNG logo. Without one, Claude first looks for an earlier Short, a DESIGN.md, design tokens, the project's stylesheets or one of your claude.ai Design Systems, and asks when it finds more than one. With nothing to use, it takes the product's logo and site, or picks a ground, one accent and one highlight from the subject and tells you. A new look can be saved as a DESIGN.md, which later Shorts find; Claude offers once you approve the stills.
-- **The voice,** such as "a warm, unhurried narrator". Without one, Claude picks a clear voice suited to a product explainer.
+- **The brand and look:** a design system, a DESIGN.md or design tokens, a reference image or site, a few words such as "light, playful, rounded", colours, or a square PNG logo. Without one, the assistant first looks for an earlier Short, a DESIGN.md, design tokens, the project's stylesheets or a host-specific Design System when its supported tool is available, and asks when it finds more than one. With nothing to use, it takes the product's logo and site, or picks a ground, one accent and one highlight from the subject and tells you. A new look can be saved as a DESIGN.md, which later Shorts find; the assistant offers once you approve the stills.
+- **The voice,** such as "a warm, unhurried narrator". Without one, the assistant picks a clear voice suited to a product explainer.
 - **Where it will be posted.** Shorts, Reels and TikTok get 1080×1920; a YouTube video or a landscape deck gets 1920×1080; name any other size you need.
 - **The outputs,** if you want less than the whole pipeline: only the storyboard, only the deck, or a silent preview.
 
 ### What you get
 
 ```text
-oncue-engine/        Claude's copy of the engine; every command runs from here
+oncue-engine/        the assistant's copy of the engine; every command runs from here
 my-short/
   short.json         the spec: beats, scenes, cue words, brand
   research.md        sources, facts, topic ideas and visual ideas (research skill; the engine never reads it)
@@ -105,13 +113,13 @@ my-short/
   build/             scenes/, timeline.json and fit.json (rewritten each run), stills/ (new frames are added, old ones stay)
 ```
 
-`short.json` is the source of truth. To change the copy, edit it (or ask Claude to) and rebuild; an edit made only in the `.pptx` leaves the deck and the video out of step.
+`short.json` is the source of truth. To change the copy, edit it (or ask the assistant to) and rebuild; an edit made only in the `.pptx` leaves the deck and the video out of step.
 
 ### Without ElevenLabs
 
 Record or generate the narration yourself and attach the MP3. Read it from the script (`node dist/cli.js script short.json`) word for word: each line is found in the transcript by its first word.
 
-The animation is timed from a word-level transcript, not from the audio. With the ElevenLabs connector, Claude transcribes your MP3. Without it, put a `words.json` from any word-level transcriber beside `short.json`, in this shape:
+The animation is timed from a word-level transcript, not from the audio. With the supported ElevenLabs tools, the assistant can transcribe your MP3; otherwise supply matching word timestamps too. Put a `words.json` from any word-level transcriber beside `short.json`, in this shape:
 
 ```json
 { "words": [{ "text": "Ever", "start": 0.12, "end": 0.28 }] }
@@ -136,7 +144,7 @@ Each stage is its own skill, so you can stop after any of them or start from an 
 
 ## How it works
 
-1. **Storyboard.** Claude writes the beats into `short.json`: each beat's voiceover line, a scene (`hook`, `list`, `card`, `chat`, `steps`, `grid`, `media`, `image` or `cta`), and for each element the word it should enter on. It also sets the look: brand colours and fonts, and an optional `theme` for corners, type size, spacing, background and header, taken from your words, a DESIGN.md, design tokens, Figma, a reference image or a site, or found in an earlier Short, the project's stylesheets or your claude.ai Design Systems. See [the spec reference](plugins/oncue/skills/storyboard/references/spec.md).
+1. **Storyboard.** The assistant writes the beats into `short.json`: each beat's voiceover line, a scene (`hook`, `list`, `card`, `chat`, `steps`, `grid`, `media`, `image` or `cta`), and for each element the word it should enter on. It also sets the look: brand colours and fonts, and an optional `theme` for corners, type size, spacing, background and header, taken from your words, a DESIGN.md, design tokens, Figma, a reference image or a site, or found in an earlier Short, the project's stylesheets or host-specific Design Systems when their supported tool is available. See [the spec reference](plugins/oncue/skills/storyboard/references/spec.md).
 2. **Voiceover.** The ElevenLabs connector reads the whole script in one take for a consistent voice, then transcribes it with word timestamps.
 3. **Deck.** The engine writes real PowerPoint text and shapes in your brand colours, on a 9:16 or 16:9 slide by the spec's orientation.
 4. **Video.** Each scene is an HTML page stepped frame by frame in headless Chromium at the spec's size; a scene too big for its frame is shrunk to fit, with a warning, with entrances on cue words, a typing effect, spotlight glows, drawn lines, scene transitions and a progress bar. ffmpeg encodes the frames and lays in the voice.
@@ -147,8 +155,9 @@ The worked example is Gleaner's own Short: [examples/gleaner/short.json](plugins
 
 | You see | Do this |
 | --- | --- |
-| The audio download is refused in a sandboxed session | Allow `storage.googleapis.com` in claude.ai Settings → Capabilities, or download the MP3 yourself and attach it. |
-| `Playwright is not installed` | In `oncue-engine/`: `npm install --save-dev playwright && npx playwright install chromium`. |
+| The audio download is refused | Use setup’s recovery for the current host, or attach the MP3 and matching word timestamps. Claude network settings do not configure ChatGPT or Codex. |
+| `Playwright is not installed` | In the writable `oncue-engine/` copy, install `playwright` with `--save-dev`. Install Chromium where downloads are permitted, or select an existing executable with `ONCUE_CHROMIUM_PATH`. |
+| Chromium cannot launch | Check the actual executable, browser compatibility and session permissions. A package install alone does not prove browser readiness. An invalid override fails visibly; unset it to restore Playwright’s default. |
 | An `ENOENT` error naming `ffmpeg` or `ffprobe` | Install ffmpeg so both are on `PATH`. |
 | `Font file missing` | A font in `brand.fonts` is not installed: `npm install @fontsource/<name>` in `oncue-engine/`. If it is installed, it lacks a weight the video uses (400, 600, 700 and 800 for `sans`; 400 and 600 for `mono`), so pick a font that has them. |
 | `Line N (...) not found in the transcript` | The narrator changed that line's first word. Make its `vo` match what was said, or transcribe again. |
@@ -175,12 +184,14 @@ Without `--words` and `--audio`, timing is estimated from the script and the vid
 
 To try it on the bundled Gleaner Short, run `npm install` in the engine folder, then `npm run example:check`, `example:deck`, `example:stills` or `example:video`. The results land in `examples/gleaner/build/`. `npm install` leaves out Playwright, an optional peer dependency, so run `npm install --no-save --save-dev playwright && npx playwright install chromium` before `example:stills` or `example:video`. Those flags install it on npm 12 too without editing the shipped `package.json`. Any later `npm install` removes it again, so repeat the command after one. Both examples also need ffprobe, because they time the frames to the bundled voiceover, and `example:video` needs ffmpeg as well.
 
+To use an already installed Chromium, set `ONCUE_CHROMIUM_PATH` to its verified absolute executable path for the session. This applies to stills, video and the visuals skill’s diagram recipe. Playwright must still be installed, and the executable must be compatible with it. An unset or empty value keeps Playwright’s default; an invalid path fails instead of silently falling back. `PLAYWRIGHT_BROWSERS_PATH` selects a cache directory and is not an executable override.
+
 To work on the engine, run `npm install` and then `npm run build` in its folder. Sources are strict TypeScript in `src/`; the compiled `dist/` is committed so the skills run without a build step.
 
 ## Development
 
 ```bash
-npm run validate          # manifests, skill frontmatter, links, shipped engine build, claude plugin validate
+npm run validate          # manifests, skill requirements/wording, recursive links, validator fixtures, Claude validation
 npm run engine:typecheck  # strict TypeScript check of the engine
 npm run engine:test       # node:test suites; the browser ones skip without Chromium, as in CI
 claude plugin eval plugins/oncue --scaffold --allow-tools Write Edit --trust-plugin   # scored skill evals; run locally before a PR
@@ -191,6 +202,15 @@ The skill evals in `plugins/oncue/evals/` run real Claude sessions against fixed
 The plugin version lives only in `plugins/oncue/.claude-plugin/plugin.json`.
 
 ## Changelog
+
+### 1.8.0 (2026-11-01)
+
+- Setup distinguishes Claude Code, Codex and ChatGPT, checks the current execution environment, and reports each output independently. All eight skills declare their requirements; text research and storyboarding remain available without rendering tools.
+- `ONCUE_CHROMIUM_PATH` selects an installed Chromium for stills, video and diagram PNGs. Default browser selection is unchanged; an invalid override fails visibly.
+- Shared skills and references use host-neutral download and delivery guidance. Claude’s Design System adapter remains conditional on its supported tool. Voiceover checks tool schemas and retains supplied audio with matching timestamps as a fallback.
+- Validation checks requirements and host assumptions, including nested references; browser regression tests cover the override through the CLI. The existing Claude marketplace layout and optional Playwright dependency are retained.
+- ChatGPT workspace import and rendering remain untested: no test workspace was available. Setup reports observed capabilities rather than promising cloud runtime support.
+
 
 ### 1.7.2 (2026-10-30)
 

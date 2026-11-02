@@ -1,12 +1,15 @@
 ---
 name: visuals
 description: Put real pictures in an OnCue explainer, a vertical Short or a 16:9 YouTube video. Place the person's screenshots and photos, draw diagrams, charts and timelines as PNG, use an image-generation tool when the session has one, or find openly licensed images with credits, each written into short.json as an image beat with alt text and a cue word. Use when the user wants to add images, pictures, photos or screenshots to a Short, recommend or create visuals for beats, make a diagram, or swap icons. Pictures change only the scene, so they are safe after the voiceover is recorded.
+compatibility: 'Supplied or licensed images and writable project files. Node.js 22+ and the bundled engine for image validation; Playwright Chromium for diagram PNGs and preview stills. Image generation is optional; ffprobe for voice-timed stills.'
 argument-hint: '[path to short.json] [beat numbers]'
 ---
 
 # Visuals
 
 Fill beats with pictures that are true: the person's own screens, diagrams drawn from real facts, or images whose license is known. Each one becomes an `image` beat in `short.json` (spec reference, `../storyboard/references/spec.md`, Scene kinds).
+
+Without writable files, return the proposed beat changes and picture sources in the reply. Without the engine or browser, keep diagram sources and draft placement available, and report validation or PNG/still rendering as not run. Never claim an unrendered placement is verified.
 
 ## 1. Read the project
 
@@ -34,10 +37,27 @@ Use the first source that fits:
 2. **A drawn diagram, chart or timeline.** Write it as SVG, or HTML with `body { margin: 0 }`, sized to the viewport, in the brand colours from `brand.colors`, with short labels only. Turn it into a PNG with Playwright from the engine folder (set up as in the explainer-video skill, `../explainer-video/SKILL.md`), using absolute paths:
 
    ```bash
-   npx playwright screenshot --viewport-size "1080, 1080" file://<absolute path to diagram.svg> <folder>/images/beat-03.png
+   node - "/absolute/path/to/diagram.svg" "/absolute/path/to/images/beat-03.png" 1080 1080 <<'NODE'
+   const { chromium } = require("playwright");
+   const { launchOptions } = require("./dist/capture.js");
+   const { pathToFileURL } = require("node:url");
+   const { mkdirSync } = require("node:fs");
+   const { dirname } = require("node:path");
+   const [input, output, width, height] = process.argv.slice(2);
+   (async () => {
+     const browser = await chromium.launch(launchOptions());
+     try {
+       const page = await browser.newPage({ viewport: { width: Number(width), height: Number(height) } });
+       await page.goto(pathToFileURL(input).href);
+       await page.evaluate(() => document.fonts.ready);
+       mkdirSync(dirname(output), { recursive: true });
+       await page.screenshot({ path: output });
+     } finally { await browser.close(); }
+   })().catch(error => { console.error(error); process.exitCode = 1; });
+   NODE
    ```
 
-   Use 1080×1080 for a portrait Short and 1920×1080 for a landscape video, so the diagram fills most of its frame. When it stands in for something real, say so in the caption, such as "Diagram" or "Illustration".
+   This uses the same `ONCUE_CHROMIUM_PATH` selection as stills. If the engine or browser is unavailable, keep the diagram source and report PNG generation as unverified; do not claim it rendered. Use 1080×1080 for a portrait Short and 1920×1080 for a landscape video, so the diagram fills most of its frame. When it stands in for something real, say so in the caption, such as "Diagram" or "Illustration".
 3. **An image-generation tool, only when the session has one.** Name the tool, say it may spend credits, and ask before generating. Use it for generic, illustrative scenes only, never for anything under Truth rules.
 4. **An openly licensed image** (public domain, CC0, CC BY, CC BY-SA, or a site licence such as Unsplash's or Pexels'). Record its title, author, licence and link under Credits in `research.md`, and put an attribution in the caption when the licence asks for one. A picture whose licence you could not confirm may still be placed, but flag it under Credits and in your delivery note as needing a check before publishing.
 
@@ -74,7 +94,7 @@ node dist/cli.js check <folder>/short.json
 node dist/cli.js stills <folder>/short.json --words <folder>/words.json --audio <folder>/voiceover.mp3
 ```
 
-Pass the take being timed: `words.json` and `voiceover.mp3`, or a matching pair such as `words-take1.json` and `voiceover-take1.mp3` while the person is still choosing. Leave out `--words` and `--audio` when there is no pair. Fix every cue warning by choosing an `imageCue` or `captionCue` word that is in that beat's `vo`, and look at the beat's still: the picture is in its frame, uncropped, with nothing in the bottom ~350 px of a portrait frame. Only then report done.
+Pass the take being timed: `words.json` and `voiceover.mp3`, or a matching pair such as `words-take1.json` and `voiceover-take1.mp3` while the person is still choosing. Leave out `--words` and `--audio` when there is no pair. Fix every cue warning by choosing an `imageCue` or `captionCue` word that is in that beat's `vo`, and look at the beat's still: the picture is in its frame, uncropped, with nothing in the bottom ~350 px of a portrait frame. Only then report the visual as verified. If required rendering tools are unavailable, save the draft placement and report which checks were not run.
 
 ## 6. Deliver
 

@@ -4,7 +4,7 @@
  * shipped build. No dependencies. Runs `claude plugin validate` too when the Claude CLI is on PATH.
  */
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 
@@ -29,11 +29,50 @@ function frontmatter(src) {
   need(m, "missing YAML frontmatter");
   /** @type {Record<string, string>} */
   const out = {};
+  let previous = "";
   for (const line of m[1].split("\n")) {
+    need(previous !== "compatibility" || !/^\s+\S/.test(line), "compatibility must be single-line");
     const kv = /^([a-z-]+):\s*(.*)$/.exec(line);
-    if (kv) out[kv[1]] = kv[2].replace(/^'(.*)'$/, "$1").replace(/^"(.*)"$/, "$1");
+    if (kv) {
+      previous = kv[1];
+      if (previous === "compatibility") {
+        need(!(previous in out), "compatibility must appear only once");
+        need(!/^[>|]/.test(kv[2]), "compatibility must be single-line");
+        // Single quotes have no escapes beyond '', so this reader never applies YAML's plain or double-quoted rules.
+        need(/^'(?:[^']|'')*'$/.test(kv[2]), "compatibility must be a single-quoted string");
+      }
+      out[kv[1]] = kv[2].replace(/^'(.*)'$/, "$1").replace(/^"(.*)"$/, "$1");
+    }
   }
   return out;
+}
+
+/** Recursively include references, so a nested guide cannot evade checks. @param {string} dir @returns {string[]} */
+function markdownFiles(dir) {
+  return readdirSync(dir).flatMap((name) => {
+    const file = join(dir, name);
+    return statSync(file).isDirectory() ? markdownFiles(file) : file.endsWith(".md") ? [file] : [];
+  });
+}
+
+/**
+ * Keep host setup in setup and preserve only the explicitly guarded design-system adapter.
+ * This is a prose regression check, not proof that the host exposes a particular tool.
+ * @param {string} file @param {string} name @param {string} skillsDir
+ */
+function hostInstructions(file, name, skillsDir) {
+  if (name === "setup") return;
+  let src = readFileSync(file, "utf8");
+  const label = `${relative(root, file)}: host-specific instructions belong in setup or a guarded adapter`;
+  need(!/\b(?:claude|codex)\s+(?:plugin|mcp)\b|\/(?:plugin|mcp|reload-plugins)\b/i.test(src), label);
+  if (file === join(skillsDir, "storyboard", "references", "theme.md")) {
+    src = src.split(/(?=^## )/m).filter((section) => {
+      if (!section.startsWith("## Design System artifacts\n")) return true;
+      const guard = /Only in Claude sessions with an Artifact tool that supports the Design System type\. Otherwise skip this adapter\./;
+      return !guard.test(section);
+    }).join("");
+  }
+  need(!/\bclaude\b|\bcodex\b|\bchatgpt\b|\bcomputer\b[^.!?\n]*\blinked\b|\bWebFetch\b/i.test(src), label);
 }
 
 /** Markdown links and backticked ./ ../ paths outside code fences must exist. @param {string} file */
@@ -74,9 +113,14 @@ for (const entry of market.plugins ?? []) {
       need(fm.name === name, `frontmatter name "${fm.name}" must match folder "${name}"`);
       need(fm.description && fm.description.length <= 1024, "description is required and at most 1024 characters");
       need(!/[<>]/.test(fm.description), "description must not contain angle brackets");
+      need(fm.compatibility?.trim() && fm.compatibility.length <= 500, "compatibility is required, nonempty and at most 500 characters");
       links(file);
+      hostInstructions(file, name, skillsDir);
       const refs = join(skillsDir, name, "references");
-      if (existsSync(refs)) for (const f of readdirSync(refs).filter((f) => f.endsWith(".md"))) links(join(refs, f));
+      if (existsSync(refs)) for (const ref of markdownFiles(refs)) {
+        links(ref);
+        hostInstructions(ref, name, skillsDir);
+      }
     });
   }
 

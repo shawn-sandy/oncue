@@ -1,6 +1,7 @@
 ---
 name: vertical-deck
 description: Build a native, editable PowerPoint deck from a short.json explainer, vertical 9:16 or widescreen landscape 16:9, one slide per beat with the voiceover in the speaker notes, ready to present or record into a YouTube Short or a YouTube video. Use when the user wants a vertical, portrait or 9:16 presentation, a widescreen or 16:9 deck, a deck for Shorts, Reels, TikTok or YouTube, or "the slides" for an explainer they storyboarded.
+compatibility: 'Node.js 22+, the bundled engine with installed dependencies, readable short.json/assets and a writable output folder. No browser, voice connector or ffmpeg required. An office renderer is optional for slide inspection.'
 argument-hint: '[path to short.json]'
 ---
 

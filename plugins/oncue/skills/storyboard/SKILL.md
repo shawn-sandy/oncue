@@ -1,6 +1,7 @@
 ---
 name: storyboard
 description: Plan a vertical or widescreen explainer as beats, voiceover lines and scenes, written to a short.json spec and optionally laid out as a storyboard on a Design canvas. Use when the user wants to storyboard, script, outline or plan a short, a Reel, a TikTok, a YouTube Short, a landscape 16:9 YouTube video or a presentation, such as "storyboard a short about our plugin", "plan a wide screen video" or "plan the beats before we build the video".
+compatibility: 'Read supplied material and write access to save short.json. Text storyboards need no renderer. Node.js 22+ and the bundled engine for validation; Playwright and launchable Chromium for optional preview stills.'
 argument-hint: '[topic, product, or path to an existing short.json]'
 ---
 
@@ -27,19 +28,19 @@ Turn a topic into a locked set of beats: what the narrator says, what the viewer
 
 ## 3. Write short.json
 
-Write `short.json` in a project folder with the logo at the path `brand.logo` names, usually beside it. Then check it with the engine (set up as in the explainer-video skill, `../explainer-video/SKILL.md`):
+Write `short.json` in a writable project folder with the logo at the path `brand.logo` names, usually beside it. Without file access, return the draft JSON and beat table in the reply. Only when Node and the engine are ready, check it as below (set up as in the explainer-video skill, `../explainer-video/SKILL.md`):
 
 ```bash
 node dist/cli.js check <folder>/short.json
 ```
 
-`check` validates every field and prints the beats with an estimated length. Fix what it names, contrast warnings included. It does not open the logo, so confirm that file exists.
+When Node or the engine is unavailable, return the draft spec and beat table, state that validation and stills were not run, and continue text planning. Otherwise, `check` validates every field and prints the beats with an estimated length. Fix what it names, contrast warnings included. It does not open the logo, so confirm that file exists.
 
 ## 4. Show the storyboard
 
 Show the beats and the look so the person can change them before audio is recorded. Only the stills show the palette and `theme` as the video will, so include them whenever they render. Pick what the session supports:
 
-- **Silent preview stills (always available):** `node dist/cli.js stills <folder>/short.json` renders one frame per beat with estimated timing into `build/stills/`. Combine them into one contact sheet and show it with the beat list.
+- **Silent preview stills (when the engine and Chromium are ready):** `node dist/cli.js stills <folder>/short.json` renders one frame per beat with estimated timing into `build/stills/`. Combine them into one contact sheet and show it with the beat list.
 - **Design canvas (when the Artifact tool offers the Design type):** one 420×1080 artboard per beat, each with a frame sketch in the spec's aspect (9:16 or 16:9) on top, then the voiceover line, a motion note, and a timing chip. For a portrait frame, draw a dashed line over the bottom ~15% marking where the Shorts captions and buttons sit. Use the person's design system when one is installed.
 - **A table in the reply** when neither fits.
 

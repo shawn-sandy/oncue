@@ -33,23 +33,29 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.launchOptions = launchOptions;
 exports.renderVideo = renderVideo;
 exports.renderStills = renderStills;
 /** Steps the scenes page frame by frame in headless Chromium and encodes the frames with ffmpeg. */
 const node_child_process_1 = require("node:child_process");
 const node_fs_1 = require("node:fs");
 const node_path_1 = require("node:path");
+/** Select a host-provided browser without changing Playwright's default when no override is set. */
+function launchOptions(env = process.env) {
+    const executablePath = env.ONCUE_CHROMIUM_PATH;
+    return executablePath ? { executablePath } : {};
+}
 async function loadPlaywright() {
     try {
         return await Promise.resolve().then(() => __importStar(require("playwright")));
     }
     catch {
-        throw new Error("Playwright is not installed. Run: npm install --save-dev playwright && npx playwright install chromium (in the engine folder).");
+        throw new Error("Playwright is not installed. Run npm install --save-dev playwright in the engine folder, then use ONCUE_CHROMIUM_PATH for an installed Chromium or run npx playwright install chromium.");
     }
 }
 async function open(scenesHtml, tl, size) {
     const { chromium } = await loadPlaywright();
-    const browser = await chromium.launch();
+    const browser = await chromium.launch(launchOptions());
     const page = await browser.newPage({ viewport: size, deviceScaleFactor: 1 });
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));

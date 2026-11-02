@@ -26,4 +26,4 @@ Before calling an engine change done, run the example end to end in the engine f
 
 ## Versioning
 
-The version lives only in `plugins/oncue/.claude-plugin/plugin.json`; `marketplace.json` has none. The changelog is the last section of `README.md`. Bump for changes to what a skill or the engine does, not for wording fixes.
+The version lives only in `plugins/oncue/.claude-plugin/plugin.json`; `marketplace.json` has none. The changelog is the last section of `README.md`. Bump for changes to what a skill or the engine does, not for wording fixes. When a bump reaches `main`, `.github/workflows/release.yml` tags it `vX.Y.Z` and creates a GitHub release from that version's `### X.Y.Z` changelog entry; a pull request that bumps the version shows the release as a dry run.
