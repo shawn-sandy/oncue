@@ -77,7 +77,7 @@ test("storyboard editor preserves specs, edits scenes and protects narration", a
     await page.locator("#beats button").first().click();
     await page
       .getByLabel("scene / headline", { exact: true })
-      .fill("A fresh storyboard");
+      .fill("A fresh\nstoryboard");
     await page.locator("summary").click();
     await page
       .getByLabel("brand / colors / accent", { exact: true })
@@ -88,7 +88,7 @@ test("storyboard editor preserves specs, edits scenes and protects narration", a
     await page.locator("#unlock").check();
     await page.getByRole("button", { name: "Move later", exact: true }).click();
     const edited = await downloadSpec();
-    assert.equal(edited.lines[1].scene.headline, "A fresh storyboard");
+    assert.equal(edited.lines[1].scene.headline, "A fresh\nstoryboard");
     assert.equal(edited.lines[1].vo, original.lines[0].vo);
     assert.deepEqual(edited.custom, original.custom);
     assert.equal(edited.brand.colors.accent, "#aabbcc");

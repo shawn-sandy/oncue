@@ -350,7 +350,10 @@
         if (typeof v !== "string" && typeof v !== "number") continue;
         const label = el("label", [...path, key].join(" / "));
         const input = el(
-          typeof v === "string" && v.length > 65 ? "textarea" : "input",
+          typeof v === "string" &&
+          (v.length > 65 || /[\r\n]/.test(v) ||
+            ["headline", "title", "sub", "desc", "text", "follow", "caption", "value"].includes(key))
+            ? "textarea" : "input",
         );
         if (input.tagName === "INPUT")
           input.type = typeof v === "number" ? "number" : "text";
