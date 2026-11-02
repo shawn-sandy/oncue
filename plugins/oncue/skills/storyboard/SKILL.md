@@ -36,6 +36,8 @@ node dist/cli.js check <folder>/short.json
 
 When Node or the engine is unavailable, return the draft spec and beat table, state that validation and stills were not run, and continue text planning. Otherwise, `check` validates every field and prints the beats with an estimated length. Fix what it names, contrast warnings included. It does not open the logo, so confirm that file exists.
 
+For interactive editing, use [storyboard-editor](../storyboard-editor/SKILL.md). Its preview is approximate; return here with the exported JSON for validation and engine stills.
+
 ## 4. Show the storyboard
 
 Show the beats and the look so the person can change them before audio is recorded. Only the stills show the palette and `theme` as the video will, so include them whenever they render. Pick what the session supports:
