@@ -24,7 +24,7 @@ Setting them up:
 
 - **Node.js 22 or newer.** Check with `node --version`.
 - **ffmpeg and ffprobe.** One package installs both: `brew install ffmpeg` on macOS, `sudo apt install ffmpeg` on Debian or Ubuntu.
-- **Playwright with Chromium.** The assistant installs it in its copy of the engine the first time it is needed (`npm install --save-dev playwright && npx playwright install chromium`; on npm 12, plain `npm install playwright` installs nothing, because Playwright is an optional peer dependency). Where Playwright is already installed, as in many sandboxes, setup reuses that one.
+- **Playwright with Chromium.** The assistant installs it in its copy of the engine the first time it is needed (`npm install --save-dev playwright && npx playwright install chromium`; `--save-dev` keeps it installed through later installs without touching the shipped peer range, which a plain `npm install playwright` on npm 12 rewrites in `package.json`). Where Playwright is already installed, as in many sandboxes, setup reuses that one.
 - **ElevenLabs.** An ElevenLabs account with credits, connected through tools matching the documented `creative_*` workflow. In Claude Code, add the server, then run `/mcp` in a session and sign in with your ElevenLabs account (OAuth; no API key):
 
   ```bash

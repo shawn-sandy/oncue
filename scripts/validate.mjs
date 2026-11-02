@@ -38,13 +38,8 @@ function frontmatter(src) {
       if (previous === "compatibility") {
         need(!(previous in out), "compatibility must appear only once");
         need(!/^[>|]/.test(kv[2]), "compatibility must be single-line");
-        const raw = kv[2];
-        const quoted = /^(['"])(.*)\1$/.test(raw);
-        if (!quoted) {
-          const plain = raw.replace(/(?:^|\s+)#.*$/, "").trim();
-          need(plain && !/^[\[{'"]|^(?:null|~|true|false|[+-]?\d+(?:\.\d+)?)$/i.test(plain), "compatibility must be a nonempty string");
-          kv[2] = plain;
-        }
+        // Require quotes so this reader never has to apply YAML's plain-scalar rules.
+        need(/^'(?:[^']|'')*'$|^"(?:[^"\\]|\\.)*"$/.test(kv[2]), "compatibility must be a quoted string");
       }
       out[kv[1]] = kv[2].replace(/^'(.*)'$/, "$1").replace(/^"(.*)"$/, "$1");
     }
@@ -69,7 +64,7 @@ function hostInstructions(file, name, skillsDir) {
   if (name === "setup") return;
   let src = readFileSync(file, "utf8");
   const label = `${relative(root, file)}: host-specific instructions belong in setup or a guarded adapter`;
-  need(!/\bclaude\s+(?:plugin|mcp)\b|\/(?:plugin|mcp|reload-plugins)\b/i.test(src), label);
+  need(!/\b(?:claude|codex)\s+(?:plugin|mcp)\b|\/(?:plugin|mcp|reload-plugins)\b/i.test(src), label);
   if (file === join(skillsDir, "storyboard", "references", "theme.md")) {
     src = src.split(/(?=^## )/m).filter((section) => {
       if (!section.startsWith("## Design System artifacts\n")) return true;
@@ -77,7 +72,7 @@ function hostInstructions(file, name, skillsDir) {
       return !guard.test(section);
     }).join("");
   }
-  need(!/\bclaude\b|\bcomputer\b[^.!?\n]*\blinked\b|\bWebFetch\b/i.test(src), label);
+  need(!/\bclaude\b|\bcodex\b|\bchatgpt\b|\bcomputer\b[^.!?\n]*\blinked\b|\bWebFetch\b/i.test(src), label);
 }
 
 /** Markdown links and backticked ./ ../ paths outside code fences must exist. @param {string} file */

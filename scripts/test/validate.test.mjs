@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 /** @param {{ compatibility?: string, body?: string, refs?: Record<string, string>, name?: string }} options */
-function validate({ compatibility = "compatibility: Node.js 22+.", body = "Use supplied material.", refs = {}, name = "storyboard" } = {}) {
+function validate({ compatibility = "compatibility: 'Node.js 22+.'", body = "Use supplied material.", refs = {}, name = "storyboard" } = {}) {
   const dir = mkdtempSync(join(tmpdir(), "oncue-validator-"));
   /** @param {string} path @param {string} text */
   const write = (path, text) => { const file = join(dir, path); mkdirSync(join(file, ".."), { recursive: true }); writeFileSync(file, text); };
@@ -26,7 +26,7 @@ function validate({ compatibility = "compatibility: Node.js 22+.", body = "Use s
 }
 
 test("accepts valid requirements, including the 500-character limit", () => {
-  for (const text of ["Node.js 22+.", "x".repeat(500)]) {
+  for (const text of ["'Node.js 22+.'", `'${"x".repeat(500)}'`, "'Node''s engine'", '"Node.js \\"22\\"+"']) {
     const run = validate({ compatibility: `compatibility: ${text}` });
     assert.equal(run.status, 0, run.stdout + run.stderr);
   }
@@ -34,14 +34,17 @@ test("accepts valid requirements, including the 500-character limit", () => {
 
 for (const [label, compatibility] of [
   ["missing", ""], ["empty", "compatibility:"], ["quoted empty", 'compatibility: ""'],
-  ["whitespace", 'compatibility: "   "'], ["oversized", `compatibility: ${"x".repeat(501)}`],
+  ["whitespace", 'compatibility: "   "'], ["oversized", `compatibility: '${"x".repeat(501)}'`],
   ["literal multiline", "compatibility: |\n  Node.js 22+."], ["folded multiline", "compatibility: >-\n  Node.js 22+."],
   ["continued multiline", "compatibility: Node.js\n  22+."],
   ["comment only", "compatibility: # requirements pending"],
   ["YAML collection", "compatibility: [Node.js]"],
   ["YAML boolean", "compatibility: false"],
   ["YAML null", "compatibility: null"],
-  ["duplicate field", "compatibility: Node.js\ncompatibility: Browser"],
+  ["duplicate field", "compatibility: 'Node.js'\ncompatibility: 'Browser'"],
+  ["unquoted", "compatibility: Node.js 22+."],
+  ["YAML mapping", "compatibility: Requirements: Node.js 22+"],
+  ["unescaped apostrophe", "compatibility: 'Node's engine'"],
 ]) {
   test(`rejects ${label} compatibility`, () => {
     const run = validate({ compatibility });
@@ -50,7 +53,7 @@ for (const [label, compatibility] of [
   });
 }
 
-for (const body of ["Use claude.ai Settings → Capabilities.", "Run `claude plugin list`.", "Choose `/mcp`.", "Copy to the person's folder when their computer is linked."]) {
+for (const body of ["Use claude.ai Settings → Capabilities.", "Run `claude plugin list`.", "Choose `/mcp`.", "Copy to the person's folder when their computer is linked.", "Run `codex plugin add oncue@oncue`.", "In ChatGPT, open Admin → Plugins."]) {
   test(`rejects shared host assumption: ${body}`, () => {
     const run = validate({ body });
     assert.notEqual(run.status, 0);
