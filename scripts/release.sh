@@ -18,7 +18,7 @@ notes=$(awk -v head="### $version " '
   on { print }
 ' README.md)
 
-args=(--title "OnCue $version" --target "${GITHUB_SHA:-$(git rev-parse HEAD)}")
+args=(--title "OnCue $version")
 if [[ -n "${notes//[[:space:]]/}" ]]; then
   args+=(--notes "$notes")
 else
@@ -26,8 +26,11 @@ else
   args+=(--generate-notes)
 fi
 
+# No --target in a dry run: on a pull request GITHUB_SHA is a temporary merge commit, not the one main gets.
 if [[ "${DRY_RUN:-}" == true ]]; then
-  echo "Would create release $tag: ${args[*]}"
+  echo "Would create release $tag at the commit that reaches main: ${args[*]}"
   exit 0
 fi
-gh release create "$tag" "${args[@]}"
+# A run racing this one may create the release first; that counts as done.
+gh release create "$tag" --target "${GITHUB_SHA:-$(git rev-parse HEAD)}" "${args[@]}" \
+  || gh release view "$tag" >/dev/null
