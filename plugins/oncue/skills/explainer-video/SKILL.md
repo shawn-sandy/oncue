@@ -14,6 +14,7 @@ Run the whole pipeline. Each stage has its own skill; this one sets up the engin
 | Research (optional, any stage) | [research](../research/SKILL.md) | `research.md`: ranked topic ideas, sourced facts, narration rewrites and visual ideas |
 | 1. Storyboard | [storyboard](../storyboard/SKILL.md) | `short.json`, a beat list, preview stills or a Design canvas |
 | Visuals (optional, any stage) | [visuals](../visuals/SKILL.md) | `images/` and `image` beats: the person's screenshots, drawn diagrams or licensed pictures, safe to add after the voiceover |
+| Interactive editing (optional) | [storyboard-editor](../storyboard-editor/SKILL.md) | Browser editor and exported `short.json`; validate and render stills before approval |
 | 2. Voiceover | [voiceover](../voiceover/SKILL.md) | `voiceover.mp3`, `words.json` (word timings) |
 | 3. Deck | [vertical-deck](../vertical-deck/SKILL.md) | `deck.pptx`, 9:16 or 16:9, voiceover in the speaker notes |
 | 4. Video | [animate-short](../animate-short/SKILL.md) | `short.mp4` at the spec's size (1080×1920, 1920×1080 or custom), every element entering on its word |
@@ -34,7 +35,7 @@ Video additionally needs ffmpeg; voice-timed stills and final audio need ffprobe
 
 ## Order of work
 
-1. Start with a one-line plan, then gather material and build the storyboard. Show it and ask the person to approve or change the beats. **Do not record audio before they approve**, unless they said to go ahead without stopping.
+1. Start with a one-line plan, then gather material and build the storyboard. For interactive design, apply [storyboard surface routing](../setup/SKILL.md#storyboard-surface-routing); choose from verified host capabilities and reuse the existing editor. Show it and ask the person to approve or change the beats. **Do not record audio before they approve**, unless they said to go ahead without stopping.
 2. Generate the voiceover. Tell them the voice you picked, give them both takes, and pick one for timing (ask which they prefer if they are present; otherwise take the first and say so).
 3. Build the deck if they want a presentation or an editable source; it is quick.
 4. Render the video when its required capabilities are ready; otherwise report which outputs are available. Run stills first and look at them, then the full render in the background.

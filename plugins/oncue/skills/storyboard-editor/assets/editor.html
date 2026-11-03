@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  />
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src blob:; connect-src 'none'; base-uri 'none'; form-action 'none'"
+  />
+  <title>OnCue storyboard editor</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font:
+        16px/1.5 system-ui,
+        sans-serif;
+      color: #182348;
+      background: #edf0fa;
+    }
+    header {
+      padding: 24px 32px;
+      background: #253be9;
+      color: white;
+    }
+    h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+    button {
+      cursor: pointer;
+      border: 1px solid #9ba7ca;
+      border-radius: 6px;
+      padding: 9px 14px;
+      background: white;
+      color: #182348;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+    :focus-visible {
+      outline: 3px solid #ff795e;
+      outline-offset: 3px;
+    }
+    .toolbar {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      padding: 20px 32px;
+      background: white;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 220px minmax(280px, 1fr) minmax(300px, 420px);
+      gap: 24px;
+      padding: 24px;
+    }
+    nav button {
+      display: block;
+      width: 100%;
+      margin-bottom: 10px;
+      text-align: left;
+    }
+    nav button[aria-current="true"] {
+      background: #253be9;
+      color: white;
+    }
+    .panel {
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+    }
+    label {
+      display: block;
+      margin: 10px 0;
+    }
+    input:not([type="checkbox"]),
+    textarea,
+    select {
+      display: block;
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #8592b6;
+      border-radius: 4px;
+    }
+    textarea {
+      min-height: 75px;
+      resize: vertical;
+    }
+    fieldset {
+      border: 0;
+      padding: 0;
+      margin: 18px 0;
+    }
+    legend {
+      font-weight: 700;
+    }
+    .frame {
+      max-width: 460px;
+      aspect-ratio: 9/16;
+      margin: auto;
+      background: white;
+      padding: 8%;
+      overflow: auto;
+      border: 1px solid #adb6ce;
+      overflow-wrap: anywhere;
+    }
+    .frame h2 {
+      line-height: 1.15;
+      font-size: clamp(24px, 3vw, 42px);
+    }
+    .frame .item {
+      padding: 12px;
+      margin: 12px 0;
+      border: 1px solid currentColor;
+    }
+    .frame img {
+      max-width: 100%;
+      max-height: 230px;
+      object-fit: contain;
+    }
+    .hint {
+      font-size: 14px;
+      color: #465577;
+    }
+    #status {
+      padding: 0 32px;
+    }
+    #actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    details {
+      margin: 14px 0;
+    }
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+    }
+    @media (max-width: 950px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      nav {
+        display: flex;
+        overflow: auto;
+        gap: 8px;
+      }
+      nav button {
+        min-width: 170px;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        scroll-behavior: auto;
+      }
+    }
+  </style>
+  <header>
+    <h1>OnCue storyboard editor</h1>
+    <div>Shape the beats. Then check the real render.</div>
+  </header>
+  <div class="toolbar">
+    <label
+      >Import short.json<input
+        id="import"
+        type="file"
+        accept=".json,application/json" /></label
+    ><label
+      >Preview local pictures<input
+        id="pictures"
+        type="file"
+        accept="image/png,image/jpeg"
+        multiple /></label
+    ><button id="export" disabled>Export short.json</button
+    ><label
+      ><input id="unlock" type="checkbox" /> Unlock narration and beat order
+      (may require re-recording)</label
+    >
+  </div>
+  <p id="status" role="status" aria-live="polite">
+    Import a storyboard to begin. Changes stay in memory until you export.
+  </p>
+  <main class="layout">
+    <nav id="beats" aria-label="Storyboard beats"></nav>
+    <div class="panel">
+      <p class="hint">
+        Approximate layout preview. Fonts, spacing and animation may differ from
+        the engine. Select pictures locally to preview them; they are not
+        included in JSON exports.
+      </p>
+      <div id="preview" class="frame"></div>
+      <p class="hint">
+        Run OnCue check and render stills before approving the final design.
+      </p>
+      <div id="actions"></div>
+    </div>
+    <div class="panel">
+      <div id="fields"></div>
+      <details>
+        <summary>Brand, format and theme</summary>
+        <div id="global"></div>
+      </details>
+      <p class="hint">
+        No autosave. Export before closing. Asset paths resolve relative to the
+        exported spec when rendered.
+      </p>
+    </div>
+  </main>
+  <script>
+    "use strict";
+    let spec = null,
+      selected = 0,
+      dirty = false;
+    const assets = new Map();
+    const kinds = [
+      "hook",
+      "list",
+      "card",
+      "chat",
+      "steps",
+      "grid",
+      "media",
+      "image",
+      "cta",
+    ];
+    const $ = (id) => document.getElementById(id);
+    const el = (tag, text) => {
+      const n = document.createElement(tag);
+      if (text !== undefined) n.textContent = text;
+      return n;
+    };
+    function message(s) {
+      $("status").textContent = s;
+    }
+    function changed() {
+      dirty = true;
+      message("Unsaved changes. Export JSON to keep them.");
+      preview();
+    }
+    function validate(s) {
+      if (
+        !s ||
+        typeof s !== "object" ||
+        !Array.isArray(s.lines) ||
+        !s.lines.length ||
+        s.lines.some(
+          (l) =>
+            !l ||
+            typeof l.vo !== "string" ||
+            !l.scene ||
+            !kinds.includes(l.scene.kind),
+        )
+      )
+        throw Error(
+          "Expected nonempty lines with narration and a supported scene kind.",
+        );
+      if (
+        !s.brand ||
+        typeof s.brand !== "object" ||
+        Array.isArray(s.brand) ||
+        !s.brand.colors ||
+        typeof s.brand.colors !== "object"
+      )
+        throw Error("Missing brand colors.");
+      if (
+        s.theme !== undefined &&
+        (!s.theme || typeof s.theme !== "object" || Array.isArray(s.theme))
+      )
+        throw Error("Theme must be an object.");
+      const f = s.format;
+      if (
+        !f ||
+        ![f.width, f.height].every(
+          (n) => Number.isInteger(n) && n >= 320 && n <= 4096 && n % 2 === 0,
+        ) ||
+        Math.max(f.width, f.height) / Math.min(f.width, f.height) > 2.4
+      )
+        throw Error(
+          "Format sides must be even integers from 320 to 4096, at most 2.4:1.",
+        );
+    }
+    $("import").onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (dirty && !confirm("Discard unexported changes?")) {
+        e.target.value = "";
+        return;
+      }
+      try {
+        const next = JSON.parse(await file.text());
+        validate(next);
+        spec = next;
+        selected = 0;
+        dirty = false;
+        $("unlock").checked = false;
+        for (const url of assets.values()) URL.revokeObjectURL(url);
+        assets.clear();
+        $("pictures").value = "";
+        render();
+        message(
+          "Imported. Narration and beat order are locked. Export to save edits.",
+        );
+      } catch (err) {
+        message("Import failed: " + err.message);
+      }
+      e.target.value = "";
+    };
+    $("pictures").onchange = (e) => {
+      for (const f of e.target.files) {
+        if (!["image/png", "image/jpeg"].includes(f.type)) continue;
+        if (assets.has(f.name)) URL.revokeObjectURL(assets.get(f.name));
+        assets.set(f.name, URL.createObjectURL(f));
+      }
+      preview();
+    };
+    $("unlock").onchange = () => {
+      if (!canNavigate()) {
+        $("unlock").checked = !$("unlock").checked;
+        return;
+      }
+      render();
+      message(
+        $("unlock").checked
+          ? "Narration and order unlocked. Existing recordings may need replacing or re-alignment."
+          : "Narration and order locked.",
+      );
+    };
+    function editor(parent, obj, path = [], locked = false) {
+      for (const key of Object.keys(obj)) {
+        const v = obj[key];
+        if (v && typeof v === "object") {
+          const group = el("fieldset");
+          group.append(el("legend", key));
+          editor(group, v, [...path, key], locked);
+          parent.append(group);
+          continue;
+        }
+        if (typeof v !== "string" && typeof v !== "number") continue;
+        const label = el("label", [...path, key].join(" / "));
+        const input = el(
+          typeof v === "string" &&
+          (v.length > 65 || /[\r\n]/.test(v) ||
+            ["headline", "title", "sub", "desc", "text", "follow", "caption", "value"].includes(key))
+            ? "textarea" : "input",
+        );
+        if (input.tagName === "INPUT")
+          input.type = typeof v === "number" ? "number" : "text";
+        if (typeof v === "number") input.step = "any";
+        input.value = String(v);
+        input.disabled = locked || key === "kind";
+        input.oninput = () => {
+          if (typeof v === "number") {
+            if (
+              input.value.trim() === "" ||
+              !Number.isFinite(Number(input.value))
+            ) {
+              input.setCustomValidity("Enter a finite number");
+              $("export").disabled = true;
+              return;
+            }
+            input.setCustomValidity("");
+            obj[key] = Number(input.value);
+          } else obj[key] = input.value;
+          $("export").disabled = !!document.querySelector(":invalid");
+          changed();
+          if (key === "vo") beatList();
+        };
+        label.append(input);
+        parent.append(label);
+      }
+    }
+    function canNavigate() {
+      if (document.querySelector(":invalid")) {
+        message("Correct the invalid input before changing beats or locks.");
+        return false;
+      }
+      return true;
+    }
+    function beatList() {
+      $("beats").replaceChildren();
+      spec.lines.forEach((l, i) => {
+        const b = el(
+          "button",
+          i + 1 + ". " + l.scene.kind + " — " + l.vo.slice(0, 32),
+        );
+        b.setAttribute("aria-current", String(i === selected));
+        b.onclick = () => {
+          if (document.querySelector(":invalid")) {
+            message("Correct the invalid input before switching beats.");
+            return;
+          }
+          selected = i;
+          render();
+        };
+        $("beats").append(b);
+      });
+    }
+    function render() {
+      if (!spec) return;
+      beatList();
+      $("fields").replaceChildren();
+      $("global").replaceChildren();
+      $("fields").append(el("h2", "Beat " + (selected + 1)));
+      const line = spec.lines[selected];
+      const vo = el("fieldset");
+      const narration = el("label", "Narration");
+      const input = el("textarea");
+      input.value = line.vo;
+      input.disabled = !$("unlock").checked;
+      input.oninput = () => {
+        line.vo = input.value;
+        changed();
+        beatList();
+      };
+      narration.append(input);
+      vo.append(narration);
+      editor(vo, line.scene, ["scene"]);
+      $("fields").append(vo);
+      editor($("global"), spec.brand, ["brand"]);
+      editor($("global"), spec.format, ["format"]);
+      const theme = spec.theme || {};
+      for (const [key, values] of Object.entries({
+        radius: ["sharp", "soft", "round"],
+        type: ["small", "regular", "large"],
+        density: ["compact", "regular", "airy"],
+        background: ["glow", "subtle", "flat"],
+        header: ["brand", "logo", "none"],
+      })) {
+        const label = el("label", "theme / " + key),
+          select = el("select");
+        select.setAttribute("aria-label", "theme / " + key);
+        for (const v of ["", ...values]) {
+          const o = el("option", v || "Engine default");
+          o.value = v;
+          select.append(o);
+        }
+        select.value = theme[key] || "";
+        select.onchange = () => {
+          spec.theme ??= {};
+          if (select.value) spec.theme[key] = select.value;
+          else delete spec.theme[key];
+          changed();
+        };
+        label.append(select);
+        $("global").append(label);
+      }
+      $("actions").replaceChildren();
+      for (const [name, fn, disabled] of [
+        ["Move earlier", () => move(-1), selected === 0],
+        ["Move later", () => move(1), selected === spec.lines.length - 1],
+        [
+          "Duplicate",
+          () => {
+            spec.lines.splice(selected + 1, 0, structuredClone(line));
+            selected++;
+            changed();
+            render();
+          },
+          false,
+        ],
+        [
+          "Delete",
+          () => {
+            if (confirm("Delete this beat?")) {
+              spec.lines.splice(selected, 1);
+              selected = Math.min(selected, spec.lines.length - 1);
+              changed();
+              render();
+            }
+          },
+          spec.lines.length === 1,
+        ],
+      ]) {
+        const b = el("button", name);
+        b.disabled = disabled || !$("unlock").checked;
+        b.onclick = () => {
+          if (canNavigate()) fn();
+        };
+        $("actions").append(b);
+      }
+      $("export").disabled = false;
+      preview();
+    }
+    function move(by) {
+      const target = selected + by;
+      [spec.lines[selected], spec.lines[target]] = [
+        spec.lines[target],
+        spec.lines[selected],
+      ];
+      selected = target;
+      changed();
+      render();
+    }
+    function preview() {
+      if (!spec) return;
+      const p = $("preview"),
+        s = spec.lines[selected].scene,
+        c = spec.brand.colors;
+      p.replaceChildren();
+      p.style.aspectRatio = spec.format.width + "/" + spec.format.height;
+      p.style.background = /^#[0-9a-f]{6}$/i.test(c.ground) ? c.ground : "#fff";
+      p.style.color = /^#[0-9a-f]{6}$/i.test(c.ink) ? c.ink : "#182348";
+      p.append(el("small", spec.brand.name || "Storyboard"));
+      p.append(el("h2", s.headline || s.title || ""));
+      if (s.sub) p.append(el("p", s.sub));
+      if (typeof s.src === "string" && s.src) {
+        const url = assets.get(s.src.split(/[\\/]/).pop());
+        if (url) {
+          const img = el("img");
+          img.src = url;
+          img.alt = s.alt || "";
+          p.append(img);
+        } else p.append(el("p", "Select picture: " + s.src));
+        if (s.caption) p.append(el("p", s.caption));
+      }
+      const items =
+        s.items ||
+        s.steps ||
+        s.tiles ||
+        s.turns ||
+        s.moments ||
+        s.card?.rows ||
+        [];
+      if (s.card) p.append(el("h3", s.card.title));
+      for (const item of Array.isArray(items) ? items : []) {
+        if (!item || typeof item !== "object") continue;
+        const box = el("div");
+        box.className = "item";
+        box.append(
+          el(
+            "strong",
+            item.title || item.label || item.from || item.time || "",
+          ),
+        );
+        if (item.desc || item.value || item.text)
+          box.append(el("p", item.desc || item.value || item.text));
+        if (item.cue) box.append(el("small", "Cue: " + item.cue.word));
+        p.append(box);
+      }
+      if (s.result) p.append(el("p", s.result.text));
+      if (s.pill) p.append(el("p", s.pill.text));
+      if (s.follow) p.append(el("p", s.follow));
+    }
+    $("export").onclick = () => {
+      try {
+        validate(spec);
+        if (document.querySelector(":invalid"))
+          throw Error("Correct invalid inputs before exporting.");
+        const url = URL.createObjectURL(
+          new Blob([JSON.stringify(spec, null, 2) + "\n"], {
+            type: "application/json",
+          }),
+        );
+        const a = el("a");
+        a.href = url;
+        a.download = "short.json";
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        dirty = false;
+        message(
+          "Exported. Keep your assets with this JSON. Engine check and rendered stills are still required.",
+        );
+      } catch (err) {
+        message("Export failed: " + err.message);
+      }
+    };
+    addEventListener("beforeunload", (e) => {
+      if (dirty) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    });
+  </script>
+</html>
