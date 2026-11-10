@@ -67,7 +67,7 @@ Resolved in the 2026-11-10 review:
 5. **Loading: the storyboard skill copies the preset in.** When no look is found, the skill copies the chosen mode's `colors`, plus `fonts`, `deckFonts` and `theme`, from `oncue-engine/themes/astro.json` into the new `short.json`, keeping the product's own `name` and `logo`. No merge code in `loadSpec`; customizing means editing the copied block, the same way an earlier Short's look is reused today.
 6. **Mode: light by default.** Astro Kit's primary theme (paper `#fcfcfd`, island `#0b6070`). The person's word "dark" selects the dark mode (paper `#0d1014`, island `#6bb9c9`) through the existing plain-words table.
 7. **Mono: JetBrains Mono.** Astro Kit's system mono stack is not on Fontsource; JetBrains Mono is already an engine dependency, so no new package. Inter is added as the sans (`@fontsource/inter`).
-8. **Deck: `stroke` draws, `weight` is a no-op.** `stroke: hairline` adds a 0.75pt `rule`-coloured line to the deck's card, bubble, tile and player shapes; `bold` keeps today's borderless deck, so default deck XML is unchanged. `weight` has no deck effect because PowerPoint bold is on/off; `spec.md` says so. Chosen over making both tokens video-only, which would break the both-renderers rule in `CLAUDE.md`.
+8. **Deck: `stroke` draws, `weight` is a no-op.** `stroke: hairline` adds a 0.75pt `rule`-coloured line to the deck's card, bubble, tile, player and image shapes (every shape `deck.ts` draws through its `card()` helper, except the pill); `bold` keeps today's borderless deck, so default deck XML is unchanged. `weight` has no deck effect because PowerPoint bold is on/off; `spec.md` says so. Chosen over making both tokens video-only, which would break the both-renderers rule in `CLAUDE.md`.
 9. **Preset density: `regular`.** Safe fit for every scene kind; `airy` stays available through the plain-words table. Chosen over `airy`, which `theme.md` warns can shrink dense scenes.
 </decisions>
 
@@ -77,14 +77,14 @@ Resolved in the 2026-11-10 review:
 - `theme.weight`: `heavy` (default; 800 on h1/h2, `.pt`, `.num`) or `semibold` (600, Astro's single heading weight).
 - Per `CLAUDE.md`'s new-field rule: type in `src/spec.ts` (`Theme`, `Look`, `look()`), validation in `checkTheme`, both renderers, rows in `skills/storyboard/references/spec.md`, then `npm run build` and commit `dist/`.
 - `scenes.ts`: `stroke` sets the border width on `.card`, `.bubble`, `.player`, `.tile`, `.photo` and the `.hr` height; `weight` sets the 800s on h1/h2, `.pt`, `.num`.
-- `deck.ts`: `hairline` adds a 0.75pt `rule`-coloured line to card, bubble, tile and player shapes; `bold` changes nothing. `weight` is not read; `spec.md` documents it as video-only.
+- `deck.ts`: `hairline` adds a 0.75pt `rule`-coloured line to card, bubble, tile, player and image shapes, matching `.photo` in the video; `bold` changes nothing. `weight` is not read; `spec.md` documents it as video-only.
 - No cue slot: neither token animates.
-- Tests: extend `VALUES` and `DEFAULTS` in `test/theme.test.mjs` so the existing "rejects an unknown value" loop and the byte-identical default test cover both keys; add one assertion each that `hairline` sets `.card` `border` to 1px and `semibold` sets `h2` `font-weight` to 600.
+- Tests: extend `VALUES` and `DEFAULTS` in `test/theme.test.mjs` so the existing "rejects an unknown value" loop and the byte-identical default test cover both keys; add one assertion each that `hairline` sets `.card` `border` to 1px and `semibold` sets `h2` `font-weight` to 600. Add one deck assertion that a `hairline` image scene's card carries a line and a `bold` one does not.
 
 **B — The Astro preset file.**
 - `plugins/oncue/engine/themes/astro.json` with `name`, `source` (the Design System URL and `shawn-sandy/astro-basics` ref), `modes.light.colors`, `modes.dark.colors`, `fonts`, `deckFonts`, `theme`. Appendix B is the full draft.
 - Add `@fontsource/inter` to `engine/package.json` `dependencies`.
-- A test (`test/themes.test.mjs`) that, for every `themes/*.json` and every mode, builds a spec from the Gleaner lines plus that theme, runs `loadSpec`, and asserts zero contrast warnings. This is the guard that makes "a new theme is one file" safe.
+- A test (`test/themes.test.mjs`) that, for every `themes/*.json` and every mode, builds a spec from the Gleaner lines plus that theme, runs `loadSpec`, and asserts zero contrast warnings. The same test also runs `writeScenes` into a temp folder (removed afterwards), so a preset that names a font not in `dependencies` fails with `fontFile`'s "Font file missing" error instead of passing CI and failing at render time; a theme that needs a new font adds its `@fontsource` package in the same change. This is the guard that makes "a new theme is one file" safe.
 
 **C — Skill prose.**
 - `skills/storyboard/SKILL.md` step 1: replace "pick a ground (dark unless their words say otherwise), one accent and one highlight" with "copy the Astro default theme (`oncue-engine/themes/astro.json`), light unless the person's words say dark, and say so".
