@@ -77,7 +77,7 @@ Resolved in the 2026-11-09 review:
 <workstreams>
 ### A — 3D entrances (phase 1)
 
-- `render.ts`: add `flip` (rotateY from -85deg to 0 under `perspective(1200px)`, opacity in over the first third) and `tilt` (rotateX from 60deg to 0 plus a 40 px rise) to `Fx`, `FX_SET` and the switch. Both were spiked in a scratch copy of `dist/render.js` and render correctly mid-entrance (list card caught at t=9.65 s).
+- `render.ts`: add `flip` (rotateY from -85deg to 0 under `perspective(1200px)`, opacity in over the first third) and `tilt` (rotateX from 60deg to 0 plus a 40 px rise, opacity in over the first third so it stays hidden before its cue like `up` and `pop`) to `Fx`, `FX_SET` and the switch. Both were spiked in a scratch copy of `dist/render.js` and render correctly mid-entrance (list card caught at t=9.65 s).
 - `scenes.ts`: when `theme.depth` is `3d`, `fx()` remaps `left`/`right` to `flip` and `up`/`pop` to `tilt` for card-like elements per Appendix A; `fade`, `drawX`, `drawY`, `type` and `data-spot` are untouched. Remap at markup time so `render.ts` stays theme-agnostic.
 - `spec.ts`: add `depth` to the theme choices (`spec.ts:46-57`), type and default.
 - Keep 3D off static CSS: a static `perspective/rotate` rule on `.body` made the fit guard measure a wider box and shrink the scene (seen in the spike). Entrances set by `renderAt` do not, because `fit()` runs before the first `renderAt`.
@@ -86,7 +86,7 @@ Resolved in the 2026-11-09 review:
 ### B — Three.js backdrop (phase 2)
 
 - Dependency: add `three` to `dependencies`; copy `node_modules/three/build/three.module.js` and `three.core.js` (658,900 + 1,474,799 bytes at r187) next to `scenes.html` only when `backdrop` is not `none`, the same way fonts are copied (`scenes.ts:105-114`).
-- Markup: a `<canvas id="backdrop">` at output pixel size inside `#stage`, after the blobs and before the scenes; a `<script type="module">` that imports three and registers `window.renderBackdrop(t)`.
+- Markup: a `<canvas id="backdrop">` inside `#stage` whose drawing buffer (`width`/`height` attributes, `renderer.setSize(w, h, false)`) is the output pixel size and whose CSS box is the stage's design size, because `#stage` is laid out at a 1080 short side and scaled to the output (`scenes.ts:141`); output-pixel CSS would be scaled twice. Placed after the blobs and before the scenes; a `<script type="module">` that imports three and registers `window.renderBackdrop(t)`.
 - Module source: a plain browser module (`// @ts-check` with JSDoc, per CLAUDE.md), because `tsconfig.json` compiles to CommonJS and `render.ts` must stay import-free. Copied from the engine like `render.js`.
 - Determinism contract: `WebGLRenderer({ preserveDrawingBuffer: true, alpha: true })`, pixel ratio 1, seeded RNG for particle positions, every rotation and camera move a function of `t`, `renderer.render()` called from `renderAt(t)`.
 - Boot ordering: module scripts run after classic ones; `render.ts` boot (`:166-180`) must await the backdrop's ready signal when `#backdrop` exists before setting `window.ready`.
@@ -105,7 +105,7 @@ Resolved in the 2026-11-09 review:
 
 - Tests per Appendix B. Browser tests skip in CI (Playwright without a browser, `.github/workflows/validate.yml`), so run them locally and confirm `skipped 0`.
 - `scripts/validate.mjs` dist check (`:126-130`): add the backdrop module once it ships.
-- Run `example:deck` and `example:stills` with `depth: 3d` and `backdrop: particles` and look at the frames.
+- Run `example:deck` and `example:stills` and look at the frames: phase 1 with `depth: 3d` only (`backdrop` does not exist yet and `checkTheme` would reject it); phase 2 adds `backdrop: particles`.
 - Bump `plugin.json`, add a changelog entry per release.
 </workstreams>
 
@@ -157,12 +157,14 @@ Phase 1:
 - `theme` test: `depth: "wobble"` fails with `short.json theme.depth: must be one of flat, 3d`.
 - `theme` test: the example's `scenes.html` is byte-identical with `depth` unset and `depth: "flat"`; with `3d` it contains `data-fx="flip"` and no `data-fx="left"`.
 - Browser test (Playwright): mid-entrance, a `flip` element's computed transform is a `matrix3d`; at entrance end it is `none` or identity.
+- Browser test: at a frame before its cue while its scene is visible, a `tilt` element (a grid tile) has opacity 0.
 - Fit test: `build/fit.json` is identical for `flat` and `3d`.
 
 Phase 2:
 - `theme` test: `backdrop` validation message; three files are copied only when `backdrop` is not `none`.
 - `capture` test: `launchOptions()` includes both flags with and without `ONCUE_CHROMIUM_PATH`.
 - Browser test: a still with `backdrop: "particles"` differs from `none` at the same `t`; rendering the same `t` twice gives identical bytes.
+- Browser test: at a non-1080 short side (540×960), the backdrop canvas's bounding box equals the full frame.
 - Boot test: with WebGL unavailable, `capture.ts` throws the `bootError` message, not a 15 s timeout (assert the rejection arrives well under 15 s).
 
 ### Appendix C — Spike evidence (2026-11-09)
