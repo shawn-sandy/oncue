@@ -115,7 +115,7 @@
         "rule": "low-contrast",
         "value": "*",
         "files": [
-          "docs/artifacts/proposal-add-astro-default-theme.html"
+          "docs/artifacts/proposal-add-astro-default-theme-2026-11-10.html"
         ],
         "createdAt": "2026-11-10T13:29:06.237Z",
         "reason": "Claude, measured: computed-style scan of every text node in light and dark found 0 pairs under WCAG AA; flags come from unresolved per-frame CSS variables in the theme specimens"
