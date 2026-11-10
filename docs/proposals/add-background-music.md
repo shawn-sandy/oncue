@@ -76,7 +76,8 @@ Open, for the person to decide before the plan is written:
 ```
 
 - With no voiceover (silent preview), mix music over `anullsrc` without ducking, so a preview can still be judged with music.
-- `cli.ts`: parse `--music`, resolve and check the file exists, pass it through `prepare` to `renderVideo`; update the usage line at `:125` and the header comment. Add `--music-db` only if phase 1 shows track loudness varies too much for one default.
+- `cli.ts`: parse `--music`, resolve and check the file exists, pass it through `prepare` to `renderVideo`; update the usage line at `:125` and the header comment.
+- Default output name: `cli.ts:115` picks `short.mp4` or `preview-silent.mp4` from `p.audio` alone. Add the music state so a music-only preview is not saved as `preview-silent.mp4` (which would mislabel it and overwrite a genuinely silent preview): `short.mp4` when there is a voiceover, `preview-music.mp4` when there is music but no voiceover, `preview-silent.mp4` when there is neither. One test per name, written first and seen failing. Add `--music-db` only if phase 1 shows track loudness varies too much for one default.
 - `npm run build` and commit `dist/` with `src/` (CLAUDE.md).
 
 ### B — Skills: ask for a track and its license (`skills/animate-short/SKILL.md`, `skills/explainer-video/SKILL.md`)
@@ -92,7 +93,7 @@ Open, for the person to decide before the plan is written:
 
 ### D — Later, not in this release: a `music` skill that generates the track
 
-- Prompt built from the storyboard mood, `force_instrumental` on, length set to the video duration (`audioSeconds + 1.9`), saved beside `short.json`, then handed to `--music`.
+- Prompt built from the storyboard mood, `force_instrumental` on, length set to the video duration (`audioSeconds + 1.9`) capped at the chosen provider's documented maximum (Appendix A: 10 minutes for the ElevenLabs API, 6 minutes for Stable Audio 3.0 and 3 minutes for 2.5; the ElevenLabs overview says 5, so use the smaller figure until checked), saved beside `short.json`, then handed to `--music`. When the video is longer than the cap, generate the capped length and let the engine loop it, or stop before calling the provider and say why. Never request a length the provider will reject.
 - Credit-spending: say the cost before generating and never retry silently, as the voiceover skill does.
 
 ## Risks & tensions
