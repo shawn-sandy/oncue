@@ -10,7 +10,7 @@ artifact-url: https://claude.ai/artifact/QBNWsY6MP4UqfsMkZouoZd
 issue: https://github.com/shawn-sandy/oncue/issues/36
 prototype: docs/prototypes/add-astro-default-theme.html
 proto-model: {"entity":"Theme","fields":[{"name":"name","type":"string"},{"name":"mode","type":"string"},{"name":"stroke","type":"string"},{"name":"weight","type":"string"},{"name":"ground","type":"string"},{"name":"card","type":"string"},{"name":"rule","type":"string"},{"name":"ink","type":"string"},{"name":"accent","type":"string"}],"action":"Add theme","successSignal":"Themes"}
-glance: Today every Short with no brand look gets a palette the model invents, and every Short has the same heavy 2px borders and bold headings. After this, a Short with no look starts from one named, calm Astro theme, and a new theme is a single JSON file. We will know it worked when the Gleaner example renders in the Astro look in light and dark, both new settings change the video and the deck, and the full engine suite passes with nothing skipped.
+glance: Today every Short with no brand look gets a palette the model invents, and every Short has the same heavy 2px borders and bold headings. After this, a Short with no look starts from one named, calm Astro theme, and a new theme is a single JSON file. We will know it worked when the Gleaner example renders in the Astro look in light and dark, `stroke` changes the video and the deck while `weight` changes the video only, and the full engine suite passes with nothing skipped.
 ---
 
 # Plan: Give OnCue a calm Astro default theme and two new look settings
