@@ -82,7 +82,8 @@ Open, for the person to decide before the plan is written:
 
 ### B — Skills: ask for a track and its license (`skills/animate-short/SKILL.md`, `skills/explainer-video/SKILL.md`)
 
-- `animate-short`: add an optional "Music" step before the render command. Ask whether the person has a track; if so, pass `--music`. Ask where it came from and whether it needs a credit (Creative Commons BY tracks do), and print the credit line to paste in the video description.
+- `animate-short`: add an optional "Music" step before the render command. Ask whether the person has a track; if so, pass `--music`. Ask where it came from, which license it carries, and where the video will be published and whether it earns money. Credit is only part of the answer: a Creative Commons BY track needs a credit, but a BY-NC track does not allow monetized or commercial use even with one. Print the credit line to paste in the video description when one is needed.
+- Flag a license that is unknown, or that does not fit the stated use, and leave the decision to the person; the skill does not block the render.
 - State plainly that the skill cannot verify a license, and that a track from a source without Content ID clearance can still get a copyright claim.
 - `explainer-video`: one optional line in the stage list pointing to the music step. Keep descriptions within the `validate.mjs` limits (single line, at most 1024 characters, no angle brackets).
 
@@ -99,6 +100,7 @@ Open, for the person to decide before the plan is written:
 ## Risks & tensions
 
 - **The filter graph is unverified.** The sketch above has not been run. `sidechaincompress` and `amix` option names, and the `normalize=0` option on `amix` (newer ffmpeg only), must be checked on the installed ffmpeg. Mitigation: phase 1 builds the graph by hand on the Gleaner example and keeps the working command as a fixture.
+- **The mix can clip.** With `amix` not scaling its inputs (`normalize=0`), a loud narration plus music can sum above full scale (0 dBFS), and ducking does not guarantee enough headroom. Requirement: phase 1 measures the peak level of the encoded output, and the mix ends in a peak limiter (for example `alimiter`) or enough gain reduction that the measured peak stays below 0 dBFS on the Gleaner example and on a second, louder voice.
 - **Loudness numbers must be measured.** The music gain, duck depth and release time are set from `volumedetect` or `ebur128` output on a real render, not guessed. The README must quote only measured values.
 - **ffmpeg may not be on `PATH` here.** Memory records that this machine has none on `PATH` and wraps Remotion's bundled binaries. Tests and phase 1 must say so and not report a skipped run as green.
 - **Audible loop seam.** A short track repeating can click or lurch at the join. Mitigation: a short crossfade at the loop point, or require tracks at least as long as the video and only loop as a fallback.
@@ -111,7 +113,7 @@ Open, for the person to decide before the plan is written:
 
 | Phase | Work | Size | Depends on |
 |---|---|---|---|
-| 1 | Prove the mix: run the filter graph by hand on `examples/gleaner/voiceover.mp3` with a test track; record the command, measured loudness, and loop behavior; commit the command as a fixture | S | — |
+| 1 | Prove the mix: run the filter graph by hand on `examples/gleaner/voiceover.mp3` with a test track; record the command, measured loudness and peak level (below 0 dBFS), and loop behavior; commit the command as a fixture | S | — |
 | 2 | Workstream A: extract the filter builder, add `--music`, tests written first and seen failing, rebuild and commit `dist/` | S | 1 |
 | 3 | Workstream B: `animate-short` music step and license questions; `explainer-video` line | S | 2 |
 | 4 | Workstream C: README section, changelog, version bump | S | 3 |
