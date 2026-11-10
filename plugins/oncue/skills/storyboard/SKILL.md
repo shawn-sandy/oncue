@@ -36,9 +36,11 @@ node dist/cli.js check <folder>/short.json
 
 When Node or the engine is unavailable, return the draft spec and beat table, state that validation and stills were not run, and continue text planning. Otherwise, `check` validates every field and prints the beats with an estimated length. Fix what it names, contrast warnings included. It does not open the logo, so confirm that file exists.
 
+For "design my storyboard" or interactive editing, apply [storyboard surface routing](../setup/SKILL.md#storyboard-surface-routing) before choosing a tool. It honors explicit choices, reuses the project's editor, then selects a capability-checked host default. Browser editor routes use [storyboard-editor](../storyboard-editor/SKILL.md); canvas routes use the instructions below. Do not create an editor for a planning-only request. Return here with the edited spec for validation and engine stills.
+
 ## 4. Show the storyboard
 
-Show the beats and the look so the person can change them before audio is recorded. Only the stills show the palette and `theme` as the video will, so include them whenever they render. Pick what the session supports:
+Show the beats and the look so the person can change them before audio is recorded. Only the stills show the palette and `theme` as the video will, so include them whenever they render. Use the selected route for interactive work; for planning-only requests, show the available stills or beat table:
 
 - **Silent preview stills (when the engine and Chromium are ready):** `node dist/cli.js stills <folder>/short.json` renders one frame per beat with estimated timing into `build/stills/`. Combine them into one contact sheet and show it with the beat list.
 - **Design canvas (when the Artifact tool offers the Design type):** one 420×1080 artboard per beat, each with a frame sketch in the spec's aspect (9:16 or 16:9) on top, then the voiceover line, a motion note, and a timing chip. For a portrait frame, draw a dashed line over the bottom ~15% marking where the Shorts captions and buttons sit. Use the person's design system when one is installed.

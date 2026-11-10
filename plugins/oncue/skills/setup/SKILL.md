@@ -14,6 +14,29 @@ Use the product running this conversation: Claude Code, the Claude app, Codex, o
 
 `<plugin>` below is the absolute folder two levels above this skill's folder, holding `skills/` and `engine/`. Resolve it from the loaded skill location, not the working directory. Confirm the sibling engine and reference files exist. If the host mounts skills without `engine/`, report rendering blocked by missing bundled files; text research and a beat table can still work.
 
+## Storyboard surface routing
+
+Use this routing for requests such as "design my storyboard", "let me edit the storyboard", or "use the ChatGPT storyboard". Planning-only requests still produce beats and `short.json`; they do not require creating an editor. Routing alone does not run full setup, install tools, connect accounts, publish a site, or record audio.
+
+Choose in this order:
+
+1. **Explicit choice:** honor a requested local editor, Sites/hosted editor, Design canvas, or text-only output. "ChatGPT storyboard" means the Sites editor; it does not mean an unavailable built-in canvas. Verify the requested surface's tools before acting. If unavailable, explain the limitation and offer the available fallback; do not silently replace an explicit choice.
+2. **Existing project surface:** inspect the project's recorded editor URL, Sites checkout and `.openai/hosting.json`, local `storyboard-editor.html`, or Design artifact reference. Reuse a supported existing editor before choosing a host default. A marketing website is not an editor. If several editor references exist and none is selected, clarify which to use instead of creating another.
+3. **Host default, gated by capabilities:** identify the host from session context, not installed CLIs. Use the first applicable row below. Announce the selected surface and reason in one sentence; do not ask the person to choose a tool when the route is clear.
+
+| Host | Preferred interactive surface | Required evidence |
+| --- | --- | --- |
+| ChatGPT | Hosted editor via Sites | Sites tools and installed Sites workflow are available; use [storyboard-editor](../storyboard-editor/SKILL.md) |
+| Codex | Local HTML editor | Writable project folder and a browser/file preview or downloadable HTML; use [storyboard-editor](../storyboard-editor/SKILL.md) |
+| Claude | Design canvas | An available Artifact tool explicitly supports the Design type; follow the canvas instructions in [storyboard](../storyboard/SKILL.md) |
+| Other, unknown, or preferred surface unavailable | Local HTML editor, then beat table and JSON | Use local HTML only with writable files and preview/download support; otherwise return the text storyboard |
+
+Engine-rendered stills supplement every route when the engine and browser are ready. Host names never establish tool availability. A generic artifact or presentation tool is not proof of Design support. For an automatically selected surface that fails, report what failed before using the next supported fallback. Sign-in or approval pauses keep the selected route pending; do not create a duplicate site, change its audience, or work around a denied action.
+
+For Sites reuse, preserve the exact project ID from the editor's hosting manifest or verified Sites response. Follow the installed Sites workflow for opening and publishing that editor. After creation, retain the editor's checkout/manifest and record its confirmed URL in the storyboard project's notes so later sessions can find it; never save credentials. For a local editor, retain its project-relative path; for Design, retain the returned artifact reference. Surface metadata belongs in project notes, not invented fields in `short.json`.
+
+A canvas is a planning surface, not an automatic freeform-to-engine converter. Keep `short.json` authoritative, map only supported scene fields back into it, and report any design that requires a renderer extension. Existing narration and beat order remain locked unless the person requests changes and understands recording/alignment consequences.
+
 ## 1. Plugin version, install and update
 
 Read the loaded version from `<plugin>/.claude-plugin/plugin.json`, or `<plugin>/.codex-plugin/plugin.json` when the host converted the package. Use host-provided version metadata when files are unavailable. Report unavailable metadata and continue; do not infer a version from the engine's package.json.
