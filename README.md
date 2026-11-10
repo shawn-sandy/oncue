@@ -194,6 +194,14 @@ The plugin version lives only in `plugins/oncue/.claude-plugin/plugin.json`.
 
 ## Changelog
 
+### 1.9.0 (2026-11-10)
+
+- New default look: a Short with no look of its own starts from the Astro theme in `engine/themes/astro.json`, a calm flat look with a teal accent, Inter headings and hairline borders, in a light mode (the default) or a dark one. The storyboard skill copies it into `short.json`, so the engine still reads only the spec.
+- Two new theme settings. `stroke` (`bold` default, `hairline`) sets the card border and panel rule width in the video and outlines the bordered shapes at 0.75pt in the deck. `weight` (`heavy` default, `semibold`) sets the heading weight, in the video only.
+- A new theme is one JSON file in `engine/themes/`; `test/themes.test.mjs` checks every preset in every mode for contrast, fonts and its look.
+- Light is now the default mode everywhere: a claude.ai Design System artifact with light and dark values gives its light values unless the person asks for a dark look.
+- Specs without `stroke` or `weight` render as in 1.8.0. The engine now depends on `@fontsource/inter`.
+
 ### 1.8.0 (2026-11-01)
 
 - Setup distinguishes Claude Code, Codex and ChatGPT, checks the current execution environment, and reports each output independently. All eight skills declare their requirements; text research and storyboarding remain available without rendering tools.
