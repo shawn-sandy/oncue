@@ -62,8 +62,10 @@ Optional. Each key picks a named scale for today's design, and the same scale dr
 | `density` | `compact`, `regular` (default), `airy` | Gaps and paddings between and inside items in the video, and the gaps between items in the deck, at ×0.75, ×1 and ×1.3. The frame margins and the Shorts safe area do not move. |
 | `background` | `glow` (default), `subtle`, `flat` | `glow`: three slow-drifting blurred lights in the `panel`, `chip` and `highlight` colours. `subtle`: the same lights at 40% strength. `flat`: the `ground` colour alone. Video only; the deck is always a flat ground. |
 | `header` | `brand` (default), `logo`, `none` | The brand row on every content scene, in the video and the deck: logo and name, logo only, or nothing. `hook` and `cta` scenes have no header either way. |
+| `stroke` | `bold` (default), `hairline` | Card borders. `bold`: 2px borders on cards, chat bubbles, tiles, the media player and the image card, and a 3px rule in the result panel. `hairline`: 1px borders and a 2px panel rule. In the deck, `hairline` outlines the same five shapes (list items, chat turns, tiles, the player and the image card) with a 0.75pt line in the `rule` colour; `bold` leaves deck shapes unoutlined, as before. |
+| `weight` | `heavy` (default), `semibold` | Heading weight: the titles, hook and cta headlines, the result panel title and the step numbers, at 800 or 600. Other bold text keeps its weight. Video only: PowerPoint bold is on or off, so the deck ignores `weight`. |
 
-`check` rejects an unknown key or value, naming the field and the allowed values: `short.json theme.radius: must be one of sharp, soft, round`, or `short.json theme.shape: is not a theme key; use radius, type, density, background, header`.
+`check` rejects an unknown key or value, naming the field and the allowed values: `short.json theme.radius: must be one of sharp, soft, round`, or `short.json theme.shape: is not a theme key; use radius, type, density, background, stroke, weight, header`.
 
 A theme changes no `vo`, so restyling after the voiceover is recorded is safe: render the stills, deck and video again; nothing is re-recorded. [The theme guide](theme.md) turns words, a DESIGN.md, design tokens, Figma, an image or a site into these values.
 

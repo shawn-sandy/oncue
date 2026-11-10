@@ -8,7 +8,7 @@ import PptxGenJS from "pptxgenjs";
 import sharp from "sharp";
 import { iconPng } from "./icons";
 import type { Arrangement, Colors, Format, LoadedSpec, Rich, Scene } from "./spec";
-import { look, runs, stageFor, WIDE } from "./spec";
+import { look, runs, SCALES, stageFor, WIDE } from "./spec";
 
 type Pres = InstanceType<typeof PptxGenJS>;
 type Slide = ReturnType<Pres["addSlide"]>;
@@ -71,6 +71,8 @@ export async function writeDeck(loaded: LoadedSpec, outFile: string): Promise<st
   const mono = xmlAttr(spec.brand.deckFonts.mono ?? "Courier New");
   // The theme at the deck's 192 px per inch: the same multipliers as the video, ×1 by default.
   const L = look(spec);
+  // stroke: hairline outlines the deck's bordered shapes at 0.75pt; bold leaves them as before. weight is video only.
+  const hairline = L.stroke.border === SCALES.stroke.hairline.border;
 
   const pres = new PptxGenJS();
   pres.defineLayout({ name: "SHORT", width: W, height: H });
@@ -82,8 +84,10 @@ export async function writeDeck(loaded: LoadedSpec, outFile: string): Promise<st
   const rt = (text: Rich, base: Record<string, unknown> = {}): TextRun[] =>
     runs(text).map((r) => ({ text: r.text, options: { ...base, ...(r.accent ? { color: hex(c.accent) } : {}), ...(r.code ? { fontFace: mono } : {}) } }));
 
-  const card = (s: Slide, x: number, y: number, w: number, h: number, fill: string, name: string, radius = 0.18 * L.radius): void => {
-    s.addShape(pres.ShapeType.roundRect, { x, y, w, h, fill: { color: hex(fill) }, line: { color: hex(fill), width: 0 }, rectRadius: radius, objectName: name });
+  /** A rounded card; `outlined` cards get the theme's hairline, the shapes the video borders. */
+  const card = (s: Slide, x: number, y: number, w: number, h: number, fill: string, name: string, radius = 0.18 * L.radius, outlined = false): void => {
+    const line = outlined && hairline ? { color: hex(c.rule), width: 0.75 } : { color: hex(fill), width: 0 };
+    s.addShape(pres.ShapeType.roundRect, { x, y, w, h, fill: { color: hex(fill) }, line, rectRadius: radius, objectName: name });
   };
   const dot = async (s: Slide, icon: string, x: number, y: number, d = 0.7): Promise<void> => {
     s.addShape(pres.ShapeType.ellipse, { x, y, w: d, h: d, fill: { color: hex(c.highlight) }, line: { color: hex(c.highlight), width: 0 }, objectName: `dot-${icon}` });
@@ -126,7 +130,7 @@ export async function writeDeck(loaded: LoadedSpec, outFile: string): Promise<st
         const n = scene.items.length, gap = Math.min(0.2 * L.density, bh / n / 4), h = Math.min(1.3, bh / n - gap), d = Math.min(0.7, h), pad = Math.min(0.1, h / 4);
         for (const [i, it] of scene.items.entries()) {
           const y = top + i * (h + gap);
-          card(s, M, y, CW, h, c.card, `item-${i}`);
+          card(s, M, y, CW, h, c.card, `item-${i}`, undefined, true);
           await dot(s, it.icon, M + 0.3, y + (h - d) / 2, d);
           text(s, [{ text: it.title, options: { bold: true, fontSize: 20, breakLine: true } }, ...(it.desc ? rt(it.desc, { fontSize: 15, color: hex(c.muted) }) : [])],
             { x: M + 1.2, y: y + pad, w: CW - 1.4, h: h - 2 * pad, valign: "middle" });
@@ -157,7 +161,7 @@ export async function writeDeck(loaded: LoadedSpec, outFile: string): Promise<st
         const n = scene.turns.length, gap = Math.min(0.2 * L.density, bh / n / 4), h = Math.min(0.95, bh / n - gap), bw = 3.9;
         scene.turns.forEach((t, i) => {
           const you = t.from === "you", y = top + i * (h + gap), x = you ? M + CW - bw : M;
-          card(s, x, y, bw, h, you ? c.highlight : c.card, `turn-${i}`);
+          card(s, x, y, bw, h, you ? c.highlight : c.card, `turn-${i}`, undefined, true);
           text(s, you ? [{ text: `“${t.text}”`, options: { color: hex(c.ground) } }] : [{ text: `${spec.brand.name.toLowerCase()} `, options: { bold: true, color: hex(c.accent) } }, { text: t.text }],
             { x: x + 0.25, y, w: bw - 0.5, h, fontSize: 15, valign: "middle" });
         });
@@ -189,7 +193,7 @@ export async function writeDeck(loaded: LoadedSpec, outFile: string): Promise<st
         const beside = gh < 1.3;
         for (const [i, t] of scene.tiles.entries()) {
           const x = M + (i % cols) * (gw + cg), y = top + Math.floor(i / cols) * (gh + rg);
-          card(s, x, y, gw, gh, c.card, `tile-${i}`);
+          card(s, x, y, gw, gh, c.card, `tile-${i}`, undefined, true);
           await dot(s, t.icon, x + 0.25, beside ? y + (gh - d) / 2 : y + 0.25, d);
           text(s, t.label, beside ? { x: x + 0.95, y, w: gw - 1.1, h: gh, fontSize: 15, bold: true, valign: "middle" }
             : { x: x + 0.25, y: y + gh - 0.5, w: gw - 0.4, h: 0.4, fontSize: 15, bold: true, valign: "middle" });
@@ -200,7 +204,7 @@ export async function writeDeck(loaded: LoadedSpec, outFile: string): Promise<st
         // Across the width: player left, moments right. Otherwise the player sits above the moments.
         const across = arr === "top" && wide;
         const pw = across ? CW * 0.58 : CW, ph = across ? bh : 2.0;
-        card(s, M, top, pw, ph, c.card, "player");
+        card(s, M, top, pw, ph, c.card, "player", undefined, true);
         await dot(s, "FiPlay", M + (pw - 1.0) / 2, top + (across ? (ph - 1.0) / 2 : 0.5), 1.0);
         const mx = across ? M + pw + 0.4 : M, mw = across ? CW - pw - 0.4 : CW;
         // Moments sit 0.7 in apart (0.5 in chips, 0.2 in gaps at regular density); when more than fit, they close up
@@ -222,7 +226,7 @@ export async function writeDeck(loaded: LoadedSpec, outFile: string): Promise<st
         const meta = await sharp(file).metadata();
         const { width: pw, height: ph } = meta.autoOrient;
         const ch = scene.caption ? 0.5 : 0, fh = bh - ch, pad = 0.12;
-        card(s, M, top, CW, fh, c.card, "image");
+        card(s, M, top, CW, fh, c.card, "image", undefined, true);
         const k = Math.min((CW - 2 * pad) / pw, (fh - 2 * pad) / ph), w = pw * k, h = ph * k;
         // Re-encoded at full size through sharp, which writes no metadata: the deck is the file people share, and a
         // phone photo's EXIF can say where it was taken. autoOrient puts a rotated photo upright, since PowerPoint may

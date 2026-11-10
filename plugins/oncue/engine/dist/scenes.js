@@ -140,7 +140,7 @@ ${faces.join("\n")}
 .head,.body{display:flex;flex-direction:column;gap:${d(34)}}
 .center{position:absolute;left:90px;right:90px;top:260px;bottom:340px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:${d(44)};text-align:center}
 .kicker{font-family:"Mono",monospace;font-size:${t(32)};letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
-h1,h2{margin:0;font-weight:800;letter-spacing:-.02em;line-height:1.08}
+h1,h2{margin:0;font-weight:${L.weight};letter-spacing:-.02em;line-height:1.08}
 h2{font-size:${t(80)}}.hookline{font-size:${t(104)}}.cta{font-size:${t(120)}}
 .w{display:inline-block}
 .acc{color:var(--accent)}.code{font-family:"Mono",monospace;color:var(--ink)}
@@ -150,38 +150,38 @@ h2{font-size:${t(80)}}.hookline{font-size:${t(104)}}.cta{font-size:${t(120)}}
 .svg{display:inline-flex;width:54px;height:54px}.svg svg{width:100%;height:100%}
 .svg.sm{width:56px;height:56px}.svg.md{width:64px;height:64px}.svg.lg{width:84px;height:84px}
 .stack{display:flex;flex-direction:column;gap:${d(30)};margin-top:${d(10)}}
-.card{background:var(--card);border:2px solid var(--rule);border-radius:${r(36)}}
+.card{background:var(--card);border:${L.stroke.border}px solid var(--rule);border-radius:${r(36)}}
 .row{display:flex;gap:${d(34)};align-items:center;padding:${d(34)} ${d(38)}}
 .ico{width:110px;height:110px;flex:none;border-radius:50%;background:var(--chip);display:flex;align-items:center;justify-content:center}
 .rt{font-size:${t(46)};font-weight:700;line-height:1.15}.rd{font-size:${t(34)};color:var(--muted);line-height:1.3;margin-top:6px}
 .panel{background:var(--panel);border-radius:${r(44)};padding:${d(48)} ${d(50)};display:flex;flex-direction:column;gap:${d(26)};color:var(--panel-ink)}
-.pt{font-size:${t(52)};font-weight:800}.pm{font-family:"Mono",monospace;font-size:${t(28)};color:var(--panel-muted)}
-.hr{height:3px;background:var(--panel-rule);transform-origin:left}
+.pt{font-size:${t(52)};font-weight:${L.weight}}.pm{font-family:"Mono",monospace;font-size:${t(28)};color:var(--panel-muted)}
+.hr{height:${L.stroke.rule}px;background:var(--panel-rule);transform-origin:left}
 .pk{font-size:${t(38)};font-weight:700}.pv{font-size:${t(34)};color:var(--panel-muted);margin-top:2px}
 .tags{display:flex;gap:${d(16)};flex-wrap:wrap}.tag{font-family:"Mono",monospace;font-size:${t(32)};padding:${d(10)} ${d(28)};border-radius:999px;background:var(--panel-rule);color:var(--panel-ink)}
 .thread{position:relative;padding-left:110px;display:flex;flex-direction:column;gap:${d(30)};margin-top:${d(10)}}
 .string{position:absolute;left:44px;top:30px;bottom:30px;width:8px;border-radius:4px;background:var(--hl);transform-origin:top}
 .wrap{position:absolute;left:-80px;top:52px;width:54px;display:flex;flex-direction:column;gap:9px}.wrap i{display:block;height:7px;border-radius:4px;background:var(--hl)}
-.bubble{position:relative;background:var(--card);border:2px solid var(--rule);border-radius:${r(30)};padding:${d(28)} ${d(36)}}
+.bubble{position:relative;background:var(--card);border:${L.stroke.border}px solid var(--rule);border-radius:${r(30)};padding:${d(28)} ${d(36)}}
 .who{font-family:"Mono",monospace;font-size:${t(26)};letter-spacing:.14em;text-transform:uppercase;color:var(--you)}
 .said{font-family:"Mono",monospace;font-size:${t(42)};margin-top:8px;min-height:${t(52)}}
 .reply{font-size:${t(38)};line-height:1.3}.reply b{color:var(--accent)}
 .steps{position:relative;display:flex;flex-direction:column;gap:${d(64)};margin-top:${d(20)}}
 .steps .line{position:absolute;left:61px;top:70px;bottom:70px;width:8px;border-radius:4px;background:var(--hl);transform-origin:top}
 .step{position:relative;display:flex;gap:${d(40)};align-items:flex-start}
-.num{width:130px;height:130px;flex:none;border-radius:50%;background:var(--hl);color:var(--ground);font-size:${t(58)};font-weight:800;display:flex;align-items:center;justify-content:center}
+.num{width:130px;height:130px;flex:none;border-radius:50%;background:var(--hl);color:var(--ground);font-size:${t(58)};font-weight:${L.weight};display:flex;align-items:center;justify-content:center}
 .result{display:flex;align-items:center;gap:${d(24)};padding:${d(28)} ${d(36)};border-radius:${r(30)};background:var(--panel);color:var(--panel-ink);font-size:${t(38)};font-weight:700;margin-top:${d(10)}}
-.player{position:relative;height:500px;border-radius:${r(44)};background:var(--card);border:2px solid var(--rule);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.player{position:relative;height:500px;border-radius:${r(44)};background:var(--card);border:${L.stroke.border}px solid var(--rule);display:flex;align-items:center;justify-content:center;overflow:hidden}
 .play{width:190px;height:190px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center}
 .scrub{position:absolute;left:0;bottom:0;height:12px;width:100%;background:var(--hl);transform-origin:left}
 .moments{display:flex;flex-direction:column;gap:${d(14)}}.moment{display:flex;align-items:center;gap:${d(32)};padding:${d(20)} ${d(26)};border-radius:999px}
 .ts{font-family:"Mono",monospace;font-size:${t(36)};font-weight:600;padding:${d(12)} ${d(32)};border-radius:999px;background:var(--chip);color:var(--accent)}.ml{font-size:${t(40)}}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:${d(30)};margin-top:${d(10)}}
-.tile{display:flex;flex-direction:column;gap:${d(30)};padding:${d(40)} ${d(36)};border-radius:${r(36)};background:var(--card);border:2px solid var(--rule)}.tile>span:last-child{font-size:${t(40)};font-weight:700;line-height:1.15}
+.tile{display:flex;flex-direction:column;gap:${d(30)};padding:${d(40)} ${d(36)};border-radius:${r(36)};background:var(--card);border:${L.stroke.border}px solid var(--rule)}.tile>span:last-child{font-size:${t(40)};font-weight:700;line-height:1.15}
 .body:has(>.photo){flex:1;min-height:0}
 /* The picture takes the height the title leaves, but never under a third of the short side: in a frame too
    short for that (a square one), the scene overflows and the fit guard shrinks it and warns. */
-.photo{position:relative;flex:1;min-height:360px;background:var(--card);border:2px solid var(--rule);border-radius:${r(36)};overflow:hidden}
+.photo{position:relative;flex:1;min-height:360px;background:var(--card);border:${L.stroke.border}px solid var(--rule);border-radius:${r(36)};overflow:hidden}
 .photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 .caption{font-size:${t(36)};color:var(--muted);line-height:1.3}
 .pill{display:flex;align-items:center;gap:${d(24)};padding:${d(34)} ${d(52)};border-radius:999px;background:var(--accent);color:var(--ground)}.pill>span:last-child{font-family:"Mono",monospace;font-size:${t(44)};font-weight:600}

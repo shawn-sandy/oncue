@@ -46,8 +46,23 @@ Skip `node_modules`, `build`, `dist`, hidden folders, the engine copy (`oncue-en
 - **One hit:** name it and use it.
 - **Several hits in one source:** name them and ask which to use, offering "none of these". The same goes for Design System artifacts, unless the listing marks one as the default, always in its first row: use that one without asking, and name it.
 - **A hit or a list turned down:** move on to the next source.
-- **Nothing accepted:** use the fallback in step 1 of the storyboard skill, leaving out anything turned down. Never force a pick.
+- **Nothing accepted:** use the fallback in step 1 of the storyboard skill, leaving out anything turned down: the product's logo and site, else the [default theme](#default-theme). Never force a pick.
 - **Told to go ahead without stopping:** do not ask. With several hits, use the fallback and name what you found, because a look can change later without touching the `vo`.
+
+## Default theme
+
+When nothing else gives a look, a new Short starts from the Astro default theme in `oncue-engine/themes/astro.json`: a calm, flat look with a teal accent, Inter headings at weight 600, 1px hairline borders and soft corners. It has a `light` mode (the default) and a `dark` mode, chosen by the person's words.
+
+Copy it, never reference it: the engine reads only `short.json`. Write the chosen mode's `colors` as `brand.colors`, the preset's `fonts` and `deckFonts` into `brand`, and its `theme` as the spec's `theme`, keeping the product's own `name` and `logo`. Customizing means editing the copied block; the plain-words rows below still apply on top, and their words win. Say which mode you used.
+
+## Making a new theme
+
+A theme is one JSON file in the engine's `themes/` folder, with `name`, `source`, `modes` (each mode holding the thirteen `colors`), `fonts`, `deckFonts` and `theme`.
+
+1. Copy `astro.json` to a new name and change the values.
+2. Install any new `@fontsource` font in the engine folder (see the font rule above).
+3. Run `node --test test/themes.test.mjs` in the engine folder, which checks every preset and mode for contrast, fonts and its look, or `check` on a `short.json` that uses it.
+4. Keep the file in `engine/themes/`.
 
 ## An earlier Short
 
@@ -63,10 +78,10 @@ Apply every row whose words the person used. When two rows set the same key, pic
 | --- | --- |
 | playful, friendly, rounded | `radius: "round"`, `density: "airy"` |
 | corporate, serious | `radius: "soft"` or `"sharp"`, `density: "regular"` |
-| technical, dense, dashboard | `radius: "sharp"`, `density: "compact"` |
-| editorial, calm, minimal | `background: "flat"` or `"subtle"`, `density: "airy"`, `header: "logo"` or `"none"` |
-| bold, loud | `type: "large"` |
-| quiet, understated | `type: "small"`, `background: "subtle"` |
+| technical, dense, dashboard | `radius: "sharp"`, `density: "compact"`, `stroke: "hairline"` |
+| editorial, calm, minimal | `background: "flat"` or `"subtle"`, `density: "airy"`, `header: "logo"` or `"none"`, `stroke: "hairline"` |
+| bold, loud | `type: "large"`, `weight: "heavy"` |
+| quiet, understated | `type: "small"`, `background: "subtle"`, `stroke: "hairline"` |
 | light, bright | A light-ground palette (light `ground` and `card`, dark `ink` and `muted`) with `background: "flat"`, or `"subtle"` with a light `panel`: on a light ground the glows in the `panel` and `highlight` colours read as smudges. From a dark palette, move each given colour to a role it passes in (the old `ground` becomes `ink`), derive the rest as tints or shades, and say what moved. |
 
 ## DESIGN.md
@@ -80,7 +95,7 @@ Read the YAML frontmatter between the first two `---` lines:
 | `typography` | `fonts.sans` from the body or heading family, `fonts.mono` from the code family, and the nearest Office fonts for `deckFonts` unless `oncue` sets them |
 | `rounded` | `theme.radius`, from the radius cards use, by the buckets below; with only a size scale (`sm`, `md`, `lg`), the middle step |
 | `spacing` | `theme.density`, from the gap between cards or list items, by the buckets below; with only a size scale, the middle step |
-| `oncue` | `theme.type`, `theme.background` and `brand.deckFonts`, set as written. [Saving the look as DESIGN.md](#saving-the-look-as-designmd) writes this block. |
+| `oncue` | `theme.type`, `theme.background`, `theme.stroke`, `theme.weight` and `brand.deckFonts`, set as written. [Saving the look as DESIGN.md](#saving-the-look-as-designmd) writes this block. |
 
 Frontmatter values win. The prose body only fills a key the frontmatter leaves open, through the words table, and never sets `header`: dropping the brand name from every scene is the person's call, not the design system's. A DESIGN.md has no logo slot, so take the logo from the person or the product.
 
@@ -108,6 +123,8 @@ spacing:
 oncue:
   type: regular
   background: flat
+  stroke: hairline
+  weight: semibold
   deckFonts:
     head: Arial
     body: Calibri
@@ -117,7 +134,7 @@ oncue:
 - `name` is `brand.name`. `colors` holds all thirteen keys of `brand.colors`, under the same names.
 - `typography` holds the family names of `fonts.sans` and `fonts.mono`, which read back to the same packages.
 - `rounded.card` and `spacing.gap` hold one pixel value inside the bucket that reads back to the chosen theme value: radius `sharp` 4px, `soft` 8px, `round` 16px; density `compact` 8px, `regular` 16px, `airy` 24px. An unset key writes its default, `round` or `regular`.
-- `oncue` holds what DESIGN.md has no slot for: `type`, `background` and `deckFonts`, exactly as `short.json` has them, leaving out a key `short.json` leaves out.
+- `oncue` holds what DESIGN.md has no slot for: `type`, `background`, `stroke`, `weight` and `deckFonts`, exactly as `short.json` has them, leaving out a key `short.json` leaves out.
 - `header` is never saved: dropping the brand name is the person's call for each Short.
 
 ## Design tokens
