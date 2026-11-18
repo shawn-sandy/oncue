@@ -57,6 +57,12 @@ export function verifySource(dir: string): void {
   if (!same(manifest, fingerprint(manifest.source))) throw changed(manifest.source);
 }
 
+/** Removes every match, repeated until nothing is left: taking one match out can join the pieces of another around it. */
+export function strip(text: string, pattern: RegExp): string {
+  for (let before = ""; before !== text;) { before = text; text = text.replace(pattern, ""); }
+  return text;
+}
+
 const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
 const decode = (s: string): string =>
   s.replace(/&(#x[0-9a-f]+|#\d+|\w+);/gi, (all, e: string) =>
@@ -101,8 +107,8 @@ async function readOdp(zip: JSZip): Promise<Omit<Slide, "page">[]> {
   const styles = content + ((await zip.file("styles.xml")?.async("string")) ?? "");
   const hidden = new Set([...styles.matchAll(/<style:style\b[^>]*>[\s\S]*?<\/style:style>/g)]
     .filter((m) => /presentation:visibility="hidden"/.test(m[0])).map((m) => attr(m[0], "style:name")));
-  // Tags go first, then any stray bracket: real < and > in slide text are still entities here and are decoded afterwards.
-  const text = (xml: string): string => paragraphs(xml, /<text:p\b[^>]*>([\s\S]*?)<\/text:p>/g, (p) => p.replace(/<text:(?:s|tab|line-break)\b[^>]*\/>/g, " ").replace(/<[^>]+>/g, "").replace(/[<>]/g, ""));
+  // Spacing elements become a space, every other tag goes. Real < and > in slide text are still entities here and are decoded afterwards.
+  const text = (xml: string): string => paragraphs(xml, /<text:p\b[^>]*>([\s\S]*?)<\/text:p>/g, (p) => strip(p.replace(/<text:(?:s|tab|line-break)\b[^>]*\/>/g, " "), /<[^>]*>/g));
   const pages = [...content.matchAll(/<draw:page\b[^>]*>[\s\S]*?<\/draw:page>/g)].map((m) => m[0]);
   if (!pages.length) throw new Error("No slides found in this .odp.");
   const slides: Omit<Slide, "page">[] = [];

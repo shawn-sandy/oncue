@@ -5,7 +5,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { DWELL } from "./assemble";
-import { readSlides, type Slide } from "./slides";
+import { readSlides, strip, type Slide } from "./slides";
 import { estimateWords, planSlides, type Run, type SlideLine, type Source } from "./timeline";
 
 export interface Narration { approved: boolean; lines: SlideLine[] }
@@ -42,10 +42,7 @@ ${sections.join("\n")}`;
 
 export function parseNarration(md: string): Narration {
   const front = /^---\n([\s\S]*?)\n---/.exec(md)?.[1] ?? "";
-  // Repeated until nothing is left to remove: taking one comment out can join the pieces of another around it.
-  let text = md;
-  for (let before = ""; before !== text;) { before = text; text = text.replace(/<!--[\s\S]*?-->/g, ""); }
-  const parts = text.split(/^## Slide (\d+) \((notes|drafted|none)\)[ \t]*$/m);
+  const parts = strip(md, /<!--[\s\S]*?-->/g).split(/^## Slide (\d+) \((notes|drafted|none)\)[ \t]*$/m);
   const lines: SlideLine[] = [];
   for (let i = 1; i + 2 < parts.length + 1; i += 3) lines.push({ n: Number(parts[i]), source: parts[i + 1] as Source, vo: flat(parts[i + 2] ?? "") });
   return { approved: /^approved:\s*true\s*$/m.test(front), lines };

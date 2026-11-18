@@ -42,13 +42,7 @@ ${sections.join("\n")}`;
 }
 function parseNarration(md) {
     const front = /^---\n([\s\S]*?)\n---/.exec(md)?.[1] ?? "";
-    // Repeated until nothing is left to remove: taking one comment out can join the pieces of another around it.
-    let text = md;
-    for (let before = ""; before !== text;) {
-        before = text;
-        text = text.replace(/<!--[\s\S]*?-->/g, "");
-    }
-    const parts = text.split(/^## Slide (\d+) \((notes|drafted|none)\)[ \t]*$/m);
+    const parts = (0, slides_1.strip)(md, /<!--[\s\S]*?-->/g).split(/^## Slide (\d+) \((notes|drafted|none)\)[ \t]*$/m);
     const lines = [];
     for (let i = 1; i + 2 < parts.length + 1; i += 3)
         lines.push({ n: Number(parts[i]), source: parts[i + 1], vo: flat(parts[i + 2] ?? "") });

@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.guardSource = guardSource;
 exports.verifySource = verifySource;
+exports.strip = strip;
 exports.readDeck = readDeck;
 exports.findTool = findTool;
 exports.importDeck = importDeck;
@@ -67,6 +68,14 @@ function verifySource(dir) {
     if (!same(manifest, fingerprint(manifest.source)))
         throw changed(manifest.source);
 }
+/** Removes every match, repeated until nothing is left: taking one match out can join the pieces of another around it. */
+function strip(text, pattern) {
+    for (let before = ""; before !== text;) {
+        before = text;
+        text = text.replace(pattern, "");
+    }
+    return text;
+}
 const ENTITIES = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
 const decode = (s) => s.replace(/&(#x[0-9a-f]+|#\d+|\w+);/gi, (all, e) => e[0] === "#" ? String.fromCodePoint(e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : Number(e.slice(1))) : ENTITIES[e] ?? all);
 const attr = (tag, name) => new RegExp(`\\b${name}="([^"]*)"`).exec(tag)?.[1];
@@ -108,8 +117,8 @@ async function readOdp(zip) {
     const styles = content + ((await zip.file("styles.xml")?.async("string")) ?? "");
     const hidden = new Set([...styles.matchAll(/<style:style\b[^>]*>[\s\S]*?<\/style:style>/g)]
         .filter((m) => /presentation:visibility="hidden"/.test(m[0])).map((m) => attr(m[0], "style:name")));
-    // Tags go first, then any stray bracket: real < and > in slide text are still entities here and are decoded afterwards.
-    const text = (xml) => paragraphs(xml, /<text:p\b[^>]*>([\s\S]*?)<\/text:p>/g, (p) => p.replace(/<text:(?:s|tab|line-break)\b[^>]*\/>/g, " ").replace(/<[^>]+>/g, "").replace(/[<>]/g, ""));
+    // Spacing elements become a space, every other tag goes. Real < and > in slide text are still entities here and are decoded afterwards.
+    const text = (xml) => paragraphs(xml, /<text:p\b[^>]*>([\s\S]*?)<\/text:p>/g, (p) => strip(p.replace(/<text:(?:s|tab|line-break)\b[^>]*\/>/g, " "), /<[^>]*>/g));
     const pages = [...content.matchAll(/<draw:page\b[^>]*>[\s\S]*?<\/draw:page>/g)].map((m) => m[0]);
     if (!pages.length)
         throw new Error("No slides found in this .odp.");
