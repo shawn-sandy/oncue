@@ -5,6 +5,7 @@ created: 2026-11-18
 repo-name: oncue
 workflow: never
 artifact-url: https://claude.ai/artifact/1C3a7umqSzU2znwKD6bLM1
+issue: https://github.com/shawn-sandy/oncue/issues/38
 glance: Slides in a deck-to-video MP4 snap from one to the next today, which reads as a slideshow, not a video. A half-second fade on each slide change fixes that without touching the sound, and we will know it worked when a frame taken on a slide change is a blend of both slides while the video is exactly as long as before.
 ---
 
