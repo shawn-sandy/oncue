@@ -7,7 +7,7 @@ repo-name: oncue
 
 # Proposal: Animate the deck-to-video route with build states and cross-fades
 
-> This is a proposal for review, not an execution plan. It is grounded in a read of `engine/src/assemble.ts`, `slides.ts`, `timeline.ts`, `cues.ts` and `narration.ts`, and in seven experiments run on this machine on 2026-11-18 (LibreOffice 26.8.3.1, poppler 26.11.0, ffmpeg 9.0.2, Playwright 1.65.1). Every number below comes from those runs; their output is in Appendix A. No engine code was written.
+> This is a proposal for review, not an execution plan. It is grounded in a read of `engine/src/assemble.ts`, `slides.ts`, `timeline.ts`, `cues.ts` and `narration.ts`, and in seven experiments run on this machine on 2026-11-18 (LibreOffice 26.8.3.1, poppler 26.11.0, ffmpeg 9.0.2, Playwright 1.65.1). Every number below comes from those runs; their output is in Appendix A. No engine code was written. The code was read at commit `fc259b4`, before deck-to-video merged to `main`.
 
 ## TL;DR
 
@@ -19,7 +19,7 @@ repo-name: oncue
 
 ## Context
 
-`deck-to-video` turns a finished deck into an MP4 in three commands. `import` renders one PNG per visible slide (`renderPages` in `slides.ts`: `soffice --convert-to pdf`, then `pdftoppm -r 150`). `narration` builds a script from speaker notes behind an approval gate. `assemble` gives each slide one looped still, trims it to the slide's span and joins the stills with the ffmpeg `concat` filter, so every slide change is a hard cut.
+`deck-to-video` turns a finished deck into an MP4 in three commands. `import` renders one PNG per visible slide (`renderPages` in `slides.ts`: `soffice --convert-to pdf`, then `pdftoppm`; at the commit read it ran at `-r 150`, and `main` now uses `-scale-to 1920`). `narration` builds a script from speaker notes behind an approval gate. `assemble` gives each slide one looped still, trims it to the slide's span and joins the stills with the ffmpeg `concat` filter, so every slide change is a hard cut.
 
 The cut times come from `buildSlideTimeline` (`timeline.ts`), which finds each slide's first spoken word in the transcript and cuts midway through the pause before it. The sibling test session measured those cuts within one frame of the first word on a real 13-slide deck.
 
@@ -168,7 +168,7 @@ Two details for the plan. `xfade` does not take a zero duration, so the experime
 
 Decided by the owner on 2026-11-18.
 
-1. **Cross-fades are on by default.** The option turns them off.
+1. **Cross-fades are on by default.** The plan settled the option as `--fade <seconds>`, with `--fade 0` for hard cuts.
 2. **A step whose word is never spoken is spaced evenly across the slide's span, with a warning**, as `buildTimeline` does for a slot with no cue.
 3. **No real animated deck is available.** The proposal stands on the hand-built test deck. Step 2 still needs a deck written by PowerPoint or exported from Google Slides before it is planned.
 
@@ -229,4 +229,4 @@ Not tested: a recorded voiceover (it costs credits; the timing code path is the 
 
 ## Next step
 
-Write a plan for step 1 (cross-fades, on by default) on its own. Step 2 should wait for a real animated deck.
+Step 1 (cross-fades, on by default) is planned in `docs/plans/add-slide-cross-fades.md`. Step 2 should wait for a real animated deck.
