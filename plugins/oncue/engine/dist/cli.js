@@ -1,26 +1,14 @@
 #!/usr/bin/env node
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-/**
- * oncue engine.
- *
- *   node dist/cli.js check    <short.json>                     validate; print the layout, beats, VO script, estimated length, low-contrast colour pairs and beats that would start too early
- *   node dist/cli.js script   <short.json>                     print the voiceover script, one line per beat
- *   node dist/cli.js deck     <short.json> [--out deck.pptx]    native, editable PowerPoint, 9:16 or 16:9 (VO in speaker notes)
- *   node dist/cli.js stills   <short.json> [--words w.json --audio vo.mp3] [--at 1,5,9]   QA frames (default: one per scene, just before it fades out)
- *   node dist/cli.js video    <short.json> [--words w.json --audio vo.mp3] [--out short.mp4]
- *
- * The size comes from short.json's format: wider than tall renders the landscape layout, anything else the portrait one.
- * stills and video write build/fit.json and warn about any scene shrunk to fit its frame.
- * Without --words/--audio, timings are estimated from the script and the video is silent: a preview.
- * Outputs go to build/ next to short.json unless --out is given.
- */
-const node_child_process_1 = require("node:child_process");
 const node_fs_1 = require("node:fs");
 const node_path_1 = require("node:path");
+const assemble_1 = require("./assemble");
 const capture_1 = require("./capture");
 const deck_1 = require("./deck");
+const narration_1 = require("./narration");
 const scenes_1 = require("./scenes");
+const slides_1 = require("./slides");
 const spec_1 = require("./spec");
 const timeline_1 = require("./timeline");
 const ENGINE = (0, node_path_1.resolve)(__dirname, "..");
@@ -28,7 +16,9 @@ function flags(argv) {
     const pos = [], opt = {};
     for (let i = 0; i < argv.length; i++) {
         const a = argv[i];
-        if (a.startsWith("--")) {
+        if (a === "--approved")
+            opt["approved"] = "true";
+        else if (a.startsWith("--")) {
             opt[a.slice(2)] = argv[i + 1] ?? "";
             i++;
         }
@@ -37,13 +27,12 @@ function flags(argv) {
     }
     return { pos, opt };
 }
-const audioSeconds = (file) => Number((0, node_child_process_1.execFileSync)("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", file], { encoding: "utf8" }).trim());
 function timeline(loaded, opt) {
     const { words: w, audio: a } = opt;
     if ((w && !a) || (a && !w))
         throw new Error("Pass --words and --audio together (the transcript must be of that audio).");
     if (w && a) {
-        const tl = (0, timeline_1.buildTimeline)(loaded.spec, (0, timeline_1.readWords)((0, node_path_1.resolve)(w)), audioSeconds((0, node_path_1.resolve)(a)));
+        const tl = (0, timeline_1.buildTimeline)(loaded.spec, (0, timeline_1.readWords)((0, node_path_1.resolve)(w)), (0, assemble_1.audioSeconds)((0, node_path_1.resolve)(a)));
         return { tl, audio: (0, node_path_1.resolve)(a) };
     }
     const est = (0, timeline_1.estimateWords)(loaded.spec);
@@ -78,6 +67,8 @@ async function main() {
         console.log(readHelp());
         process.exit(cmd ? 1 : 0);
     }
+    if (cmd === "import" || cmd === "narration" || cmd === "assemble")
+        return deckCommand(cmd, (0, node_path_1.resolve)(specFile), opt);
     const loaded = (0, spec_1.loadSpec)((0, node_path_1.resolve)(specFile));
     await (0, spec_1.checkPictures)(loaded);
     const { spec } = loaded;
@@ -127,7 +118,36 @@ async function main() {
             throw new Error(`Unknown command "${cmd}".\n${readHelp()}`);
     }
 }
+/** The deck route: these never load a short.json, and each one checks that the original deck is still unchanged. */
+async function deckCommand(cmd, target, opt) {
+    if (!(0, node_fs_1.existsSync)(target))
+        throw new Error(`No such ${cmd === "import" ? "file" : "folder"}: ${target}\n${readHelp()}`);
+    if (cmd === "import") {
+        const out = (0, node_path_1.resolve)(opt["out"] ?? (0, node_path_1.join)((0, node_path_1.dirname)(target), `${(0, node_path_1.basename)(target, (0, node_path_1.extname)(target))}-video`));
+        const slides = await (0, slides_1.importDeck)(target, out, opt["pages"]);
+        const fresh = (0, narration_1.writeNarration)(out, slides);
+        const bare = slides.filter((s) => !s.notes).length;
+        console.log(`imported ${slides.length} slides into ${out}; the original is unchanged (source-manifest.json).`);
+        console.log(fresh
+            ? `wrote narration.md: ${slides.length - bare} from speaker notes, ${bare} without notes and waiting for a drafted line.`
+            : "kept the existing narration.md; delete it and import again to start the narration over.");
+        return;
+    }
+    (0, slides_1.verifySource)(target);
+    if (cmd === "narration") {
+        const report = (0, narration_1.narrationReport)(target);
+        if ("approved" in opt && !report.approved)
+            throw new Error("narration.md is not approved yet. The person reads it, then changes its first lines to say approved: true. Nothing is recorded before that.");
+        console.log(report.out.join("\n"));
+        for (const w of report.warnings)
+            console.warn("warning:", w);
+    }
+    else
+        await (0, assemble_1.assemble)(target, opt["out"]);
+    (0, slides_1.verifySource)(target);
+}
 function readHelp() {
-    return "usage: node dist/cli.js <check|script|deck|stills|video> <short.json> [--words words.json --audio vo.mp3] [--out file] [--at t1,t2]";
+    return "usage: node dist/cli.js <check|script|deck|stills|video> <short.json> [--words words.json --audio vo.mp3] [--out file] [--at t1,t2]\n" +
+        "       node dist/cli.js import <deck.pptx|.odp|.pdf> [--out folder] [--pages folder] | narration <folder> [--approved] | assemble <folder> [--out file]";
 }
 main().catch((e) => { console.error(e instanceof Error ? e.message : e); process.exit(1); });

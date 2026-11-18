@@ -19,6 +19,8 @@ Run the whole pipeline. Each stage has its own skill; this one sets up the engin
 | 3. Deck | [vertical-deck](../vertical-deck/SKILL.md) | `deck.pptx`, 9:16 or 16:9, voiceover in the speaker notes |
 | 4. Video | [animate-short](../animate-short/SKILL.md) | `short.mp4` at the spec's size (1080×1920, 1920×1080 or custom), every element entering on its word |
 
+Starting from a deck that already exists (a .pptx, a Google Slides download or a PDF export)? Use [deck-to-video](../deck-to-video/SKILL.md) instead: it narrates the slides as designed and never changes the original file.
+
 The deck and the video both read `short.json`, so they always match. Its `format` sets the shape: 1080×1920 for Shorts, Reels and TikTok, 1920×1080 for a YouTube video, or a custom size; the storyboard skill picks it from where the video will be posted. The deck can be built any time after stage 1; the video needs stage 2 for real audio, or renders a silent preview from estimated timing without it.
 
 ## Set up the engine (once per session)

@@ -82,6 +82,12 @@ Run `ffmpeg -version` and `ffprobe -version` separately and inspect each exit co
 
 Video encoding needs ffmpeg. Voice-timed stills and video also need ffprobe; the deck and estimated preview stills need neither. On a local machine, a single ffmpeg package usually supplies both (`brew install ffmpeg` or `sudo apt install ffmpeg`). Ask before installing system software; the person runs sudo themselves. In a managed container, report what is present and use only an available, permitted installation route. Do not assume npm metadata proves that a binary can install or run.
 
+### LibreOffice and poppler, for decks made elsewhere
+
+Only the deck-to-video skill (`../deck-to-video/SKILL.md`) uses these, and only to draw slides as pictures. Check each on its own: `soffice --version` (on macOS also try `/Applications/LibreOffice.app/Contents/MacOS/soffice --version`) and `pdftoppm -v`. `soffice` turns a .pptx or .odp into a PDF; `pdftoppm` turns PDF pages into images, so a PDF export needs only `pdftoppm`.
+
+Missing either one blocks only that rendering. Reading a deck's notes, drafting narration and assembling the video do not need them, and slide images exported from the deck by the app that made it can stand in for both. On a local machine: `brew install --cask libreoffice` and `brew install poppler` on macOS, `sudo apt install libreoffice-impress poppler-utils` on Debian or Ubuntu. LibreOffice is a large download; ask before installing either, and the person runs sudo themselves. Report each as ready or missing; never report slide rendering as working because the other tool is present.
+
 ## 4. Engine in a writable workspace
 
 Never install into the plugin cache. If `oncue-engine/` exists in the working folder, compare it against the loaded engine:
@@ -143,7 +149,7 @@ Audio links can use `storage.googleapis.com`. If a download is denied, honor tha
 
 ## 7. Report
 
-Give a short table of the host/execution surface, loaded plugin version and installation state, Node, engine install/example check, Playwright/browser render, ffmpeg, ffprobe and ElevenLabs. Mark each **ready**, **missing**, **blocked** or **not tested** from observed evidence. Name any engine copy replaced or update waiting for a new session. Then report outputs independently:
+Give a short table of the host/execution surface, loaded plugin version and installation state, Node, engine install/example check, Playwright/browser render, ffmpeg, ffprobe, `soffice`, `pdftoppm` and ElevenLabs. Mark each **ready**, **missing**, **blocked** or **not tested** from observed evidence. Name any engine copy replaced or update waiting for a new session. Then report outputs independently:
 
 | Output | Needs |
 | --- | --- |
@@ -156,5 +162,6 @@ Give a short table of the host/execution surface, loaded plugin version and inst
 | Supplied voiceover | MP3 and matching word timestamps; transcription tools if timestamps are absent |
 | Voice-timed stills | Stills requirements, matching audio/timestamps and ffprobe |
 | Final video with audio | Video requirements, matching audio/timestamps and ffprobe |
+| Video from a finished deck | Node 22+, engine, ffmpeg and ffprobe; `soffice` and `pdftoppm` to render slides, or slide images exported from the deck; narration as for a voiceover |
 
 End with the fix that unlocks the most, or a request such as “make an explainer short about our CLI” (explainer-video skill, `../explainer-video/SKILL.md`). Never claim an output works because a different host's check passed.

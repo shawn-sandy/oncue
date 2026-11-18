@@ -118,6 +118,29 @@ The animation is timed from a word-level transcript, not from the audio. With th
 
 With neither, you still get the storyboard, the deck and a silent preview timed from an estimate.
 
+### Make a video from a deck you already have
+
+Have a finished PowerPoint, Google Slides or Keynote deck? Ask for a video of it:
+
+> Make a narrated video from quarterly-review.pptx
+
+The deck-to-video skill shows each slide exactly as you designed it, narrates it, and changes slide on the word that starts the next one. It takes a .pptx, an .odp or a PDF export; from Google Slides, use File → Download.
+
+- **Your file is never changed.** The work happens on a copy in a separate project folder. The original's SHA-256 checksum and modified time are recorded in `source-manifest.json`, and every step fails if they move.
+- **Narration comes from your speaker notes, as written.** A slide without notes gets a line drafted from what is on it. Every line waits in `narration.md`, and nothing is recorded, and no credits are spent, until you set `approved: true` there.
+- **Slides are still pictures.** Animations, builds and transitions are not carried over, and hidden slides are skipped. The video keeps the deck's shape, scaled to fit 1920×1080.
+- **Rendering needs LibreOffice and poppler** (`brew install --cask libreoffice` and `brew install poppler` on macOS). LibreOffice substitutes missing fonts, so a PDF export is the most faithful input, though a PDF has no speaker notes. Without those tools, export the slides as images from your presentation app and pass the folder with `--pages`.
+
+The same three steps by hand, from the engine folder:
+
+```bash
+node dist/cli.js import    deck.pptx --out deck-video    # pages/, slides.json, narration.md, source-manifest.json
+node dist/cli.js narration deck-video --approved         # the script to record; fails until narration.md says approved: true
+node dist/cli.js assemble  deck-video                    # deck-video/deck.mp4, or preview-silent.mp4 before any recording
+```
+
+Save the recording as `voiceover-01.mp3` with its word timestamps as `words-01.json` in the project folder (`recording-plan.json` lists the names when a deck needs more than one take).
+
 ### Run one stage at a time
 
 Each stage is its own skill, so you can stop after any of them or start from an existing `short.json`.
@@ -127,6 +150,7 @@ Each stage is its own skill, so you can stop after any of them or start from an 
 | [setup](plugins/oncue/skills/setup/SKILL.md) | "set up OnCue", "update OnCue" | The plugin version and how to update or share it; Node, ffmpeg, Playwright and ElevenLabs checked, the engine installed, and which outputs are ready |
 | [explainer-video](plugins/oncue/skills/explainer-video/SKILL.md) | "make an explainer short about our CLI" | The whole pipeline, with check-ins at the beats and the voice |
 | [research](plugins/oncue/skills/research/SKILL.md) | "suggest three Shorts about this tool", "fact-check the storyboard", "make beat 2 punchier" | `research.md` with ranked topics, sourced facts and visual ideas; narration rewrites shown before and after, applied only on your approval and never to recorded lines without naming the re-record cost |
+| [deck-to-video](plugins/oncue/skills/deck-to-video/SKILL.md) | "make a narrated video from my deck.pptx" | An MP4 of your own slides, narrated from the speaker notes, with the original file unchanged |
 | [storyboard-editor](plugins/oncue/skills/storyboard-editor/SKILL.md) | "let me edit my storyboard visually" | Browser editor for scene text, colors, theme, cue fields and beat ordering, with short.json import/export; optional hosted Sites workflow |
 | [storyboard](plugins/oncue/skills/storyboard/SKILL.md) | "storyboard a 60-second Short for this plugin" | `short.json`, a beat list, preview stills or a Design canvas |
 | [visuals](plugins/oncue/skills/visuals/SKILL.md) | "add a diagram of how it works to beat 3", "use my screenshot in beat 4" | `image` beats from your screenshots, drawn diagrams, a generation tool or licensed pictures, with alt text, a cue word and credits; safe after the voiceover |
@@ -204,6 +228,14 @@ Import `short.json`, select a scene, and edit its existing fields, brand colors,
 The editor previews supported layouts approximately. It does not support arbitrary positioning, custom HTML scenes, or importing freeform designs. Run the engine's `check` and render stills from the exported spec before approving the design. The local editor is browser-tested. A private Sites deployment succeeded, but hosted sign-in and import/edit/export testing remain incomplete.
 
 ## Changelog
+
+### 1.11.0 (2026-11-18)
+
+- Add deck-to-video: turn a finished .pptx, .odp or PDF export (including Google Slides downloads) into a narrated MP4, one still picture per visible slide, each changing on the first spoken word of the next.
+- The original file is never changed: `import` works on a copy, records its SHA-256 checksum and modified time in `source-manifest.json`, refuses the deck's own folder as output, and `import`, `narration` and `assemble` fail if the file no longer matches.
+- Narration uses speaker notes as written and drafted lines for slides without notes, held in `narration.md` behind an approval gate: `narration --approved` fails until the file says `approved: true`.
+- A slide whose first word would be found inside an earlier slide is recorded as its own clip instead of having its notes reworded; `recording-plan.json` lists the takes.
+- Engine: new `import`, `narration` and `assemble` commands that need no browser; `jszip` is now a declared dependency. Rendering slides needs LibreOffice and poppler, or slide images passed with `--pages`.
 
 ### 1.10.0 (2026-11-02)
 
