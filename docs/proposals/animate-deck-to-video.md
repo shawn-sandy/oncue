@@ -65,7 +65,7 @@ What can be read from it:
 
 What is not there: any rendered frame, and any time for a click. A click step waits for the presenter, so when a build happens is the narration's decision, which is the part OnCue is good at.
 
-Evidence and its limit. The fixture deck from `make-deck.mjs` and the one real deck on this machine (`prompt-triage-promo-deck.pptx`, 13 slides, PowerPoint 16) contain no `<p:timing>` or `<p:transition>` at all (experiments 1 and 2). So the test deck here was built with pptxgenjs and the XML above was written by hand to the schema: three transitions, five click steps, shape targets, paragraph targets and one `afterEffect` with a 750 ms delay. LibreOffice read all of it into its own model (`ooo-entrance-appear`, `ooo-entrance-fade-in`, `ooo-entrance-wipe`, five `on-click`, one `after-previous` beginning at `0.75s`), which shows the XML is well-formed and means what it should (experiment 3). It is not a file PowerPoint itself wrote. A real deck with builds is still needed before any of this is built; see Open questions.
+Evidence and its limit. The fixture deck from `make-deck.mjs` and the one real deck on this machine (`prompt-triage-promo-deck.pptx`, 13 slides, PowerPoint 16) contain no `<p:timing>` or `<p:transition>` at all (experiments 1 and 2). So the test deck here was built with pptxgenjs and the XML above was written by hand to the schema: three transitions, five click steps, shape targets, paragraph targets and one `afterEffect` with a 750 ms delay. LibreOffice read all of it into its own model (`ooo-entrance-appear`, `ooo-entrance-fade-in`, `ooo-entrance-wipe`, five `on-click`, one `after-previous` beginning at `0.75s`), which shows the XML is well-formed and means what it should (experiment 3). It is not a file PowerPoint itself wrote. A real deck with builds is still needed before step 2 is built; see Resolved decisions.
 
 ## What can be rendered faithfully
 
@@ -164,11 +164,13 @@ Two details for the plan. `xfade` does not take a zero duration, so the experime
 - **"Used as written" promise.** The route promises not to change the person's deck. Build states are made on the working copy, which `guardSource` already protects, so the promise holds, but the skill text should say the pictures now include intermediate states.
 - **More stills, larger filter graph.** A 40-slide deck with five builds a slide is 240 inputs. Not measured; ffmpeg handles long chains but the command line and memory should be checked.
 
-## Open questions (decisions only)
+## Resolved decisions
 
-1. Is there a real deck with builds and transitions, written by PowerPoint or exported from Google Slides, to test against before step 2 is planned? None was found on this machine.
-2. Should cross-fades be on by default, or opt-in for the first release?
-3. For a step whose word is never spoken: even spacing with a warning, or show it with the slide?
+Decided by the owner on 2026-11-18.
+
+1. **Cross-fades are on by default.** The option turns them off.
+2. **A step whose word is never spoken is spaced evenly across the slide's span, with a warning**, as `buildTimeline` does for a slot with no cue.
+3. **No real animated deck is available.** The proposal stands on the hand-built test deck. Step 2 still needs a deck written by PowerPoint or exported from Google Slides before it is planned.
 
 ## Appendix A: experiments and their output
 
@@ -227,4 +229,4 @@ Not tested: a recorded voiceover (it costs credits; the timing code path is the 
 
 ## Next step
 
-Decide the three open questions, then write a plan for step 1 (cross-fades) on its own. Step 2 should wait for a real animated deck.
+Write a plan for step 1 (cross-fades, on by default) on its own. Step 2 should wait for a real animated deck.
