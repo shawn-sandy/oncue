@@ -118,6 +118,29 @@ The animation is timed from a word-level transcript, not from the audio. With th
 
 With neither, you still get the storyboard, the deck and a silent preview timed from an estimate.
 
+### Make a video from a deck you already have
+
+Have a finished PowerPoint, Google Slides or Keynote deck? Ask for a video of it:
+
+> Make a narrated video from quarterly-review.pptx
+
+The deck-to-video skill shows each slide exactly as you designed it, narrates it, and changes slide on the word that starts the next one. It takes a .pptx, an .odp or a PDF export; from Google Slides, use File → Download.
+
+- **Your file is never changed.** The work happens on a copy in a separate project folder. The original's SHA-256 checksum and modified time are recorded in `source-manifest.json`, and every step fails if they move.
+- **Narration comes from your speaker notes, as written.** A slide without notes gets a line drafted from what is on it. Notes that read like reminders to yourself ("Personal anecdote:") and words a voice would stumble on (`/model`, `200K`, `$0.00014`) are flagged, and you decide whether to have them rewritten as spoken lines. Every line waits in `narration.md`, and nothing is recorded, and no credits are spent, until you set `approved: true` there.
+- **Slides are still pictures.** Animations, builds and transitions are not carried over, and hidden slides are skipped. The video keeps the deck's shape, scaled to fit 1920×1080.
+- **Rendering needs LibreOffice and poppler** (`brew install --cask libreoffice` and `brew install poppler` on macOS). LibreOffice substitutes missing fonts, so a PDF export is the most faithful input, though a PDF has no speaker notes. Without those tools, export the slides as images from your presentation app and pass the folder with `--pages`.
+
+The same three steps by hand, from the engine folder:
+
+```bash
+node dist/cli.js import    deck.pptx --out deck-video    # pages/, slides.json, narration.md, source-manifest.json
+node dist/cli.js narration deck-video --approved         # the script to record; fails until narration.md says approved: true
+node dist/cli.js assemble  deck-video                    # deck-video/deck.mp4, or preview-silent.mp4 before any recording
+```
+
+Save the recording as `voiceover-01.mp3` with its word timestamps as `words-01.json` in the project folder (`recording-plan.json` lists the names when a deck needs more than one take).
+
 ### Run one stage at a time
 
 Each stage is its own skill, so you can stop after any of them or start from an existing `short.json`.
@@ -127,6 +150,8 @@ Each stage is its own skill, so you can stop after any of them or start from an 
 | [setup](plugins/oncue/skills/setup/SKILL.md) | "set up OnCue", "update OnCue" | The plugin version and how to update or share it; Node, ffmpeg, Playwright and ElevenLabs checked, the engine installed, and which outputs are ready |
 | [explainer-video](plugins/oncue/skills/explainer-video/SKILL.md) | "make an explainer short about our CLI" | The whole pipeline, with check-ins at the beats and the voice |
 | [research](plugins/oncue/skills/research/SKILL.md) | "suggest three Shorts about this tool", "fact-check the storyboard", "make beat 2 punchier" | `research.md` with ranked topics, sourced facts and visual ideas; narration rewrites shown before and after, applied only on your approval and never to recorded lines without naming the re-record cost |
+| [deck-to-video](plugins/oncue/skills/deck-to-video/SKILL.md) | "make a narrated video from my deck.pptx" | An MP4 of your own slides, narrated from the speaker notes, with the original file unchanged |
+| [storyboard-editor](plugins/oncue/skills/storyboard-editor/SKILL.md) | "let me edit my storyboard visually" | Browser editor for scene text, colors, theme, cue fields and beat ordering, with short.json import/export; optional hosted Sites workflow |
 | [storyboard](plugins/oncue/skills/storyboard/SKILL.md) | "storyboard a 60-second Short for this plugin" | `short.json`, a beat list, preview stills or a Design canvas |
 | [visuals](plugins/oncue/skills/visuals/SKILL.md) | "add a diagram of how it works to beat 3", "use my screenshot in beat 4" | `image` beats from your screenshots, drawn diagrams, a generation tool or licensed pictures, with alt text, a cue word and credits; safe after the voiceover |
 | [voiceover](plugins/oncue/skills/voiceover/SKILL.md) | "voice it with ElevenLabs" | Two takes as MP3, each with a word-level transcript |
@@ -192,7 +217,32 @@ The skill evals in `plugins/oncue/evals/` run real Claude sessions against fixed
 
 The plugin version lives only in `plugins/oncue/.claude-plugin/plugin.json`.
 
+## Visual storyboard editing
+
+Ask “design my storyboard” or “open a visual storyboard editor for this Short.” Explicit surface choices come first, followed by an existing project editor. Otherwise the workflow defaults to Sites in ChatGPT, local HTML in Codex, or a Design canvas in Claude, only when the corresponding capabilities are available. Missing capabilities fall back to local HTML or a beat table and JSON, with the limitation stated. Planning-only requests do not create an editor.
+
+The new `storyboard-editor` skill provides a self-contained HTML editor you can open locally. In ChatGPT sessions with Sites available, ask for a hosted storyboard editor; the skill follows the installed Sites workflow. Hosting is optional and does not require embedding your storyboard in a public page.
+
+Import `short.json`, select a scene, and edit its existing fields, brand colors, format and theme. Unlock narration and beat order to reorder, duplicate or delete beats; recorded narration may then need re-recording or re-alignment. Export JSON to save: edits stay in browser memory, with no autosave or server storage. Pictures selected for previews are not packaged with the export; retain their relative asset paths.
+
+The editor previews supported layouts approximately. It does not support arbitrary positioning, custom HTML scenes, or importing freeform designs. Run the engine's `check` and render stills from the exported spec before approving the design. The local editor is browser-tested. A private Sites deployment succeeded, but hosted sign-in and import/edit/export testing remain incomplete.
+
 ## Changelog
+
+### 1.11.0 (2026-11-18)
+
+- Add deck-to-video: turn a finished .pptx, .odp or PDF export (including Google Slides downloads) into a narrated MP4, one still picture per visible slide, each changing on the first spoken word of the next.
+- The original file is never changed: `import` works on a copy, records its SHA-256 checksum and modified time in `source-manifest.json`, refuses the deck's own folder as output, and `import`, `narration` and `assemble` fail if the file no longer matches.
+- Narration uses speaker notes as written and drafted lines for slides without notes, held in `narration.md` behind an approval gate: `narration --approved` fails until the file says `approved: true`.
+- `narration` flags notes that read as reminders to the presenter and words a voice may read wrongly (commands, placeholders, prices, 200K-style amounts, web addresses, flags, code names), so they can be rewritten, with the person's agreement, before credits are spent.
+- A slide whose first word would be found inside an earlier slide is recorded as its own clip instead of having its notes reworded; `recording-plan.json` lists the takes.
+- Engine: new `import`, `narration` and `assemble` commands that need no browser; `jszip` is now a declared dependency. Rendering slides needs LibreOffice and poppler, or slide images passed with `--pages`.
+
+### 1.10.0 (2026-11-02)
+
+- Automatically route interactive storyboard requests by explicit choice, existing editor and verified host capabilities; preserve editor references for reuse.
+- Add storyboard-editor: a portable browser editor with a capability-gated Sites workflow, JSON round trips, existing scene fields, brand/theme controls and narration/order locks.
+- Document the distinction between approximate editor previews and exact engine-rendered stills; preserve custom fields and require asset-aware validation on handoff.
 
 ### 1.9.0 (2026-11-10)
 

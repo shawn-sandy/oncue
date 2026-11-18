@@ -23,6 +23,14 @@ node dist/cli.js script <folder>/short.json
 
 This prints every beat's `vo`, separated by blank lines. Read it once more for anything a narrator would stumble on: spell out symbols, keep quoted commands short.
 
+For a deck project (deck-to-video skill, `../deck-to-video/SKILL.md`) there is no `short.json`. The script comes from the approved narration instead:
+
+```bash
+node dist/cli.js narration <folder> --approved
+```
+
+It fails until the person has approved `narration.md`; do not record before it succeeds. It prints one script per recording and the file names to save each as (`voiceover-01.mp3` and `words-01.json`, and so on, also listed in `recording-plan.json`). Generate and transcribe each recording as below, with the same voice, and save one chosen take per recording under those names. Speaker notes are read as written: do not edit them for the narrator. Step 5 does not apply; the deck skill checks timing when it assembles.
+
 ## 2. Pick a voice and generate
 
 1. `creative_create_flow` first, and pass its `flow_id` to every call below so the speech, the reference audio and the transcripts share one flow.

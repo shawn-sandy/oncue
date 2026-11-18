@@ -6,6 +6,8 @@ exports.estimateWords = estimateWords;
 exports.stillTimes = stillTimes;
 exports.splitWarnings = splitWarnings;
 exports.buildTimeline = buildTimeline;
+exports.buildSlideTimeline = buildSlideTimeline;
+exports.planSlides = planSlides;
 /**
  * Turns short.json + a word-timestamped transcript into timeline.json:
  * when each scene starts and when each animated slot enters.
@@ -67,15 +69,19 @@ function lineStarts(spec, words) {
     return starts;
 }
 /**
- * One warning per beat the split would start inside an earlier beat, found by running the split on the script itself:
- * only a sentence the split can still reach matters, not every repeat of the word. A warning, not an error, because a
+ * For each line, the line its split start lands in, found by running the split on the script itself. A line that lands
+ * in an earlier one would start there, too early: only a sentence the split can still reach matters, not every repeat.
+ */
+function hosts(spec) {
+    const lineOf = spec.lines.flatMap((l, b) => l.vo.split(/\s+/).filter(Boolean).map(() => b));
+    return lineStarts(spec, estimateWords(spec).words).map((word) => lineOf[word]);
+}
+/**
+ * One warning per beat the split would start inside an earlier beat. A warning, not an error, because a
  * transcript punctuated differently may still place the beat. A line it cannot find at all is left for stills to report.
  */
 function splitWarnings(spec) {
-    const starts = lineStarts(spec, estimateWords(spec).words);
-    const beatOf = spec.lines.flatMap((l, b) => l.vo.split(/\s+/).filter(Boolean).map(() => b));
-    return starts.flatMap((word, b) => {
-        const host = beatOf[word];
+    return hosts(spec).flatMap((host, b) => {
         if (host >= b)
             return [];
         const first = spec.lines[b].vo.split(/\s+/)[0];
@@ -117,4 +123,48 @@ function buildTimeline(spec, words, audioSeconds) {
     scenes.forEach((sc, i) => { if (i + 1 < scenes.length)
         sc.end = scenes[i + 1].start; });
     return { lead: exports.LEAD, tail: exports.TAIL, duration, scenes, warnings };
+}
+/**
+ * When each slide of one take is on screen, in that take's own seconds: from its first word (cut midway through the
+ * pause before it, as buildTimeline does) to the next slide's, the last one to the end of the audio.
+ */
+function buildSlideTimeline(slides, words, audioSeconds) {
+    const starts = lineStarts({ lines: slides }, words);
+    const missing = slides[starts.length];
+    if (missing)
+        throw new Error(`Slide ${missing.n} ("${missing.vo.slice(0, 40)}…") not found in its transcript. Re-transcribe, or check that this take reads that slide's line.`);
+    const at = starts.map((wi, s) => (s === 0 ? 0 : (words[wi - 1].end + words[wi].start) / 2));
+    return slides.map((slide, s) => ({ n: slide.n, start: at[s], end: at[s + 1] ?? audioSeconds }));
+}
+/**
+ * Groups narrated slides into recordings. Slides the split can place share one continuous take, even across a silent
+ * slide. A slide whose first word would be found inside an earlier slide of the take gets its own clip instead, so
+ * its line never has to change; the take resumes after it.
+ */
+function planSlides(lines) {
+    const groups = [];
+    const warnings = [];
+    let open = null;
+    for (const line of lines.filter((l) => l.source !== "none")) {
+        const trial = [...(open ?? []), line];
+        const host = hosts({ lines: trial }).at(-1);
+        if (host === trial.length - 1) {
+            if (!open)
+                groups.push({ kind: "run", lines: (open = []) });
+            open.push(line);
+            continue;
+        }
+        const first = line.vo.split(/\s+/)[0];
+        warnings.push(`slide ${line.n}'s first word "${first}" is also heard inside slide ${trial[host].n}, so one continuous read would start slide ${line.n} there, too early; ` +
+            (line.source === "notes"
+                ? `slide ${line.n} keeps its notes unchanged and is recorded as its own clip, an extra take.`
+                : `reword slide ${line.n}'s drafted line to open differently, or it is recorded as its own clip, an extra take.`));
+        groups.push({ kind: "clip", lines: [line] });
+        open = null;
+    }
+    return {
+        runs: groups.map((g) => ({ kind: g.kind, slides: g.lines.map((l) => l.n), script: g.lines.map((l) => l.vo).join("\n\n") })),
+        silent: lines.filter((l) => l.source === "none").map((l) => l.n),
+        warnings,
+    };
 }

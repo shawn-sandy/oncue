@@ -14,6 +14,29 @@ Use the product running this conversation: Claude Code, the Claude app, Codex, o
 
 `<plugin>` below is the absolute folder two levels above this skill's folder, holding `skills/` and `engine/`. Resolve it from the loaded skill location, not the working directory. Confirm the sibling engine and reference files exist. If the host mounts skills without `engine/`, report rendering blocked by missing bundled files; text research and a beat table can still work.
 
+## Storyboard surface routing
+
+Use this routing for requests such as "design my storyboard", "let me edit the storyboard", or "use the ChatGPT storyboard". Planning-only requests still produce beats and `short.json`; they do not require creating an editor. Routing alone does not run full setup, install tools, connect accounts, publish a site, or record audio.
+
+Choose in this order:
+
+1. **Explicit choice:** honor a requested local editor, Sites/hosted editor, Design canvas, or text-only output. "ChatGPT storyboard" means the Sites editor; it does not mean an unavailable built-in canvas. Verify the requested surface's tools before acting. If unavailable, explain the limitation and offer the available fallback; do not silently replace an explicit choice.
+2. **Existing project surface:** inspect the project's recorded editor URL, Sites checkout and `.openai/hosting.json`, local `storyboard-editor.html`, or Design artifact reference. Reuse a supported existing editor before choosing a host default. A marketing website is not an editor. If several editor references exist and none is selected, clarify which to use instead of creating another.
+3. **Host default, gated by capabilities:** identify the host from session context, not installed CLIs. Use the first applicable row below. Announce the selected surface and reason in one sentence; do not ask the person to choose a tool when the route is clear.
+
+| Host | Preferred interactive surface | Required evidence |
+| --- | --- | --- |
+| ChatGPT | Hosted editor via Sites | Sites tools and installed Sites workflow are available; use [storyboard-editor](../storyboard-editor/SKILL.md) |
+| Codex | Local HTML editor | Writable project folder and a browser/file preview or downloadable HTML; use [storyboard-editor](../storyboard-editor/SKILL.md) |
+| Claude | Design canvas | An available Artifact tool explicitly supports the Design type; follow the canvas instructions in [storyboard](../storyboard/SKILL.md) |
+| Other, unknown, or preferred surface unavailable | Local HTML editor, then beat table and JSON | Use local HTML only with writable files and preview/download support; otherwise return the text storyboard |
+
+Engine-rendered stills supplement every route when the engine and browser are ready. Host names never establish tool availability. A generic artifact or presentation tool is not proof of Design support. For an automatically selected surface that fails, report what failed before using the next supported fallback. Sign-in or approval pauses keep the selected route pending; do not create a duplicate site, change its audience, or work around a denied action.
+
+For Sites reuse, preserve the exact project ID from the editor's hosting manifest or verified Sites response. Follow the installed Sites workflow for opening and publishing that editor. After creation, retain the editor's checkout/manifest and record its confirmed URL in the storyboard project's notes so later sessions can find it; never save credentials. For a local editor, retain its project-relative path; for Design, retain the returned artifact reference. Surface metadata belongs in project notes, not invented fields in `short.json`.
+
+A canvas is a planning surface, not an automatic freeform-to-engine converter. Keep `short.json` authoritative, map only supported scene fields back into it, and report any design that requires a renderer extension. Existing narration and beat order remain locked unless the person requests changes and understands recording/alignment consequences.
+
 ## 1. Plugin version, install and update
 
 Read the loaded version from `<plugin>/.claude-plugin/plugin.json`, or `<plugin>/.codex-plugin/plugin.json` when the host converted the package. Use host-provided version metadata when files are unavailable. Report unavailable metadata and continue; do not infer a version from the engine's package.json.
@@ -58,6 +81,12 @@ On a local machine, suggest Node 22+ from nodejs.org or the person's version man
 Run `ffmpeg -version` and `ffprobe -version` separately and inspect each exit code. Do not use a combined `command -v ffmpeg ffprobe`: it can hide one missing binary.
 
 Video encoding needs ffmpeg. Voice-timed stills and video also need ffprobe; the deck and estimated preview stills need neither. On a local machine, a single ffmpeg package usually supplies both (`brew install ffmpeg` or `sudo apt install ffmpeg`). Ask before installing system software; the person runs sudo themselves. In a managed container, report what is present and use only an available, permitted installation route. Do not assume npm metadata proves that a binary can install or run.
+
+### LibreOffice and poppler, for decks made elsewhere
+
+Only the deck-to-video skill (`../deck-to-video/SKILL.md`) uses these, and only to draw slides as pictures. Check each on its own: `soffice --version` (on macOS also try `/Applications/LibreOffice.app/Contents/MacOS/soffice --version`) and `pdftoppm -v`. `soffice` turns a .pptx or .odp into a PDF; `pdftoppm` turns PDF pages into images, so a PDF export needs only `pdftoppm`.
+
+Missing either one blocks only that rendering. Reading a deck's notes, drafting narration and assembling the video do not need them, and slide images exported from the deck by the app that made it can stand in for both. On a local machine: `brew install --cask libreoffice` and `brew install poppler` on macOS, `sudo apt install libreoffice-impress poppler-utils` on Debian or Ubuntu. LibreOffice is a large download; ask before installing either, and the person runs sudo themselves. Report each as ready or missing; never report slide rendering as working because the other tool is present.
 
 ## 4. Engine in a writable workspace
 
@@ -120,7 +149,7 @@ Audio links can use `storage.googleapis.com`. If a download is denied, honor tha
 
 ## 7. Report
 
-Give a short table of the host/execution surface, loaded plugin version and installation state, Node, engine install/example check, Playwright/browser render, ffmpeg, ffprobe and ElevenLabs. Mark each **ready**, **missing**, **blocked** or **not tested** from observed evidence. Name any engine copy replaced or update waiting for a new session. Then report outputs independently:
+Give a short table of the host/execution surface, loaded plugin version and installation state, Node, engine install/example check, Playwright/browser render, ffmpeg, ffprobe, `soffice`, `pdftoppm` and ElevenLabs. Mark each **ready**, **missing**, **blocked** or **not tested** from observed evidence. Name any engine copy replaced or update waiting for a new session. Then report outputs independently:
 
 | Output | Needs |
 | --- | --- |
@@ -133,5 +162,6 @@ Give a short table of the host/execution surface, loaded plugin version and inst
 | Supplied voiceover | MP3 and matching word timestamps; transcription tools if timestamps are absent |
 | Voice-timed stills | Stills requirements, matching audio/timestamps and ffprobe |
 | Final video with audio | Video requirements, matching audio/timestamps and ffprobe |
+| Video from a finished deck | Node 22+, engine, ffmpeg and ffprobe; `soffice` and `pdftoppm` to render slides, or slide images exported from the deck; narration as for a voiceover |
 
 End with the fix that unlocks the most, or a request such as “make an explainer short about our CLI” (explainer-video skill, `../explainer-video/SKILL.md`). Never claim an output works because a different host's check passed.
