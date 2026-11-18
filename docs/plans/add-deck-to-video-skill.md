@@ -31,7 +31,7 @@ The requirement that the source stays unedited is the load-bearing constraint. T
 
 Risks and mitigations:
 
-**Slide boundaries in one continuous read.** The split finds each slide by its first spoken word at a sentence start. Notes often open with "So," or repeat an opening word. Mitigation: `narration` runs `splitWarnings` on the script and the person rewrites flagged openings before recording. Fallback, if a split still cannot be fixed: record per-slide clips (see Unresolved Questions).
+**Slide boundaries in one continuous read.** The split finds each slide by its first spoken word at a sentence start. Notes often open with "So," or repeat an opening word. Mitigation: `narration` runs `splitWarnings` on the script and lists each flagged opening. A slide is unplaceable when its first word is not found at a sentence start after the previous slide's start, or when it matches only inside an earlier slide's text. Speaker notes are never rewritten to fix this: an unplaceable slide that has notes is recorded as its own per-slide clip with its notes unchanged, while every slide that places cleanly stays in the one continuous read (contiguous clean slides form a run, one take per run). Only a slide whose line was drafted may be reworded instead. The skill states the extra takes, and their credit cost, before recording.
 
 **Slides with no narration.** One continuous audio file has no gap for a silent slide. Mitigation: `assemble` cuts the audio at the boundary and inserts a fixed silent dwell.
 
@@ -81,8 +81,8 @@ Ship a `deck-to-video` OnCue skill that turns a .pptx, a Google Slides export or
 - plugins/oncue/skills/voiceover/SKILL.md (modified) — step 1 accepts deck narration
 - plugins/oncue/skills/setup/SKILL.md (modified) — check `soffice` and `pdftoppm`
 - plugins/oncue/skills/explainer-video/SKILL.md (modified) — one line pointing to the deck route
-- plugins/oncue/.claude-plugin/plugin.json (modified) — version 1.10.0
-- README.md (modified) — skills list, usage, changelog 1.10.0
+- plugins/oncue/.claude-plugin/plugin.json (modified) — version 1.11.0
+- README.md (modified) — skills list, usage, changelog 1.11.0
 
 ## Steps
 
@@ -100,14 +100,14 @@ Ship a `deck-to-video` OnCue skill that turns a .pptx, a Google Slides export or
 
 8. Widen `estimateWords`, `splitWarnings` and `lineStarts` in `src/timeline.ts` to take `{ lines: { vo: string }[] }`, then add `buildSlideTimeline` and `planSlides`. Why: reuses the proven split without a fake `Spec`, and short.json renders must not change. Verify: `node --test test/slide-timeline.test.mjs test/split.test.mjs` exits 0, so the existing portrait split tests still pass.
 9. Implement `guardSource` and the output-folder check in `src/slides.ts`: hash with SHA-256 and read the modified time, copy the source to `<out>/work/`, run the callback on the copy only, hash again, write `source-manifest.json`, throw on any difference. Why: this is the unchanged-source mechanism. Verify: `node --test test/slides-source.test.mjs` exits 0.
-10. Implement `readDeck` in `src/slides.ts` with jszip: slide order from `ppt/presentation.xml` and its rels, hidden slides from `show="0"`, notes from the body placeholder (`<p:ph type="body"`) of the linked notes slide, text from `<a:t>` runs. Why: notes and order cannot be taken from file names. Verify: `node --test test/slides-notes.test.mjs` exits 0.
+10. Implement `readDeck` in `src/slides.ts` with jszip, dispatching on extension. For .pptx: slide order from `ppt/presentation.xml` and its rels, hidden slides from `show="0"`, notes from the body placeholder (`<p:ph type="body"`) of the linked notes slide, text from `<a:t>` runs. For .odp: read `content.xml` in document order, `draw:page` elements are the slides, hidden slides carry `presentation:visibility="hidden"` in `styles.xml`/`content.xml` page styles, notes come from each page's `presentation:notes` element, text from `text:p`. A PDF skips `readDeck`: it has no notes or hidden slides, so slide order is the page order and `slides.json` is built from the page count after rendering, with text left empty and the narration drafted from the page pictures. Why: notes and order cannot be taken from file names, and .odp stores them in different XML. Verify: `node --test test/slides-notes.test.mjs` exits 0, including the .odp cases.
 11. Implement page rendering in `src/slides.ts`: `soffice --headless --convert-to pdf` on the copy (skipped for a PDF input), then `pdftoppm -r 150 -png` into `<out>/pages/slide-NN.png`, and fail naming the binary when either is missing. Why: this is the render route that `vertical-deck` already points to. Verify: `node --test test/slides-render-smoke.test.mjs` exits 0 where both tools exist, and reports the test skipped (not passed) where they do not.
 12. Implement `src/narration.ts`: write `narration.md` with an `approved:` flag and a marker per slide, parse it back, print the script, run `splitWarnings`, print estimated seconds and the repo's reference credit rate labelled as a rough estimate. Why: the approval gate and the boundary warnings live here. Verify: `node --test test/narration.test.mjs` exits 0.
 13. Implement `src/assemble.ts`: build per-slide durations from the timeline and dwell plan, cut the audio at silent-dwell boundaries with ffmpeg `atrim` and `anullsrc`, encode H.264 and AAC at 30 fps, scale pages to fit 1920×1080 with even dimensions, and write `preview-silent.mp4` when there is no audio. Why: this turns the timeline into the file the person asked for. Verify: `node --test test/deck-to-video.test.mjs` exits 0.
 14. Add `import`, `narration` and `assemble` to `src/cli.ts` ahead of `loadSpec`, declare `jszip` in `package.json`, run `npm install` and `npm run build`. Why: the existing CLI loads a spec before its switch, so these commands must branch first. Verify: `node dist/cli.js import test/fixtures/none.pptx` prints the usage line for a missing file, `npm test` in the engine exits 0, and `git diff --stat` shows `dist/` updated. If a test still fails after 8 iterations, stop and report the failing assertion, the last diff tried and what was ruled out; do not report success.
 15. Write `skills/deck-to-video/SKILL.md`: inputs and formats, the order import, draft, approve, voice, assemble, the unchanged-source rules, the Google write tools it must never call (`update_presentation`, `update_file`, `trash_file`, `share_file`), and the fidelity limits, using no host product names outside setup. Why: the skill prose is what the model follows at run time. Verify: `npm run validate` from the repo root exits 0 for the new skill.
 16. Edit `skills/voiceover/SKILL.md` step 1 so a deck project takes its script from `node dist/cli.js narration <folder> --approved`, and `skills/setup/SKILL.md` to report `soffice` and `pdftoppm` as separate checks that block only rendering. Why: voiceover assumed `short.json`, and setup is the only place that may name install commands. Verify: `npm run validate` exits 0 and `grep -n "narration" plugins/oncue/skills/voiceover/SKILL.md` finds the new line.
-17. Add the one-line deck route to `skills/explainer-video/SKILL.md`, bump `plugins/oncue/.claude-plugin/plugin.json` to 1.10.0, and add the `### 1.10.0` changelog entry and usage section to `README.md`. Why: the repo requires a bump and changelog for any change to what a skill or the engine does. Verify: `npm run validate` exits 0 and every command shown in the README section runs against the fixture.
+17. Add the one-line deck route to `skills/explainer-video/SKILL.md`, bump `plugins/oncue/.claude-plugin/plugin.json` to 1.11.0, and add the `### 1.11.0` changelog entry and usage section to `README.md`. Why: the repo requires a bump and changelog for any change to what a skill or the engine does. Verify: `npm run validate` exits 0 and every command shown in the README section runs against the fixture.
 
 ### Phase: VERIFY
 
@@ -121,9 +121,9 @@ Ship a `deck-to-video` OnCue skill that turns a .pptx, a Google Slides export or
 Tier 1 — This plan creates and modifies application source files
 - Objective: a .pptx plus approved narration becomes an MP4 whose slide changes land on the narrated words, and the .pptx is unchanged. File: plugins/oncue/engine/test/deck-to-video.test.mjs; Type: smoke; Asserts: ffprobe reports 1920×1080, H.264 video, AAC audio, and a duration within 0.1 s of the Gleaner audio plus 0.3 s lead and 1.6 s tail; a frame at the midpoint of each slide's narration is the colour of that slide; the source's SHA-256 and modified time are identical before and after; Run: cd plugins/oncue/engine && node --test test/deck-to-video.test.mjs
 - Unit: the source guard refuses a mutation and an output folder equal to the source's. File: plugins/oncue/engine/test/slides-source.test.mjs; Targets: guardSource; Key cases: unchanged read-only file, appended byte throws, same-folder output refused, a PDF input
-- Unit: deck reading. File: plugins/oncue/engine/test/slides-notes.test.mjs; Targets: readDeck; Key cases: presentation order differs from file numbers, hidden slide skipped, no-notes slide, `&amp;` decoded, body placeholder only
+- Unit: deck reading. File: plugins/oncue/engine/test/slides-notes.test.mjs; Targets: readDeck; Key cases: presentation order differs from file numbers, hidden slide skipped, no-notes slide, `&amp;` decoded, body placeholder only, an .odp fixture gives the same order, hidden state and notes, a PDF input skips readDeck and orders slides by page
 - Unit: narration file and gate. File: plugins/oncue/engine/test/narration.test.mjs; Targets: narration read, write, approval and warnings; Key cases: round trip, unapproved exits non-zero, repeated opening word warns, blank slides listed
-- Unit: slide timing. File: plugins/oncue/engine/test/slide-timeline.test.mjs; Targets: buildSlideTimeline, planSlides; Key cases: slide spans, tail hold, silent dwell adds exactly the dwell, a slide whose first word is never heard is an error naming it
+- Unit: slide timing. File: plugins/oncue/engine/test/slide-timeline.test.mjs; Targets: buildSlideTimeline, planSlides; Key cases: slide spans, tail hold, silent dwell adds exactly the dwell, a slide whose first word is never heard is an error naming it, and an unplaceable slide with notes is flagged for a per-slide clip with its notes unchanged
 - Integration: real rendering. File: plugins/oncue/engine/test/slides-render-smoke.test.mjs; Targets: `soffice` and `pdftoppm` through the CLI `import` command; Key cases: .pptx and PDF inputs give one PNG per visible slide, page count matches slide count, skipped with a stated reason when a binary is missing
 
 ## Acceptance Criteria
@@ -143,7 +143,7 @@ Tier 1 — This plan creates and modifies application source files
 
 ## Verification
 
-From `plugins/oncue/engine`, run `npm run build`, then `node --test test/deck-to-video.test.mjs`. It exits 0 only if the MP4 has the expected size, codecs and duration, each slide's colour appears at the midpoint of its narration, and the fixture deck's SHA-256 and modified time are unchanged. Run `npm test`, `npm run engine:typecheck` and, from the repo root, `npm run validate`; all must exit 0, with the count of skipped tests stated.
+From `plugins/oncue/engine`, run `npm run build`, then `node --test test/deck-to-video.test.mjs`. It exits 0 only if the MP4 has the expected size, codecs and duration, each slide's colour appears at the midpoint of its narration, and the fixture deck's SHA-256 and modified time are unchanged. Run `npm test`, `npm run typecheck` and, from the repo root, `npm run validate`; all must exit 0, with the count of skipped tests stated.
 
 Then walk it as a person would, on a machine with LibreOffice and poppler: `node dist/cli.js import my-deck.pptx`, read `narration.md`, set `approved: true`, record the voiceover through the voiceover skill, run `node dist/cli.js assemble`, and open the MP4. Finish by running `shasum -a 256 my-deck.pptx` and comparing it with `source-manifest.json`. If those two tools are not installed, state that rendering and this last walk-through are unverified.
 
@@ -156,10 +156,6 @@ Then walk it as a person would, on a machine with LibreOffice and poppler: `node
 - Should the output be letterboxed for portrait targets such as Shorts?
   ```text
   In /Users/shawns-work/repos/oncue/plugins/oncue/engine/src/assemble.ts (once it exists), recommend whether assemble should accept a --format WxH option that letterboxes a 16:9 deck onto a 1080x1920 canvas, reusing the size rules in src/spec.ts (even sides, 320 to 4096, long side at most 2.4x short). Recommend one approach with reasoning and the smallest design that avoids blurry text. Do not write code.
-  ```
-- When the split cannot find a slide's first word, should the skill switch to per-slide voice clips?
-  ```text
-  In /Users/shawns-work/repos/oncue, read plugins/oncue/skills/voiceover/SKILL.md and engine/src/timeline.ts. Recommend whether deck-to-video should fall back to one ElevenLabs clip per slide when buildSlideTimeline cannot place a slide, covering voice consistency, credit cost, and whether the ElevenLabs tools in this session support stitching. Recommend one approach. Do not spend credits or write code.
   ```
 - Can the Drive connector export a Google Slides file read-only?
   ```text

@@ -28,8 +28,10 @@ const VALUES = {
   density: ["compact", "regular", "airy"],
   background: ["glow", "subtle", "flat"],
   header: ["brand", "logo", "none"],
+  stroke: ["bold", "hairline"],
+  weight: ["heavy", "semibold"],
 };
-const DEFAULTS = { radius: "round", type: "regular", density: "regular", background: "glow", header: "brand" };
+const DEFAULTS = { radius: "round", type: "regular", density: "regular", background: "glow", header: "brand", stroke: "bold", weight: "heavy" };
 const CONTENT_SCENES = gleaner.lines.filter((/** @type {any} */ l) => l.scene.kind !== "hook" && l.scene.kind !== "cta").length;
 
 let n = 0;
@@ -272,6 +274,52 @@ test("deck: font names with XML characters are escaped once, in the slides and t
   const all = parts.map(([, xml]) => xml).join("\n");
   assert.match(all, /typeface="A&amp;B Sans"/);
   assert.match(all, /typeface="M&lt;N&gt; &quot;Mono&quot;"/);
+});
+
+// stroke and weight
+
+test("stroke: hairline draws 1px borders and a 2px panel rule; bold keeps 2px and 3px", async () => {
+  const BORDERED = [".card", ".bubble", ".player", ".tile", ".photo"];
+  const bold = await page(gleaner), thin = await page(themed({ stroke: "hairline" }));
+  for (const sel of BORDERED) {
+    assert.equal(prop(bold, sel, "border"), "2px solid var(--rule)", sel);
+    assert.equal(prop(thin, sel, "border"), "1px solid var(--rule)", sel);
+  }
+  assert.equal(prop(bold, ".hr", "height"), "3px");
+  assert.equal(prop(thin, ".hr", "height"), "2px");
+});
+
+test("weight: semibold sets headings, panel title and step numbers to 600; heavy keeps 800", async () => {
+  const heavy = await page(gleaner), semi = await page(themed({ weight: "semibold" }));
+  for (const sel of ["h1,h2", ".pt", ".num"]) {
+    assert.equal(prop(heavy, sel, "font-weight"), "800", sel);
+    assert.equal(prop(semi, sel, "font-weight"), "600", sel);
+  }
+  // Only the 800s move: the result bar keeps its 700.
+  assert.equal(prop(semi, ".result", "font-weight"), "700");
+});
+
+/** Each named shape on a slide and the width and colour of its outline. @param {string} xml */
+const outlines = (xml) => [...xml.matchAll(/<p:sp>.*?<\/p:sp>/gs)].map(([sp]) => ({
+  name: /<p:cNvPr id="\d+" name="([^"]*)"/.exec(sp)?.[1] ?? "",
+  w: /<a:ln w="(\d+)"/.exec(sp)?.[1],
+  color: /<a:ln[^>]*>\s*<a:solidFill>\s*<a:srgbClr val="([0-9A-Fa-f]{6})"/.exec(sp)?.[1]?.toUpperCase(),
+}));
+
+test("deck: hairline outlines item, turn, tile, player and image shapes in the rule colour, and nothing else", async () => {
+  // Gleaner has no image beat, so add one that shows the logo.
+  const cta = gleaner.lines.length - 1;
+  const lines = [...gleaner.lines.slice(0, cta), { vo: "Here is the logo.", scene: { kind: "image", kicker: "Picture", title: "The {logo}", src: "logo.png", alt: "The logo" } }, ...gleaner.lines.slice(cta)];
+  const rule = gleaner.brand.colors.rule.slice(1).toUpperCase();
+  const OUTLINED = /^(item|turn|tile)-\d+$|^(player|image)$/;
+  const shapes = (await slides({ ...themed({ stroke: "hairline" }), lines })).flatMap(outlines);
+  const lined = shapes.filter((x) => x.w === "9525");
+  for (const kind of ["item", "turn", "tile", "player", "image"]) assert.ok(lined.some((x) => x.name.startsWith(kind)), `no hairline on a ${kind} shape`);
+  assert.deepEqual(lined.filter((x) => !OUTLINED.test(x.name)).map((x) => x.name), [], "hairline on a shape that should have none");
+  assert.deepEqual(shapes.filter((x) => OUTLINED.test(x.name) && (x.w !== "9525" || x.color !== rule)).map((x) => x.name), []);
+  for (const name of ["panel", "result", "pill"]) assert.ok(shapes.some((x) => x.name === name && x.w !== "9525"), `${name} missing or outlined`);
+  const bold = (await slides({ ...themed({ stroke: "bold" }), lines })).flatMap(outlines);
+  assert.deepEqual(bold.filter((x) => x.w === "9525").map((x) => x.name), []);
 });
 
 test("deck: the you bubble's text is the ground colour on highlight", async () => {

@@ -1,0 +1,18 @@
+{
+  "name": "Astro",
+  "source": "Astro Kit Design System, shawn-sandy/astro-basics DESIGN.md",
+  "modes": {
+    "light": { "colors": {
+      "ground": "#fcfcfd", "card": "#f1f3f5", "chip": "#e6f2f6", "rule": "#dde1e6",
+      "ink": "#101418", "muted": "#5a6472", "accent": "#0b6070", "highlight": "#0b6070", "you": "#0b6070",
+      "panel": "#e6f2f6", "panelInk": "#101418", "panelMuted": "#5a6472", "panelRule": "#c9dfe6" } },
+    "dark": { "colors": {
+      "ground": "#0d1014", "card": "#151a20", "chip": "#102a33", "rule": "#262c33",
+      "ink": "#e8eaed", "muted": "#99a2ad", "accent": "#6bb9c9", "highlight": "#6bb9c9", "you": "#6bb9c9",
+      "panel": "#102a33", "panelInk": "#e8eaed", "panelMuted": "#99a2ad", "panelRule": "#1d4552" } }
+  },
+  "fonts": { "sans": "inter", "mono": "jetbrains-mono" },
+  "deckFonts": { "head": "Arial", "body": "Arial" },
+  "theme": { "radius": "soft", "background": "flat", "density": "regular", "type": "regular",
+             "header": "brand", "stroke": "hairline", "weight": "semibold" }
+}

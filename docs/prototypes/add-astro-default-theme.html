@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="proto-source" content="docs/plans/add-astro-default-theme.md">
+<meta name="proto-created" content="2026-11-10">
+<title>Add Astro default theme</title>
+<style>
+  :root {
+    --bg:#ffffff; --surface:#f9fafb; --border:#e5e7eb; --border-mid:#d1d5db;
+    --text:#111827; --muted:#6b7280; --subtle:#6b7280; --accent:#2563eb;
+    --accent-bg:#eff6ff; --green:#15803d; --green-bg:#f0fdf4; --red:#dc2626;
+    --red-bg:#fef2f2; --radius:6px; --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+    --on-accent:#ffffff; color-scheme:light;
+  }
+  /* Dark page chrome. Written twice because an explicit data-theme has to beat the OS setting. */
+  :root[data-theme="dark"] {
+    --bg:#0f1115; --surface:#171a21; --border:#2a2f3a; --border-mid:#465064;
+    --text:#e8eaed; --muted:#a3acb9; --subtle:#a3acb9; --accent:#7aa7ff; --on-accent:#0b1020;
+    --green:#4ade80; --green-bg:#0f2417; --red:#f87171; color-scheme:dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#0f1115; --surface:#171a21; --border:#2a2f3a; --border-mid:#465064;
+      --text:#e8eaed; --muted:#a3acb9; --subtle:#a3acb9; --accent:#7aa7ff; --on-accent:#0b1020;
+      --green:#4ade80; --green-bg:#0f2417; --red:#f87171; color-scheme:dark;
+    }
+  }
+  *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; font-size:15px;
+         line-height:1.6; color:var(--text); background:var(--bg); max-width:880px;
+         margin:0 auto; padding:32px 20px 64px; }
+  header { border-bottom:1px solid var(--border); padding-bottom:16px; margin-bottom:24px; }
+  header::before { content:""; display:block; height:3px; background:var(--accent);
+                   border-radius:2px; margin-bottom:16px; }
+  h1 { font-size:22px; font-weight:700; letter-spacing:-.02em; margin-bottom:4px; }
+  .source { font-size:12px; color:var(--subtle); font-family:ui-monospace,Consolas,monospace; }
+  .summary-bar { display:flex; align-items:center; gap:10px; margin:20px 0; }
+  .summary-badge { display:inline-flex; align-items:center; gap:6px; font-size:13px;
+                   font-weight:700; padding:6px 14px; border-radius:999px;
+                   background:var(--green-bg); color:var(--green);
+                   border:1px solid color-mix(in srgb, var(--green) 35%, var(--bg)); }
+  form { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; margin:16px 0;
+         padding:16px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); }
+  .field { display:flex; flex-direction:column; gap:4px; }
+  .field label { font-size:12px; font-weight:600; color:var(--muted); }
+  .field label .req { color:var(--red); }
+  .field input, .field select { padding:7px 10px; border:1px solid var(--border-mid); border-radius:var(--radius);
+                 font-size:14px; font-family:inherit; color:var(--text); background:var(--bg); }
+  .field input[type="color"] { padding:2px; width:52px; height:36px; }
+  button { font-family:inherit; cursor:pointer; }
+  .btn { padding:8px 16px; font-size:14px; font-weight:600; border-radius:var(--radius);
+         border:1px solid var(--accent); background:var(--accent); color:var(--on-accent); }
+  .btn:hover { filter:brightness(.92); }
+  .btn-secondary { background:var(--bg); color:var(--muted); border-color:var(--border-mid); }
+  .btn-danger { background:var(--bg); color:var(--red); border:1px solid var(--red); padding:4px 10px; font-size:12px; }
+  .btn-preview { background:var(--bg); color:var(--accent); border:1px solid var(--accent); padding:4px 10px; font-size:12px; margin-right:6px; }
+  .btn-preview[aria-pressed="true"] { background:var(--accent); color:var(--on-accent); }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .error { color:var(--red); font-size:12px; min-height:16px; width:100%; }
+  .table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; margin-top:8px; font-size:14px; }
+  caption { text-align:left; font-size:12px; color:var(--subtle); margin-bottom:6px; }
+  th,td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--border); vertical-align:top; white-space:nowrap; }
+  thead th { font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted);
+             background:var(--surface); }
+  .swatch { display:inline-block; width:12px; height:12px; border-radius:3px; border:1px solid var(--border-mid);
+            margin-right:6px; vertical-align:-1px; }
+  .empty-state { color:var(--subtle); font-style:italic; padding:16px 10px; }
+  .status { position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; }
+  .toolbar { display:flex; gap:10px; margin-top:16px; }
+
+  /* === PREVIEW: one sample scene drawn from the selected theme row ===
+     Sizes are the real ones from engine/src/scenes.ts on its 1080px stage. */
+  .preview { margin-top:32px; }
+  .preview h2.pv-title { font-size:16px; font-weight:700; }
+  .preview-bar { display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .preview-note { font-size:12px; color:var(--subtle); margin-top:8px; }
+  .stage-wrap { overflow:auto; border:1px solid var(--border); border-radius:var(--radius); }
+  #stage {
+    --ground:#fcfcfd; --card:#f1f3f5; --rule:#dde1e6; --ink:#101418; --accent:#0b6070;
+    --bw:1px; --hrh:2px; --hw:600;
+    /* ponytail: a real preset carries all 13 colour roles; the prototype keeps 5
+       and mixes the rest. Add the other 8 as fields if the tints need judging. */
+    --chip:color-mix(in srgb, var(--accent) 12%, var(--ground));
+    --muted:color-mix(in srgb, var(--ink) 62%, var(--ground));
+    --panel-rule:color-mix(in srgb, var(--accent) 30%, var(--ground));
+    width:1080px; padding:90px; background:var(--ground); color:var(--ink);
+    display:flex; flex-direction:column; gap:34px; line-height:1.3;
+  }
+  #stage .kicker { font-family:ui-monospace,Consolas,monospace; font-size:32px; letter-spacing:.14em;
+                   text-transform:uppercase; color:var(--accent); }
+  #stage .s-h2 { font-size:80px; font-weight:var(--hw); letter-spacing:-.02em; line-height:1.08; }
+  #stage .acc { color:var(--accent); }
+  /* ponytail: corner radius fixed at the preset's "soft" (36px x 0.55); radius is not one of the two new settings. */
+  #stage .card { background:var(--card); border:var(--bw) solid var(--rule); border-radius:20px; }
+  #stage .row { display:flex; gap:34px; align-items:center; padding:34px 38px; }
+  #stage .ico { width:110px; height:110px; flex:none; border-radius:50%; background:var(--chip); }
+  #stage .rt { font-size:46px; font-weight:700; line-height:1.15; }
+  #stage .rd { font-size:34px; color:var(--muted); margin-top:6px; }
+  #stage .panel { background:var(--chip); border-radius:24px; padding:48px 50px; display:flex; flex-direction:column; gap:26px; }
+  #stage .pt { font-size:52px; font-weight:var(--hw); }
+  #stage .hr { height:var(--hrh); background:var(--panel-rule); }
+  #stage .pk { font-size:38px; font-weight:700; }
+  #stage .step { display:flex; gap:34px; align-items:center; }
+  #stage .num { width:130px; height:130px; flex:none; border-radius:50%; background:var(--accent); color:var(--ground);
+                font-size:58px; font-weight:var(--hw); display:flex; align-items:center; justify-content:center; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Add Astro default theme</h1>
+  <div class="source">Prototype &middot; source: docs/plans/add-astro-default-theme.md</div>
+</header>
+
+<!-- Inline JSON seed. JSON-serialized with script-breakout escaping ONLY
+     (e.g. </script> -> <\/script>) — never HTML-escaped, or JSON.parse breaks. -->
+<script type="application/json" id="seed">[{"name":"Astro light","mode":"light","stroke":"hairline","weight":"semibold","ground":"#fcfcfd","card":"#f1f3f5","rule":"#dde1e6","ink":"#101418","accent":"#0b6070"},{"name":"Astro dark","mode":"dark","stroke":"hairline","weight":"semibold","ground":"#0d1014","card":"#151a20","rule":"#262c33","ink":"#e8eaed","accent":"#6bb9c9"},{"name":"Gleaner (today)","mode":"dark","stroke":"bold","weight":"heavy","ground":"#0e1d1a","card":"#152b27","rule":"#2b4842","ink":"#e4efeb","accent":"#9ed9c8"}]</script>
+
+<!-- Derived data model — the durable copy of Step 3's model. Same
+     script-breakout escaping rule as #seed. The drift hook compares this
+     against the <th data-field> headers below and against the source plan's
+     proto-model: frontmatter. -->
+<script type="application/json" id="proto-model">{"entity":"Theme","fields":[{"name":"name","type":"string"},{"name":"mode","type":"string"},{"name":"stroke","type":"string"},{"name":"weight","type":"string"},{"name":"ground","type":"string"},{"name":"card","type":"string"},{"name":"rule","type":"string"},{"name":"ink","type":"string"},{"name":"accent","type":"string"}],"action":"Add theme","successSignal":"Themes"}</script>
+
+<div class="summary-bar">
+  <span class="summary-badge" id="summary" data-label="Themes">Themes: 0</span>
+</div>
+
+<form id="add-form" novalidate>
+  <div class="field"><label for="f-name">Name <span class="req">*</span></label><input id="f-name" name="name" type="text" data-required></div>
+  <div class="field"><label for="f-mode">Mode</label><select id="f-mode" name="mode"><option>light</option><option>dark</option></select></div>
+  <div class="field"><label for="f-stroke">Stroke</label><select id="f-stroke" name="stroke"><option>hairline</option><option>bold</option></select></div>
+  <div class="field"><label for="f-weight">Weight</label><select id="f-weight" name="weight"><option>semibold</option><option>heavy</option></select></div>
+  <div class="field"><label for="f-ground">Ground</label><input id="f-ground" name="ground" type="color" value="#fcfcfd"></div>
+  <div class="field"><label for="f-card">Card</label><input id="f-card" name="card" type="color" value="#f1f3f5"></div>
+  <div class="field"><label for="f-rule">Rule</label><input id="f-rule" name="rule" type="color" value="#dde1e6"></div>
+  <div class="field"><label for="f-ink">Ink</label><input id="f-ink" name="ink" type="color" value="#101418"></div>
+  <div class="field"><label for="f-accent">Accent</label><input id="f-accent" name="accent" type="color" value="#0b6070"></div>
+  <button type="submit" class="btn">Add theme</button>
+  <p class="error" id="form-error" role="alert"></p>
+</form>
+
+<div class="table-wrap">
+<table id="grid">
+  <caption>Add Astro default theme records — edits persist in this browser only.</caption>
+  <thead>
+    <tr>
+      <th scope="col" data-field="name" data-type="string">Name</th>
+      <th scope="col" data-field="mode" data-type="string">Mode</th>
+      <th scope="col" data-field="stroke" data-type="string">Stroke</th>
+      <th scope="col" data-field="weight" data-type="string">Weight</th>
+      <th scope="col" data-field="ground" data-type="string">Ground</th>
+      <th scope="col" data-field="card" data-type="string">Card</th>
+      <th scope="col" data-field="rule" data-type="string">Rule</th>
+      <th scope="col" data-field="ink" data-type="string">Ink</th>
+      <th scope="col" data-field="accent" data-type="string">Accent</th>
+      <th scope="col">Actions</th>
+    </tr>
+  </thead>
+  <tbody id="rows"></tbody>
+</table>
+</div>
+
+<div class="toolbar">
+  <button type="button" class="btn btn-secondary" id="reset-btn">Reset to sample data</button>
+</div>
+
+<section class="preview" aria-labelledby="pv-title">
+  <div class="preview-bar">
+    <h2 class="pv-title" id="pv-title">Preview: <span id="pv-name"></span></h2>
+    <div class="field"><label for="pv-scale">Scale</label>
+      <select id="pv-scale"><option value="1">100% (real pixels)</option><option value="0.5">50% (whole scene)</option></select></div>
+  </div>
+  <div class="stage-wrap" tabindex="0" role="region" aria-label="Sample scene preview">
+    <div id="stage">
+      <div class="kicker">The problem</div>
+      <div class="s-h2">Saving things is easy. <span class="acc">Finding them isn't.</span></div>
+      <div class="card row"><div class="ico"></div><div><div class="rt">Too many tabs</div><div class="rd">Kept open "for later" until the browser crashes</div></div></div>
+      <div class="card row"><div class="ico"></div><div><div class="rt">Dead bookmarks</div><div class="rd">A link with no idea why you saved it</div></div></div>
+      <div class="panel"><div class="pt">Native view transitions</div><div class="hr"></div><div class="pk">TL;DR</div></div>
+      <div class="step"><div class="num">1</div><div class="rt">Save the page</div></div>
+    </div>
+  </div>
+  <p class="preview-note">The video stage is 1080 px wide, so at 100% it scrolls sideways. Judge borders at 100%: at 50% the browser rounds a half-pixel line up, and hairline and bold can look the same. System font stands in for Inter; five colours are stored and the other roles are mixed from them.</p>
+</section>
+
+<p class="status" id="status" role="status" aria-live="polite" aria-atomic="true"></p>
+
+<script>
+/* === STORE (extractable: depends only on STORE_KEY, document#seed, localStorage, confirm) === */
+var STORE_KEY = "proto-add-astro-default-theme";
+function readSeed() {
+  try { return JSON.parse(document.getElementById('seed').textContent); }
+  catch (e) { return []; }
+}
+function isRecordList(value) {
+  // JSON.parse accepts shapes render() cannot walk ([null], {}, "x") — only an
+  // array of plain objects counts as stored records; anything else is dropped.
+  if (!Array.isArray(value)) return false;
+  for (var i = 0; i < value.length; i++) {
+    if (value[i] === null || typeof value[i] !== 'object' || Array.isArray(value[i])) return false;
+  }
+  return true;
+}
+function load() {
+  try {
+    var raw = localStorage.getItem(STORE_KEY);
+    var stored = raw ? JSON.parse(raw) : null;
+    return isRecordList(stored) ? stored : readSeed();
+  } catch (e) { return readSeed(); }
+}
+function save(records) {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(records)); } catch (e) {}
+}
+function resetStore() {
+  if (!confirm('Reset to the sample data? This clears your local changes.')) return null;
+  try { localStorage.removeItem(STORE_KEY); } catch (e) {}
+  return readSeed();
+}
+/* === END STORE === */
+
+(function () {
+  var rowsEl    = document.getElementById('rows');
+  var summaryEl = document.getElementById('summary');
+  var statusEl  = document.getElementById('status');
+  var errorEl   = document.getElementById('form-error');
+  var form      = document.getElementById('add-form');
+  var resetBtn  = document.getElementById('reset-btn');
+  var stage     = document.getElementById('stage');
+  var pvName    = document.getElementById('pv-name');
+  var pvScale   = document.getElementById('pv-scale');
+  // Read the label from the (HTML-escaped) attribute — getAttribute decodes
+  // entities, so the JS string is correct even for &, quotes, or apostrophes.
+  var summaryLabel = summaryEl.getAttribute('data-label') || '';
+
+  // Field order + types derived from the table header — text nodes only, no raw HTML.
+  var fields = [];
+  document.querySelectorAll('#grid thead th[data-field]').forEach(function (th) {
+    fields.push({ key: th.getAttribute('data-field'), type: th.getAttribute('data-type') || 'string' });
+  });
+
+  var records = load();
+  var current = 0;                       // index of the row shown in the preview
+  var HEX = /^#[0-9a-f]{6}$/i;           // only a plain hex colour ever reaches CSS
+  // The plan's two new settings, as step 4 defines them in SCALES.
+  var STROKE = { bold: ['2px', '3px'], hairline: ['1px', '2px'] };   // [border, .hr height]
+  var WEIGHT = { heavy: '800', semibold: '600' };
+  var COLORS = ['ground', 'card', 'rule', 'ink', 'accent'];
+
+  function announce(msg) { statusEl.textContent = msg; }
+
+  function setText(cell, value) { cell.appendChild(document.createTextNode(value == null ? '' : String(value))); }
+
+  function preview() {
+    var rec = records[current];
+    if (!rec) { pvName.textContent = 'no theme selected'; return; }
+    pvName.textContent = String(rec.name == null ? '' : rec.name);
+    COLORS.forEach(function (k) {
+      if (HEX.test(rec[k])) stage.style.setProperty('--' + k, rec[k]);
+      else stage.style.removeProperty('--' + k);          // stored junk falls back to the Astro light default
+    });
+    // An unknown value falls back to today's look, as a spec with no theme does.
+    var s = Object.prototype.hasOwnProperty.call(STROKE, rec.stroke) ? STROKE[rec.stroke] : STROKE.bold;
+    var w = Object.prototype.hasOwnProperty.call(WEIGHT, rec.weight) ? WEIGHT[rec.weight] : WEIGHT.heavy;
+    stage.style.setProperty('--bw', s[0]);
+    stage.style.setProperty('--hrh', s[1]);
+    stage.style.setProperty('--hw', w);
+  }
+
+  function render() {
+    while (rowsEl.firstChild) rowsEl.removeChild(rowsEl.firstChild);
+    if (current >= records.length) current = Math.max(0, records.length - 1);
+
+    if (!records.length) {
+      var tr = document.createElement('tr');
+      var td = document.createElement('td');
+      td.className = 'empty-state';
+      td.setAttribute('colspan', String(fields.length + 1));
+      setText(td, 'No records yet — add one above.');
+      tr.appendChild(td);
+      rowsEl.appendChild(tr);
+    } else {
+      records.forEach(function (rec, idx) {
+        var tr = document.createElement('tr');
+        fields.forEach(function (f) {
+          var td = document.createElement('td');
+          if (HEX.test(rec[f.key])) {
+            var sw = document.createElement('span');
+            sw.className = 'swatch';
+            sw.style.background = rec[f.key];
+            td.appendChild(sw);
+          }
+          setText(td, rec[f.key]);          // textContent path — hostile input is inert
+          tr.appendChild(td);
+        });
+        var actions = document.createElement('td');
+        var show = document.createElement('button');
+        show.type = 'button';
+        show.className = 'btn-preview';
+        show.textContent = 'Preview';
+        show.setAttribute('aria-pressed', String(idx === current));
+        show.addEventListener('click', function () {
+          current = idx;
+          render();
+          rowsEl.querySelectorAll('.btn-preview')[idx].focus();
+          announce('Previewing ' + pvName.textContent + '.');
+        });
+        actions.appendChild(show);
+        var del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'btn-danger';
+        del.textContent = 'Delete';
+        del.addEventListener('click', function () { remove(idx); });
+        actions.appendChild(del);
+        tr.appendChild(actions);
+        rowsEl.appendChild(tr);
+      });
+    }
+    summaryEl.textContent = summaryLabel + ': ' + records.length;
+    preview();
+  }
+
+  function remove(idx) {
+    records.splice(idx, 1);
+    if (idx < current) current--;
+    save(records);
+    render();
+    announce('Record deleted. ' + records.length + ' remaining.');
+  }
+
+  form.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    errorEl.textContent = '';
+    var rec = {};
+    var firstInvalid = null;
+    for (var i = 0; i < fields.length; i++) {
+      var input = form.elements[fields[i].key];
+      if (!input) continue;
+      if (fields[i].type === 'bool') {
+        rec[fields[i].key] = !!input.checked;  // checkbox: read state, not "on"
+        continue;
+      }
+      var val = input.value.trim();
+      if (input.hasAttribute('data-required') && !val) {
+        if (!firstInvalid) firstInvalid = input;
+        continue;
+      }
+      rec[fields[i].key] = (fields[i].type === 'number' && val !== '') ? Number(val) : val;
+    }
+    if (firstInvalid) {
+      errorEl.textContent = 'Please fill in the required fields.';
+      firstInvalid.focus();
+      return;
+    }
+    records.push(rec);
+    current = records.length - 1;         // show the theme that was just added
+    save(records);
+    render();
+    form.reset();
+    var first = form.querySelector('input, select, textarea');
+    if (first) first.focus();
+    announce('Record added. ' + records.length + ' total.');
+  });
+
+  resetBtn.addEventListener('click', function () {
+    var seeded = resetStore();
+    if (seeded === null) return;          // user cancelled the confirm
+    records = seeded;
+    current = 0;
+    render();
+    resetBtn.focus();
+    announce('Reset to sample data. ' + records.length + ' records.');
+  });
+
+  pvScale.addEventListener('change', function () { stage.style.zoom = pvScale.value; });
+  stage.style.zoom = pvScale.value;
+
+  render();
+})();
+</script>
+</body>
+</html>

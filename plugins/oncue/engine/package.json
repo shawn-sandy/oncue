@@ -21,6 +21,7 @@
     "node": ">=22"
   },
   "dependencies": {
+    "@fontsource/inter": "^5.3.0",
     "@fontsource/jetbrains-mono": "^5.3.0",
     "@fontsource/plus-jakarta-sans": "^5.3.0",
     "pptxgenjs": "^4.0.1",
@@ -34,6 +35,9 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "image-size": "^2.0.3"
   },
   "peerDependencies": {
     "playwright": ">=1.40.0"

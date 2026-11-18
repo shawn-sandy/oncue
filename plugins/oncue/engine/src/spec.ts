@@ -40,14 +40,18 @@ export interface Brand {
 }
 
 /**
- * Each theme value and its multiplier on today's design: radius on card corners, type on font sizes, density on
- * gaps and paddings, background on the glow's opacity. The default (×1) is today's look.
+ * Each theme value and what it sets. radius, type, density and background are multipliers on today's design: radius
+ * on card corners, type on font sizes, density on gaps and paddings, background on the glow's opacity; their
+ * default (×1) is today's look. stroke is the card border and panel rule width in px, and weight the heading font
+ * weight; their defaults (bold, heavy) are today's 2px, 3px and 800.
  */
 export const SCALES = {
   radius: { sharp: 0.2, soft: 0.55, round: 1 },
   type: { small: 0.9, regular: 1, large: 1.1 },
   density: { compact: 0.75, regular: 1, airy: 1.3 },
   background: { glow: 1, subtle: 0.4, flat: 0 },
+  stroke: { bold: { border: 2, rule: 3 }, hairline: { border: 1, rule: 2 } },
+  weight: { heavy: 800, semibold: 600 },
 } as const;
 /** What content scenes show above the kicker: logo and name, logo only, or nothing. */
 export const HEADERS = ["brand", "logo", "none"] as const;
@@ -56,13 +60,17 @@ export type Header = (typeof HEADERS)[number];
 /** Optional look for the whole short; every unset key keeps today's design. */
 export type Theme = { [K in keyof typeof SCALES]?: keyof (typeof SCALES)[K] } & { header?: Header };
 
-/** A spec's theme as the renderers use it: multipliers, plus the header. */
-export interface Look { radius: number; type: number; density: number; background: number; header: Header }
+/** A spec's theme as the renderers use it: multipliers, border and rule widths, heading weight, and the header. */
+export interface Look {
+  radius: number; type: number; density: number; background: number;
+  stroke: { border: number; rule: number }; weight: number; header: Header;
+}
 export function look(spec: Spec): Look {
   const t = spec.theme ?? {};
   return {
     radius: SCALES.radius[t.radius ?? "round"], type: SCALES.type[t.type ?? "regular"],
     density: SCALES.density[t.density ?? "regular"], background: SCALES.background[t.background ?? "glow"],
+    stroke: SCALES.stroke[t.stroke ?? "bold"], weight: SCALES.weight[t.weight ?? "heavy"],
     header: t.header ?? "brand",
   };
 }

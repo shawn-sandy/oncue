@@ -1,0 +1,322 @@
+<!doctype html>
+<title>OnCue Astro Default Theme</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one 60rem reading column, flat paper surfaces separated by tone and a hairline (Astro Kit's own rules). */
+:root{
+  --paper:#fcfcfd; --paper-sunk:#f1f3f5; --ink:#101418; --ink-soft:#5a6472;
+  --island:#0b6070; --island-bg:#e6f2f6; --rule:#dde1e6;
+  --ok:#1f7a45; --ok-bg:#e5f4ea;
+  --display:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0d1014; --paper-sunk:#151a20; --ink:#e8eaed; --ink-soft:#99a2ad;
+  --island:#6bb9c9; --island-bg:#102a33; --rule:#262c33; --ok:#7fd4a0; --ok-bg:#12291c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0d1014; --paper-sunk:#151a20; --ink:#e8eaed; --ink-soft:#99a2ad;
+  --island:#6bb9c9; --island-bg:#102a33; --rule:#262c33; --ok:#7fd4a0; --ok-bg:#12291c; color-scheme:dark}
+
+body{background:var(--paper);color:var(--ink);font:400 16px/1.55 var(--sans)}
+.wrap{max-width:60rem;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:3rem 4rem;display:flex;flex-direction:column;gap:3rem}
+h1,h2,h3{font-family:var(--display);font-weight:600;margin:0;text-wrap:balance;color:var(--ink)}
+h1{font-size:clamp(2rem,5vw,3rem);line-height:1.08;letter-spacing:-.025em}
+h2{font-size:1.5rem;line-height:1.2;letter-spacing:-.015em}
+h3{font-size:1.05rem;line-height:1.3}
+p{margin:0;max-width:65ch}
+a{color:var(--island);text-underline-offset:3px}
+a:focus-visible{outline:2px solid var(--island);outline-offset:2px;border-radius:4px}
+code{font-family:var(--mono);font-size:.86em;color:var(--ink-soft);background:var(--paper-sunk);padding:.08em .35em;border-radius:4px}
+.eyebrow{font-family:var(--mono);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
+.deck{font-size:1.15rem;color:var(--ink-soft);max-width:60ch}
+section{display:flex;flex-direction:column;gap:1rem}
+header{display:flex;flex-direction:column;gap:1rem;padding-bottom:2rem;border-bottom:1px solid var(--rule)}
+.meta{display:flex;flex-wrap:wrap;gap:.5rem 1.25rem}
+.status{font-family:var(--mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;padding:.5rem .8rem;border-radius:4px;background:var(--ok-bg);color:var(--ok)}
+blockquote{margin:0;padding:1.25rem 1.5rem;background:var(--paper-sunk);border-radius:8px;font-family:var(--display);font-weight:600;font-size:1.15rem;line-height:1.45;max-width:none}
+ul,ol{margin:0;padding-left:1.25rem;display:flex;flex-direction:column;gap:.45rem;max-width:68ch}
+li{min-width:0}
+
+/* Frame specimens: each phone frame is a fixed sample of one look, so it carries its own colours. */
+.frames{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.25rem}
+@media (max-width:720px){.frames{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:460px){.frames{grid-template-columns:minmax(0,1fr)}}
+figure{margin:0;display:flex;flex-direction:column;gap:.6rem;min-width:0}
+figcaption{display:flex;flex-direction:column;gap:.15rem}
+figcaption b{font-family:var(--display);font-weight:600;font-size:.95rem}
+figcaption span{font-size:.85rem;color:var(--ink-soft)}
+.frame{position:relative;aspect-ratio:9/16;max-width:100%;border-radius:14px;overflow:hidden;padding:9% 8%;display:flex;flex-direction:column;gap:5%;border:1px solid var(--rule);background:var(--g);color:var(--i)}
+.frame .bar{position:absolute;left:0;top:0;height:4px;width:58%;background:var(--h)}
+.frame .glow{position:absolute;border-radius:50%;filter:blur(28px);opacity:.55;pointer-events:none}
+.frame .brandrow{display:flex;align-items:center;gap:6px;font-weight:700;font-size:.72rem;position:relative}
+.frame .logo{width:16px;height:16px;border-radius:4px;background:var(--a)}
+.frame .k{font-family:var(--mono);font-size:.6875rem;letter-spacing:.14em;text-transform:uppercase;color:var(--a);position:relative;margin-top:14%}
+.frame .t{font-size:1.02rem;line-height:1.12;letter-spacing:-.02em;position:relative}
+.frame .t em{font-style:normal;color:var(--a)}
+.frame .rows{display:flex;flex-direction:column;gap:7px;position:relative}
+.frame .row{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--c);font-size:.75rem;font-weight:700;line-height:1.2}
+.frame .row small{display:block;font-weight:400;color:var(--m);font-size:.6875rem;margin-top:2px}
+.frame .dot{flex:none;width:20px;height:20px;border-radius:50%;background:var(--ch);display:grid;place-items:center}
+.frame .dot i{width:8px;height:8px;border-radius:2px;background:var(--a)}
+.frame .pill{align-self:flex-start;font-family:var(--mono);font-size:.6875rem;padding:6px 12px;border-radius:999px;background:var(--ch);color:var(--a);position:relative}
+.gleaner{--g:#0e1d1a;--c:#152b27;--ch:#234240;--r:#2b4842;--i:#e4efeb;--m:#a3bab3;--a:#9ed9c8;--h:#d98a62}
+.gleaner .t{font-weight:800}.gleaner .row{border:2px solid var(--r);border-radius:12px}
+.astro-l{--g:#fcfcfd;--c:#f1f3f5;--ch:#e6f2f6;--r:#dde1e6;--i:#101418;--m:#5a6472;--a:#0b6070;--h:#0b6070;font-family:var(--display)}
+.astro-d{--g:#0d1014;--c:#151a20;--ch:#102a33;--r:#262c33;--i:#e8eaed;--m:#99a2ad;--a:#6bb9c9;--h:#6bb9c9;font-family:var(--display)}
+.astro-l .t,.astro-d .t{font-weight:600}
+.astro-l .row,.astro-d .row{border:1px solid var(--r);border-radius:7px}
+.gleaner{font-family:"Plus Jakarta Sans",var(--sans)}
+
+/* Tables */
+.scroll{overflow-x:auto;border:1px solid var(--rule);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:.9rem;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:.55rem .8rem;border-bottom:1px solid var(--rule);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{font-family:var(--mono);font-size:.72rem;font-weight:400;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);background:var(--paper-sunk);white-space:nowrap}
+td.num{text-align:right;white-space:nowrap}
+th.num{text-align:right}
+.chosen{background:var(--island-bg)}
+.sw{display:inline-flex;align-items:center;gap:.45rem;white-space:nowrap;font-family:var(--mono);font-size:.82rem}
+.sw::before{content:"";width:.95rem;height:.95rem;border-radius:3px;background:var(--s);border:1px solid var(--rule)}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.25rem}
+@media (max-width:720px){.two{grid-template-columns:minmax(0,1fr)}}
+
+/* Decisions */
+.decisions{list-style:none;padding:0;gap:0;max-width:none;border-top:1px solid var(--rule)}
+.decisions li{display:grid;grid-template-columns:2.2rem minmax(0,1fr);gap:.75rem;padding:.85rem 0;border-bottom:1px solid var(--rule)}
+.decisions .n{font-family:var(--mono);font-size:.8rem;color:var(--ink-soft);padding-top:.15rem}
+.decisions b{font-family:var(--display);font-weight:600}
+.decisions .when{display:block;font-family:var(--mono);font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:.15rem}
+
+.ws{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+@media (max-width:720px){.ws{grid-template-columns:minmax(0,1fr)}}
+.ws article{background:var(--paper-sunk);border-radius:8px;padding:1.25rem 1.4rem;display:flex;flex-direction:column;gap:.7rem;min-width:0}
+.ws ul{font-size:.92rem}
+.size{font-family:var(--mono);font-size:.75rem;color:var(--ink-soft)}
+
+pre{margin:0;background:var(--paper-sunk);border-radius:8px;padding:1rem 1.2rem;overflow-x:auto;font:400 .8rem/1.6 var(--mono);color:var(--ink)}
+.cmd{display:flex;flex-direction:column;gap:.6rem}
+footer{border-top:1px solid var(--rule);padding-top:1.5rem;color:var(--ink-soft);font-size:.88rem}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">OnCue plugin · proposal · 2026-11-10</span>
+    <h1>An Astro-based default theme for OnCue videos</h1>
+    <p class="deck">Give every new Short a calm, named default look built from the Astro Kit Design System, and make a new theme one JSON file.</p>
+    <div class="meta">
+      <span class="status">Converged</span>
+      <span class="eyebrow">Tier 2 · 9 decisions locked · 4 phases</span>
+    </div>
+  </header>
+
+  <section aria-labelledby="look">
+    <span class="eyebrow">The look, side by side</span>
+    <h2 id="look">Today's reference look against the Astro default</h2>
+    <p>A sketch of one list scene at phone size, drawn from the real colour values. The Astro frames use the two new tokens: 1px hairlines and 600-weight headings, with no glow blobs.</p>
+    <div class="frames">
+      <figure>
+        <div class="frame gleaner" role="img" aria-label="Today's look: dark green ground, glow blobs, 800-weight heading, 2px card borders">
+          <div class="glow" style="width:70%;height:40%;left:-25%;top:-8%;background:#185c53"></div>
+          <div class="glow" style="width:60%;height:35%;right:-30%;top:45%;background:#234240"></div>
+          <div class="bar"></div>
+          <div class="brandrow"><span class="logo"></span>Gleaner</div>
+          <div class="k">The problem</div>
+          <div class="t">Saving is easy. <em>Finding isn't.</em></div>
+          <div class="rows">
+            <div class="row"><span class="dot"><i></i></span><span>Too many tabs<small>Kept open for later</small></span></div>
+            <div class="row"><span class="dot"><i></i></span><span>Dead bookmarks<small>No idea why you saved it</small></span></div>
+          </div>
+          <span class="pill">00:42 · tags</span>
+        </div>
+        <figcaption><b>Today (Gleaner sample)</b><span>Glow, 2px borders, 800 headings, two accent colours</span></figcaption>
+      </figure>
+      <figure>
+        <div class="frame astro-l" role="img" aria-label="Astro default, light: paper ground, teal accent, hairline cards, 600-weight heading">
+          <div class="bar"></div>
+          <div class="brandrow"><span class="logo"></span>Your product</div>
+          <div class="k">The problem</div>
+          <div class="t">Saving is easy. <em>Finding isn't.</em></div>
+          <div class="rows">
+            <div class="row"><span class="dot"><i></i></span><span>Too many tabs<small>Kept open for later</small></span></div>
+            <div class="row"><span class="dot"><i></i></span><span>Dead bookmarks<small>No idea why you saved it</small></span></div>
+          </div>
+          <span class="pill">00:42 · tags</span>
+        </div>
+        <figcaption><b>Astro, light (the default)</b><span>Flat paper, 1px hairlines, 600 headings, one teal</span></figcaption>
+      </figure>
+      <figure>
+        <div class="frame astro-d" role="img" aria-label="Astro default, dark: near-black ground, light teal accent, hairline cards">
+          <div class="bar"></div>
+          <div class="brandrow"><span class="logo"></span>Your product</div>
+          <div class="k">The problem</div>
+          <div class="t">Saving is easy. <em>Finding isn't.</em></div>
+          <div class="rows">
+            <div class="row"><span class="dot"><i></i></span><span>Too many tabs<small>Kept open for later</small></span></div>
+            <div class="row"><span class="dot"><i></i></span><span>Dead bookmarks<small>No idea why you saved it</small></span></div>
+          </div>
+          <span class="pill">00:42 · tags</span>
+        </div>
+        <figcaption><b>Astro, dark (say "dark")</b><span>Same rules on Astro Kit's dark values</span></figcaption>
+      </figure>
+    </div>
+    <p class="eyebrow">Sketch, not an engine render. Real stills come in phase 4.</p>
+  </section>
+
+  <section aria-labelledby="finding">
+    <span class="eyebrow">Core finding</span>
+    <h2 id="finding">Colours fit; the look lives in hard-coded traits</h2>
+    <blockquote>Astro Kit's colours map onto OnCue's 13 roles with every contrast pair passing, but its look lives in traits OnCue hard-codes (2px borders, 800 headings), so a colours-only preset would repaint today's shapes. A distinct default needs a preset file plus two new theme tokens, <code>stroke</code> and <code>weight</code>.</blockquote>
+    <ul>
+      <li><code>scenes.ts</code> has 98 CSS rules; 27 use only literal px and 92 px values are fixed in total.</li>
+      <li>Fixed today: 2px borders on cards, bubbles, player, tiles and photos; weight 800 on headings, panel titles and step numbers; 999px pills; circular icons.</li>
+      <li>No colour or font defaults exist in the engine; when nothing is found, the storyboard skill invents a palette.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="options">
+    <span class="eyebrow">Options considered</span>
+    <h2 id="options">Four ways to ship a default</h2>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Dimension</th><th class="chosen">Preset + 2 look tokens (chosen)</th><th>Preset, skill copies it</th><th>Engine preset with overrides</th><th>Keep current</th></tr></thead>
+        <tbody>
+          <tr><td>What ships</td><td class="chosen"><code>themes/astro.json</code> plus <code>stroke</code> and <code>weight</code></td><td><code>themes/astro.json</code> only</td><td><code>theme.preset</code> merged by <code>loadSpec</code></td><td>Nothing</td></tr>
+          <tr><td>Distinct from today</td><td class="chosen">Yes: flat, hairlines, 600 headings</td><td>Colours only</td><td>Colours only</td><td>No</td></tr>
+          <tr><td>New theme</td><td class="chosen">One JSON file</td><td>One JSON file</td><td>One JSON file</td><td>13 colours by hand</td></tr>
+          <tr><td>Customize</td><td class="chosen">Edit the copied block</td><td>Same</td><td>Override single keys</td><td>Same as today</td></tr>
+          <tr><td><code>short.json</code> contract</td><td class="chosen">Two new optional keys</td><td>Unchanged</td><td>Colours and fonts become optional</td><td>Unchanged</td></tr>
+          <tr><td>Engine change</td><td class="chosen">spec, scenes, deck, tests, docs</td><td>None</td><td>spec, docs, tests</td><td>None</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="decisions">
+    <span class="eyebrow">Locked and resolved</span>
+    <h2 id="decisions">Decisions</h2>
+    <ol class="decisions">
+      <li><span class="n">1</span><div><span class="when">Approach · 2026-11-10</span><b>Preset file plus two look tokens.</b> The only option that renders a look distinct from today's while keeping new themes to one file.</div></li>
+      <li><span class="n">2</span><div><span class="when">Settled before</span><b>Unset keys keep today's look.</b> <code>stroke</code> defaults to <code>bold</code>, <code>weight</code> to <code>heavy</code>; specs without them render byte-identical output.</div></li>
+      <li><span class="n">3</span><div><span class="when">Settled before</span><b><code>short.json</code> stays the single source of truth.</b> Nothing in the render path opens a preset file.</div></li>
+      <li><span class="n">4</span><div><span class="when">Settled before</span><b>The Gleaner example keeps its own brand.</b> The default applies to new Shorts with no look.</div></li>
+      <li><span class="n">5</span><div><span class="when">Review · 2026-11-10</span><b>The storyboard skill copies the preset in.</b> Colours, fonts, deck fonts and theme go into <code>short.json</code>; the product keeps its own name and logo. No merge code in the engine.</div></li>
+      <li><span class="n">6</span><div><span class="when">Review · 2026-11-10</span><b>Light by default.</b> Astro Kit's primary theme; the word "dark" picks the dark mode.</div></li>
+      <li><span class="n">7</span><div><span class="when">Review · 2026-11-10</span><b>Inter for sans, JetBrains Mono for mono.</b> Inter is added; JetBrains Mono is already installed.</div></li>
+      <li><span class="n">8</span><div><span class="when">Review · 2026-11-10</span><b>Deck: <code>stroke</code> draws, <code>weight</code> does nothing.</b> Hairline adds a 0.75pt rule-coloured line; PowerPoint bold is only on or off.</div></li>
+      <li><span class="n">9</span><div><span class="when">Review · 2026-11-10</span><b>Preset density stays <code>regular</code>.</b> Safe fit for every scene; "airy" stays available by word.</div></li>
+    </ol>
+  </section>
+
+  <section aria-labelledby="palette">
+    <span class="eyebrow">Appendix A · measured 2026-11-10</span>
+    <h2 id="palette">Colour roles and contrast</h2>
+    <p>WCAG 2 contrast over the 16 pairs <code>check</code> tests, floored to two decimals. All 32 pairs pass 4.5:1. Only <code>panelRule</code> is derived; every other role is an Astro Kit value.</p>
+    <div class="two">
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Role</th><th>Astro token</th><th>Light</th><th>Dark</th></tr></thead>
+          <tbody>
+            <tr><td>ground</td><td>paper</td><td><span class="sw" style="--s:#fcfcfd">#fcfcfd</span></td><td><span class="sw" style="--s:#0d1014">#0d1014</span></td></tr>
+            <tr><td>card</td><td>paper-sunk</td><td><span class="sw" style="--s:#f1f3f5">#f1f3f5</span></td><td><span class="sw" style="--s:#151a20">#151a20</span></td></tr>
+            <tr><td>chip</td><td>island-bg</td><td><span class="sw" style="--s:#e6f2f6">#e6f2f6</span></td><td><span class="sw" style="--s:#102a33">#102a33</span></td></tr>
+            <tr><td>rule</td><td>rule</td><td><span class="sw" style="--s:#dde1e6">#dde1e6</span></td><td><span class="sw" style="--s:#262c33">#262c33</span></td></tr>
+            <tr><td>ink</td><td>ink</td><td><span class="sw" style="--s:#101418">#101418</span></td><td><span class="sw" style="--s:#e8eaed">#e8eaed</span></td></tr>
+            <tr><td>muted</td><td>ink-soft</td><td><span class="sw" style="--s:#5a6472">#5a6472</span></td><td><span class="sw" style="--s:#99a2ad">#99a2ad</span></td></tr>
+            <tr><td>accent, highlight, you</td><td>island</td><td><span class="sw" style="--s:#0b6070">#0b6070</span></td><td><span class="sw" style="--s:#6bb9c9">#6bb9c9</span></td></tr>
+            <tr><td>panel</td><td>island-bg</td><td><span class="sw" style="--s:#e6f2f6">#e6f2f6</span></td><td><span class="sw" style="--s:#102a33">#102a33</span></td></tr>
+            <tr><td>panelInk</td><td>ink</td><td><span class="sw" style="--s:#101418">#101418</span></td><td><span class="sw" style="--s:#e8eaed">#e8eaed</span></td></tr>
+            <tr><td>panelMuted</td><td>ink-soft</td><td><span class="sw" style="--s:#5a6472">#5a6472</span></td><td><span class="sw" style="--s:#99a2ad">#99a2ad</span></td></tr>
+            <tr><td>panelRule</td><td>derived tint</td><td><span class="sw" style="--s:#c9dfe6">#c9dfe6</span></td><td><span class="sw" style="--s:#1d4552">#1d4552</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Pair</th><th class="num">Light</th><th class="num">Dark</th></tr></thead>
+          <tbody>
+            <tr><td>ink on ground</td><td class="num">18.04</td><td class="num">15.82</td></tr>
+            <tr><td>muted on ground</td><td class="num">5.85</td><td class="num">7.37</td></tr>
+            <tr><td>accent on ground</td><td class="num">7.01</td><td class="num">8.54</td></tr>
+            <tr><td>ink on card</td><td class="num">16.62</td><td class="num">14.51</td></tr>
+            <tr><td>muted on card</td><td class="num">5.39</td><td class="num">6.76</td></tr>
+            <tr><td>accent on card</td><td class="num">6.46</td><td class="num">7.83</td></tr>
+            <tr><td>highlight on ground</td><td class="num">7.01</td><td class="num">8.54</td></tr>
+            <tr><td>accent on chip</td><td class="num">6.29</td><td class="num">6.71</td></tr>
+            <tr><td>you on card</td><td class="num">6.46</td><td class="num">7.83</td></tr>
+            <tr><td>panelInk on panel</td><td class="num">16.20</td><td class="num">12.43</td></tr>
+            <tr><td>panelMuted on panel</td><td class="num">5.25</td><td class="num">5.80</td></tr>
+            <tr><td>accent on panel</td><td class="num">6.29</td><td class="num">6.71</td></tr>
+            <tr><td>ink on panel</td><td class="num">16.20</td><td class="num">12.43</td></tr>
+            <tr><td>panelInk on panelRule</td><td class="num">13.37</td><td class="num">8.60</td></tr>
+            <tr><td>ground on highlight</td><td class="num">7.01</td><td class="num">8.54</td></tr>
+            <tr><td>ground on accent</td><td class="num">7.01</td><td class="num">8.54</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="work">
+    <span class="eyebrow">Workstreams and roadmap</span>
+    <h2 id="work">What gets built, in order</h2>
+    <div class="ws">
+      <article><span class="size">Phase 1 · M</span><h3>A. Two new theme tokens</h3>
+        <ul><li><code>stroke</code>: <code>bold</code> (2px, default) or <code>hairline</code> (1px).</li><li><code>weight</code>: <code>heavy</code> (800, default) or <code>semibold</code> (600).</li><li>Type, validation, both renderers, <code>spec.md</code>, rebuilt <code>dist/</code>.</li><li>Tests extend the existing theme loop; default output stays byte-identical.</li></ul></article>
+      <article><span class="size">Phase 2 · S</span><h3>B. The Astro preset file</h3>
+        <ul><li><code>engine/themes/astro.json</code> with light and dark modes.</li><li>Add <code>@fontsource/inter</code>.</li><li>A test runs every theme file and mode through the contrast check, so a new theme is safe to drop in.</li></ul></article>
+      <article><span class="size">Phase 3 · S</span><h3>C. Skill prose</h3>
+        <ul><li>Storyboard step 1 copies the Astro default instead of inventing a palette.</li><li><code>theme.md</code> gains "Default theme" and "Making a new theme".</li><li>Plain words can set <code>stroke</code> and <code>weight</code>; the DESIGN.md <code>oncue:</code> block stores both.</li></ul></article>
+      <article><span class="size">Phase 4 · S</span><h3>D. Release</h3>
+        <ul><li>Version 1.8.0 to 1.9.0, changelog entry.</li><li>Render the example deck and stills in both modes and look at them.</li></ul></article>
+    </div>
+  </section>
+
+  <section aria-labelledby="preset">
+    <span class="eyebrow">Appendix B</span>
+    <h2 id="preset">Draft preset file</h2>
+<pre>{
+  "name": "Astro",
+  "source": "Astro Kit Design System, shawn-sandy/astro-basics DESIGN.md",
+  "modes": {
+    "light": { "colors": {
+      "ground": "#fcfcfd", "card": "#f1f3f5", "chip": "#e6f2f6", "rule": "#dde1e6",
+      "ink": "#101418", "muted": "#5a6472", "accent": "#0b6070", "highlight": "#0b6070", "you": "#0b6070",
+      "panel": "#e6f2f6", "panelInk": "#101418", "panelMuted": "#5a6472", "panelRule": "#c9dfe6" } },
+    "dark": { "colors": {
+      "ground": "#0d1014", "card": "#151a20", "chip": "#102a33", "rule": "#262c33",
+      "ink": "#e8eaed", "muted": "#99a2ad", "accent": "#6bb9c9", "highlight": "#6bb9c9", "you": "#6bb9c9",
+      "panel": "#102a33", "panelInk": "#e8eaed", "panelMuted": "#99a2ad", "panelRule": "#1d4552" } }
+  },
+  "fonts": { "sans": "inter", "mono": "jetbrains-mono" },
+  "deckFonts": { "head": "Arial", "body": "Arial" },
+  "theme": { "radius": "soft", "background": "flat", "density": "regular", "type": "regular",
+             "header": "brand", "stroke": "hairline", "weight": "semibold" }
+}</pre>
+  </section>
+
+  <section aria-labelledby="risks">
+    <span class="eyebrow">Risks</span>
+    <h2 id="risks">Where it could strain</h2>
+    <ul>
+      <li><b>1px lines in compressed video.</b> H.264 may soften a hairline. If stills look broken, <code>hairline</code> becomes 1.5px, decided from a real frame.</li>
+      <li><b>Pills and circles stay.</b> Astro Kit avoids pills, but tags, timestamps and icon dots keep their shape. Out of scope for now.</li>
+      <li><b>Accent equals highlight.</b> One teal for everything reads calmer than today's two colours. That is the intent; confirm on the stills.</li>
+      <li><b>One more font package</b> in every project's engine copy.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="next" class="cmd">
+    <span class="eyebrow">Next step</span>
+    <h2 id="next">Turn it into an execution plan</h2>
+    <p>The proposal lives at <code>docs/prompts/proposal-add-astro-default-theme.md</code> in the OnCue repo. Planning starts with:</p>
+    <pre>/plan-agent:implementation-plan Add an Astro-based default theme and the stroke and weight theme tokens to OnCue --from-prompt docs/prompts/proposal-add-astro-default-theme.md</pre>
+  </section>
+
+  <footer>Built from the <a href="https://claude.ai/artifact/HKxyaqURmUX9WE4G8TiiW4">Astro Kit Design System</a> and a read of <code>plugins/oncue/engine/src/</code>. Contrast figures come from a script run, not estimates.</footer>
+</div>

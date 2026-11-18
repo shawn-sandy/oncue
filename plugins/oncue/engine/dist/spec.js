@@ -20,14 +20,18 @@ const node_fs_1 = require("node:fs");
 const node_path_1 = require("node:path");
 const sharp_1 = __importDefault(require("sharp"));
 /**
- * Each theme value and its multiplier on today's design: radius on card corners, type on font sizes, density on
- * gaps and paddings, background on the glow's opacity. The default (×1) is today's look.
+ * Each theme value and what it sets. radius, type, density and background are multipliers on today's design: radius
+ * on card corners, type on font sizes, density on gaps and paddings, background on the glow's opacity; their
+ * default (×1) is today's look. stroke is the card border and panel rule width in px, and weight the heading font
+ * weight; their defaults (bold, heavy) are today's 2px, 3px and 800.
  */
 exports.SCALES = {
     radius: { sharp: 0.2, soft: 0.55, round: 1 },
     type: { small: 0.9, regular: 1, large: 1.1 },
     density: { compact: 0.75, regular: 1, airy: 1.3 },
     background: { glow: 1, subtle: 0.4, flat: 0 },
+    stroke: { bold: { border: 2, rule: 3 }, hairline: { border: 1, rule: 2 } },
+    weight: { heavy: 800, semibold: 600 },
 };
 /** What content scenes show above the kicker: logo and name, logo only, or nothing. */
 exports.HEADERS = ["brand", "logo", "none"];
@@ -36,6 +40,7 @@ function look(spec) {
     return {
         radius: exports.SCALES.radius[t.radius ?? "round"], type: exports.SCALES.type[t.type ?? "regular"],
         density: exports.SCALES.density[t.density ?? "regular"], background: exports.SCALES.background[t.background ?? "glow"],
+        stroke: exports.SCALES.stroke[t.stroke ?? "bold"], weight: exports.SCALES.weight[t.weight ?? "heavy"],
         header: t.header ?? "brand",
     };
 }
