@@ -26,7 +26,8 @@ test("import renders one PNG per visible slide from a .pptx, and again from the 
   assert.equal(JSON.parse(readFileSync(join(out, "slides.json"), "utf8")).slides.length, 3);
   const page = sharp(join(out, "pages", "slide-01.png"));
   const { width = 0, height = 0 } = await page.metadata();
-  assert.ok(Math.abs(width / height - 16 / 9) < 0.01, `${width}×${height}`);
+  // LibreOffice writes a 16:9 page a hair taller than 405 pt, so the height can round up by one pixel.
+  assert.ok(width === 1920 && Math.abs(height - 1080) <= 1, `a 16:9 slide renders at the video's size, got ${width}×${height}`);
   assert.ok((await page.stats()).channels.some((c) => c.stdev > 0), "the page is not blank");
   assert.deepEqual(readdirSync(join(tmp, "src")), ["deck.pptx"], "no lock file or export is left beside the deck");
 

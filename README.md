@@ -127,7 +127,7 @@ Have a finished PowerPoint, Google Slides or Keynote deck? Ask for a video of it
 The deck-to-video skill shows each slide exactly as you designed it, narrates it, and changes slide on the word that starts the next one. It takes a .pptx, an .odp or a PDF export; from Google Slides, use File → Download.
 
 - **Your file is never changed.** The work happens on a copy in a separate project folder. The original's SHA-256 checksum and modified time are recorded in `source-manifest.json`, and every step fails if they move.
-- **Narration comes from your speaker notes, as written.** A slide without notes gets a line drafted from what is on it. Every line waits in `narration.md`, and nothing is recorded, and no credits are spent, until you set `approved: true` there.
+- **Narration comes from your speaker notes, as written.** A slide without notes gets a line drafted from what is on it. Notes that read like reminders to yourself ("Personal anecdote:") and words a voice would stumble on (`/model`, `200K`, `$0.00014`) are flagged, and you decide whether to have them rewritten as spoken lines. Every line waits in `narration.md`, and nothing is recorded, and no credits are spent, until you set `approved: true` there.
 - **Slides are still pictures.** Animations, builds and transitions are not carried over, and hidden slides are skipped. The video keeps the deck's shape, scaled to fit 1920×1080.
 - **Rendering needs LibreOffice and poppler** (`brew install --cask libreoffice` and `brew install poppler` on macOS). LibreOffice substitutes missing fonts, so a PDF export is the most faithful input, though a PDF has no speaker notes. Without those tools, export the slides as images from your presentation app and pass the folder with `--pages`.
 
@@ -234,6 +234,7 @@ The editor previews supported layouts approximately. It does not support arbitra
 - Add deck-to-video: turn a finished .pptx, .odp or PDF export (including Google Slides downloads) into a narrated MP4, one still picture per visible slide, each changing on the first spoken word of the next.
 - The original file is never changed: `import` works on a copy, records its SHA-256 checksum and modified time in `source-manifest.json`, refuses the deck's own folder as output, and `import`, `narration` and `assemble` fail if the file no longer matches.
 - Narration uses speaker notes as written and drafted lines for slides without notes, held in `narration.md` behind an approval gate: `narration --approved` fails until the file says `approved: true`.
+- `narration` flags notes that read as reminders to the presenter and words a voice may read wrongly (commands, placeholders, prices, 200K-style amounts, web addresses, flags, code names), so they can be rewritten, with the person's agreement, before credits are spent.
 - A slide whose first word would be found inside an earlier slide is recorded as its own clip instead of having its notes reworded; `recording-plan.json` lists the takes.
 - Engine: new `import`, `narration` and `assemble` commands that need no browser; `jszip` is now a declared dependency. Rendering slides needs LibreOffice and poppler, or slide images passed with `--pages`.
 

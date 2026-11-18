@@ -91,3 +91,30 @@ test("notes edited in narration.md but still marked notes warn, since notes are 
   edit(out, (md) => md.replace("Hello there.", "Hello everyone."));
   assert.match(run("narration", out).stderr, /^warning: .*slide 1\b.*notes/m);
 });
+
+test("notes that read as reminders to the presenter are flagged, naming the slide, and ordinary notes are not", async () => {
+  const { out } = await makeProject(join(tmp, "reminders"), [
+    { text: "A", notes: "Open with the problem in one line:\nPeople lose what they read." },
+    { text: "B", notes: "Personal anecdote: the time I lost a link. [pause]" },
+    { text: "C", notes: "Here is the thing. It saves every page you read." },
+  ]);
+  const { stderr } = run("narration", out);
+  assert.match(stderr, /^warning: slide 1\b.*reminder/m);
+  assert.match(stderr, /^warning: slide 2\b.*reminder/m);
+  assert.doesNotMatch(stderr, /^warning: slide 3\b/m);
+});
+
+test("text a voice would read badly is flagged before recording, naming the slide and the words", async () => {
+  const { out } = await makeProject(join(tmp, "spoken"), [
+    { text: "A", notes: "Run /triage-stats since YYYY-MM-DD for the numbers." },
+    { text: "B", notes: "It costs $0.00014 a call, with a 200K context and 1M on Opus." },
+    { text: "C", notes: "See example.com or use the --verbose flag and my_config." },
+    { text: "D", notes: "Plain sentences, read as written. It costs ten cents." },
+  ]);
+  const { stderr } = run("narration", out);
+  const line = (/** @type {number} */ n) => stderr.split("\n").find((l) => l.startsWith(`warning: slide ${n} `) && /read/.test(l)) ?? "";
+  for (const word of ["/triage-stats", "YYYY-MM-DD"]) assert.ok(line(1).includes(word), line(1));
+  for (const word of ["$0.00014", "200K", "1M"]) assert.ok(line(2).includes(word), line(2));
+  for (const word of ["example.com", "--verbose", "my_config"]) assert.ok(line(3).includes(word), line(3));
+  assert.equal(line(4), "");
+});

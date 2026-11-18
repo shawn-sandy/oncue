@@ -20,8 +20,8 @@ function fingerprint(file: string): Pick<Manifest, "sha256" | "mtimeMs" | "bytes
   return { sha256: createHash("sha256").update(readFileSync(file)).digest("hex"), mtimeMs: stat.mtimeMs, bytes: stat.size };
 }
 const same = (a: Pick<Manifest, "sha256" | "mtimeMs">, b: Pick<Manifest, "sha256" | "mtimeMs">): boolean => a.sha256 === b.sha256 && a.mtimeMs === b.mtimeMs;
-const changed = (source: string): Error =>
-  new Error(`The original file changed during this run: ${source}. Its checksum or modified time no longer matches ${MANIFEST}. Nothing here writes to it, so check what else did, then import again.`);
+const changed = (source: string, when: "during this run" | "since it was imported"): Error =>
+  new Error(`The original file has changed ${when}: ${source}. Its checksum or modified time no longer matches ${MANIFEST}. Nothing here writes to it, so check what else did, then import again.`);
 
 /**
  * Runs `fn` on a copy of `source` under `<outDir>/work/`, then fails if the original's checksum or modified time moved.
@@ -44,7 +44,7 @@ export async function guardSource<T>(source: string, outDir: string, fn: (copy: 
     const unchanged = same(before, fingerprint(src));
     const manifest: Manifest = { source: src, ...before, unchanged, checked: new Date().toISOString() };
     writeFileSync(join(out, MANIFEST), JSON.stringify(manifest, null, 2));
-    if (!unchanged) throw changed(src);
+    if (!unchanged) throw changed(src, "during this run");
   }
 }
 
@@ -54,7 +54,7 @@ export function verifySource(dir: string): void {
   if (!existsSync(file)) throw new Error(`No ${MANIFEST} in ${dir}. Run import first.`);
   const manifest = JSON.parse(readFileSync(file, "utf8")) as Manifest;
   if (!existsSync(manifest.source)) { console.warn(`warning: the original file is no longer at ${manifest.source}, so it cannot be re-checked against ${MANIFEST}.`); return; }
-  if (!same(manifest, fingerprint(manifest.source))) throw changed(manifest.source);
+  if (!same(manifest, fingerprint(manifest.source))) throw changed(manifest.source, "since it was imported");
 }
 
 /** Removes every match, repeated until nothing is left: taking one match out can join the pieces of another around it. */
@@ -70,7 +70,9 @@ const decode = (s: string): string =>
 const attr = (tag: string, name: string): string | undefined => new RegExp(`\\b${name}="([^"]*)"`).exec(tag)?.[1];
 /** Non-empty paragraphs of text, one per line. `para` matches one paragraph and captures its content. */
 function paragraphs(xml: string, para: RegExp, run: (inner: string) => string): string {
-  return [...xml.matchAll(para)].map((m) => decode(run(m[1]!)).replace(/\s+/g, " ").trim()).filter(Boolean).join("\n");
+  // Line breaks inside a paragraph are kept, so a reminder line such as "Open with this:" stays recognisable.
+  const tidy = (p: string): string => p.split("\n").map((l) => l.replace(/\s+/g, " ").trim()).filter(Boolean).join("\n");
+  return [...xml.matchAll(para)].map((m) => tidy(decode(run(m[1]!)))).filter(Boolean).join("\n");
 }
 
 // ponytail: the XML is read with regular expressions, which is enough for the handful of elements needed here; switch to a
@@ -83,7 +85,7 @@ async function readPptx(zip: JSZip): Promise<Omit<Slide, "page">[]> {
       const target = attr(tag, "Target") ?? "";
       return { id: attr(tag, "Id") ?? "", type: attr(tag, "Type") ?? "", target: target.startsWith("/") ? target.slice(1) : join(dirname(part), target) };
     });
-  const text = (xml: string): string => paragraphs(xml, /<a:p\b[^>]*>([\s\S]*?)<\/a:p>/g, (p) => [...p.matchAll(/<a:t\b[^>]*>([^<]*)<\/a:t>/g)].map((t) => t[1]).join(""));
+  const text = (xml: string): string => paragraphs(xml, /<a:p\b[^>]*>([\s\S]*?)<\/a:p>/g, (p) => [...p.replace(/<a:br\b[^>]*\/>/g, "<a:t>\n</a:t>").matchAll(/<a:t\b[^>]*>([^<]*)<\/a:t>/g)].map((t) => t[1]).join(""));
 
   const pres = "ppt/presentation.xml";
   const presRels = await rels(pres);
@@ -108,7 +110,7 @@ async function readOdp(zip: JSZip): Promise<Omit<Slide, "page">[]> {
   const hidden = new Set([...styles.matchAll(/<style:style\b[^>]*>[\s\S]*?<\/style:style>/g)]
     .filter((m) => /presentation:visibility="hidden"/.test(m[0])).map((m) => attr(m[0], "style:name")));
   // Spacing elements become a space, every other tag goes. Real < and > in slide text are still entities here and are decoded afterwards.
-  const text = (xml: string): string => paragraphs(xml, /<text:p\b[^>]*>([\s\S]*?)<\/text:p>/g, (p) => strip(p.replace(/<text:(?:s|tab|line-break)\b[^>]*\/>/g, " "), /<[^>]*>/g));
+  const text = (xml: string): string => paragraphs(xml, /<text:p\b[^>]*>([\s\S]*?)<\/text:p>/g, (p) => strip(p.replace(/<text:line-break\b[^>]*\/>/g, "\n").replace(/<text:(?:s|tab)\b[^>]*\/>/g, " "), /<[^>]*>/g));
   const pages = [...content.matchAll(/<draw:page\b[^>]*>[\s\S]*?<\/draw:page>/g)].map((m) => m[0]);
   if (!pages.length) throw new Error("No slides found in this .odp.");
   const slides: Omit<Slide, "page">[] = [];
@@ -160,7 +162,8 @@ function renderPages(copy: string, outDir: string): string[] {
     pdf = join(work, `${basename(copy, extname(copy))}.pdf`);
     if (!existsSync(pdf)) throw new Error("soffice ran but wrote no PDF; the deck may be damaged or password-protected.");
   }
-  tool("pdftoppm", ["-r", "150", "-png", pdf, join(pages, "p")]);
+  // Long side at the video's 1920 px, so a 16:9 slide comes out exactly 1920×1080 instead of an odd size from a fixed DPI.
+  tool("pdftoppm", ["-scale-to", "1920", "-png", pdf, join(pages, "p")]);
   // pdftoppm pads page numbers to the width of the page count, so order them by number, not by name.
   const made = readdirSync(pages).filter((f) => /^p-\d+\.png$/.test(f)).sort((a, b) => parseInt(a.slice(2), 10) - parseInt(b.slice(2), 10));
   return made.map((f, i) => { renameSync(join(pages, f), join(pages, pageName(i, ".png"))); return `pages/${pageName(i, ".png")}`; });

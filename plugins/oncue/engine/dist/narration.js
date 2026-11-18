@@ -4,6 +4,8 @@ exports.formatNarration = formatNarration;
 exports.parseNarration = parseNarration;
 exports.readNarration = readNarration;
 exports.writeNarration = writeNarration;
+exports.reminderHint = reminderHint;
+exports.hardWords = hardWords;
 exports.narrationReport = narrationReport;
 /**
  * narration.md: one section per slide and an approval flag. Speaker notes are used as written, a slide without notes
@@ -73,6 +75,40 @@ function writeNarration(dir, slides) {
     (0, node_fs_1.writeFileSync)(file, formatNarration(slides));
     return true;
 }
+/**
+ * Notes written for the presenter rather than to be spoken: a line ending in a colon ("Open with the problem in one
+ * line:"), a leading label ("Personal anecdote: ..."), or a bracketed stage direction ("[pause]", "(click)").
+ * A hint for the person to judge, not a verdict: plenty of real narration has a colon in it.
+ */
+// ponytail: three surface patterns, not a classifier; the skill also has the model read every note before approval.
+function reminderHint(notes) {
+    for (const line of notes.split("\n").map((l) => l.trim()).filter(Boolean)) {
+        if (/:$/.test(line))
+            return line;
+        const label = /^[A-Z][\w' -]{0,30}:\s/.exec(line);
+        if (label)
+            return label[0].trim();
+        const cue = /\[[^\]]+\]|\((?:pause|click|beat|demo|next slide|advance)[^)]*\)/i.exec(line);
+        if (cue)
+            return cue[0];
+    }
+    return null;
+}
+/** Words a voice is likely to read wrongly: commands, placeholders, prices, K/M amounts, web addresses, flags and code names. */
+const HARD = [
+    /(?<=^|\s)\/[\w-]+/g, // /triage-stats
+    /\b[A-Z]{2,}(?:-[A-Z]{2,})+\b/g, // YYYY-MM-DD
+    /\$\d[\d,.]*/g, // $0.00014
+    /\b\d+(?:\.\d+)?[KMB]\b/g, // 200K, 1M
+    /\b(?:https?:\/\/)?[\w-]+(?:\.[\w-]+)*\.(?:com|org|net|io|dev|ai|app|co)\b[^\s]*/g, // example.com
+    /(?<=^|\s)--?[a-z][\w-]*/g, // --verbose, -v
+    /\b[A-Za-z0-9]+_[\w]+\b/g, // my_config
+    /`[^`]+`|[{}<>|\\]/g, // code and stray symbols
+];
+function hardWords(vo) {
+    const found = HARD.flatMap((re) => vo.match(re) ?? []).map((w) => w.replace(/[.,;:!?)]+$/, ""));
+    return [...new Set(found.filter(Boolean))];
+}
 const list = (ns) => `slide${ns.length > 1 ? "s" : ""} ${ns.join(", ")}`;
 /**
  * What `narration` prints: the script of each recording, then the silent slides and a length and credit estimate.
@@ -81,10 +117,17 @@ const list = (ns) => `slide${ns.length > 1 ? "s" : ""} ${ns.join(", ")}`;
 function narrationReport(dir) {
     const { approved, lines } = readNarration(dir);
     const { runs, silent, warnings } = (0, timeline_1.planSlides)(lines);
-    const deck = new Map((0, slides_1.readSlides)(dir).map((s) => [s.n, flat(s.notes)]));
-    for (const l of lines)
-        if (l.source === "notes" && l.vo !== deck.get(l.n))
+    const notes = new Map((0, slides_1.readSlides)(dir).map((s) => [s.n, s.notes]));
+    for (const l of lines) {
+        if (l.source === "notes" && l.vo !== flat(notes.get(l.n) ?? ""))
             warnings.push(`slide ${l.n} is marked (notes) but its text differs from the deck's speaker notes; restore them, or mark it (drafted) if the change is meant.`);
+        const hint = l.source === "notes" ? reminderHint(notes.get(l.n) ?? "") : null;
+        if (hint)
+            warnings.push(`slide ${l.n}'s notes look like a reminder to the presenter ("${hint}"), not lines to speak; ask the person whether to draft spoken lines for it instead, marked (drafted).`);
+        const hard = hardWords(l.vo);
+        if (hard.length)
+            warnings.push(`slide ${l.n} has words a voice may read wrongly: ${hard.map((w) => `"${w}"`).join(", ")}; write them as they should be heard, for example "two hundred thousand" for 200K, if the person agrees.`);
+    }
     const name = (k, stem, ext) => `${stem}-${String(k + 1).padStart(2, "0")}.${ext}`;
     const plan = { dwell: assemble_1.DWELL, silent, runs: runs.map((r, k) => ({ run: k + 1, ...r, audio: name(k, "voiceover", "mp3"), words: name(k, "words", "json") })) };
     (0, node_fs_1.writeFileSync)((0, node_path_1.join)(dir, "recording-plan.json"), JSON.stringify(plan, null, 2));

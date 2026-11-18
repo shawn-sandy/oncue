@@ -19,7 +19,7 @@ This is the rule the whole skill is judged on.
 - `import` records the original's SHA-256 checksum and modified time in `<folder>/source-manifest.json` and fails if they moved. `narration` and `assemble` re-check it and stop if the file has changed since.
 - The project folder must not be the deck's own folder; `import` refuses it. By default it is a new `<deck name>-video` folder beside the deck.
 - A deck that lives in Google Drive is read-only to this skill. Ask the person to download it (File → Download → PowerPoint or PDF) and work from the download. Never call a tool that writes to their Drive or their presentation: `update_presentation`, `update_file`, `trash_file` and `share_file` are the ones to avoid, and so is any other tool that edits, moves, shares or deletes.
-- Speaker notes are the person's words. Use them as written; never rewrite them to make a recording easier.
+- Speaker notes are the person's words. Use them as written unless the person agrees to a change; never rewrite them on your own to make a recording easier.
 
 At the end, report the checksum line from `source-manifest.json` so the person can see it is unchanged.
 
@@ -53,6 +53,8 @@ Look at every page picture before going on. Say plainly if any slide is drawn wr
 
 For each `(none)` slide, look at its page picture and write one or two spoken sentences that say what the slide shows, using only what is on the slide or in the person's material. Put the line under the heading and change the marker to `(drafted)`. Leave a slide `(none)` only when the person wants it silent: it is then held for four seconds with no sound. For a PDF every slide starts as `(none)`.
 
+Read every `(notes)` slide too, as a narrator would say it. Many decks' notes are reminders to the presenter ("Open with the problem in one line:", "Personal anecdote:", "[pause]") rather than lines to speak, and the voice reads them word for word. When notes read like that, ask the person whether to draft spoken lines for those slides instead. With their yes, write the spoken version under the heading and change its marker to `(drafted)`; without it, keep the notes as they are.
+
 Then run:
 
 ```bash
@@ -63,10 +65,22 @@ It prints the script, the slides with no narration, an estimated length and a ro
 
 - **A slide's first word is also heard inside an earlier slide.** The narration is recorded as one continuous read and split at each slide's first word, so that slide would start too early. If the line was drafted, reword its opening and run `narration` again. If it is the person's notes, leave them alone: the plan already records that slide as its own clip, and the slides around it stay in continuous takes. Each extra recording is another take to pay for; say how many there are.
 - **A slide is marked `(notes)` but differs from the deck.** Restore the notes, or mark it `(drafted)` if the person asked for the change.
+- **A slide's notes look like a reminder to the presenter.** Ask the person as described above.
+- **A slide has words a voice may read wrongly,** such as `/triage-stats`, `YYYY-MM-DD`, `$0.00014`, `200K`, a web address, a command-line flag or a code name. Show the person the list and offer to write each as it should be heard ("two hundred thousand", "slash triage stats"). For a drafted line, rewrite it; for notes, change them only with the person's yes, and mark the slide `(drafted)`.
 
-## 3. Get approval
+## 3. Preview without sound
 
-Show the person `narration.md`, the page pictures and the estimate: how many recordings, about how long, and that generating and transcribing spends their credits. **Do not record anything yet.** When they approve, they (or you, on their say-so) change the first lines of `narration.md` to `approved: true`. Then:
+Before asking for approval, make a silent preview. It needs no approval and spends no credits:
+
+```bash
+node dist/cli.js assemble <folder>
+```
+
+With nothing recorded yet, this writes `<folder>/preview-silent.mp4`, timed from an estimate of the narration. It carries a silent audio track so players treat it like any other video. Grab a frame or two to check the slides appear in order (step 6 shows how), and send it with the approval request.
+
+## 4. Get approval
+
+Show the person `narration.md`, the page pictures, the silent preview and the estimate: how many recordings, about how long, and that generating and transcribing spends their credits. **Do not record anything yet.** When they approve, they (or you, on their say-so) change the first lines of `narration.md` to `approved: true`. Then:
 
 ```bash
 node dist/cli.js narration <folder> --approved
@@ -74,19 +88,17 @@ node dist/cli.js narration <folder> --approved
 
 This exits with an error until the file is approved. Only its output is the script to record.
 
-A silent preview needs no approval and no credits: run step 5 before recording, and it writes `preview-silent.mp4` with estimated timing.
+## 5. Record the voiceover
 
-## 4. Record the voiceover
+Use the voiceover skill (`../voiceover/SKILL.md`) with the script from step 4. `recording-plan.json` lists each recording in order with the file names to save: `voiceover-01.mp3` and `words-01.json` for the first, and so on. Most decks need exactly one. Use the same voice for every recording.
 
-Use the voiceover skill (`../voiceover/SKILL.md`) with the script from step 3. `recording-plan.json` lists each recording in order with the file names to save: `voiceover-01.mp3` and `words-01.json` for the first, and so on. Most decks need exactly one. Use the same voice for every recording.
-
-## 5. Assemble
+## 6. Assemble
 
 ```bash
 node dist/cli.js assemble <folder>
 ```
 
-This writes `<folder>/deck.mp4`: H.264 and AAC at 30 frames a second. Each slide appears on its first spoken word and the last holds for a moment after the narration ends. If a slide's first word is not found in its transcript, the command names the slide: the narrator probably changed that word, so re-transcribe or re-record that take, and do not edit the notes to match.
+With every recording in place, this writes `<folder>/deck.mp4`: H.264 and AAC at 30 frames a second. Each slide appears on its first spoken word and the last holds for a moment after the narration ends. If a slide's first word is not found in its transcript, the command names the slide: the narrator probably changed that word, so re-transcribe or re-record that take, and do not edit the notes to match.
 
 Grab a frame or two and check them against the page pictures before sending the video:
 
@@ -94,6 +106,6 @@ Grab a frame or two and check them against the page pictures before sending the 
 ffmpeg -ss 5 -i <folder>/deck.mp4 -frames:v 1 <folder>/check-5s.png
 ```
 
-## 6. Deliver
+## 7. Deliver
 
 Send the MP4 and say in a few lines: how many slides, which were narrated from notes and which from drafted lines, which voice, what it cost in credits, anything that was not verified (for example rendering fidelity on a slide), and that the original file is unchanged, with its checksum from `source-manifest.json`.

@@ -55,7 +55,8 @@ test("a source that changes after import fails the later commands", async () => 
   const out = join(tmp, "later-out");
   await guardSource(src, out, () => {});
   appendFileSync(src, "x");
-  assert.throws(() => verifySource(out), /changed/);
+  assert.throws(() => verifySource(out), /changed since it was imported/);
+  assert.throws(() => verifySource(out), (/** @type {Error} */ e) => !/during this run/.test(e.message));
 });
 
 test("an output folder equal to the source's own folder is refused before anything is written", async () => {
