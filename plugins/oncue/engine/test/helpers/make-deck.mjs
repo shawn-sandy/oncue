@@ -54,8 +54,8 @@ export async function makeDeck(file, { slides = FOUR, hidden = slides === FOUR ?
 /** The same four slides as an OpenDocument presentation. @param {string} file */
 export async function makeOdp(file) {
   const page = (/** @type {FixtureSlide} */ s, /** @type {number} */ i) =>
-    `<draw:page draw:name="page${i + 1}" draw:style-name="${i === 2 ? "dp2" : "dp1"}"><draw:frame><draw:text-box><text:p>${s.text.replace("&", "&amp;").replace(": ", ': <text:span>').replace(/$/, s.text.includes(": ") ? "</text:span>" : "")}</text:p></draw:text-box></draw:frame>` +
-    `<presentation:notes><draw:page-thumbnail/>${s.notes ? `<draw:frame presentation:class="notes"><draw:text-box><text:p>${s.notes.replace("&", "&amp;")}</text:p></draw:text-box></draw:frame>` : ""}</presentation:notes></draw:page>`;
+    `<draw:page draw:name="page${i + 1}" draw:style-name="${i === 2 ? "dp2" : "dp1"}"><draw:frame><draw:text-box><text:p>${s.text.replaceAll("&", "&amp;").replace(": ", ': <text:span>').replace(/$/, s.text.includes(": ") ? "</text:span>" : "")}</text:p></draw:text-box></draw:frame>` +
+    `<presentation:notes><draw:page-thumbnail/>${s.notes ? `<draw:frame presentation:class="notes"><draw:text-box><text:p>${s.notes.replaceAll("&", "&amp;")}</text:p></draw:text-box></draw:frame>` : ""}</presentation:notes></draw:page>`;
   const zip = new JSZip();
   zip.file("mimetype", "application/vnd.oasis.opendocument.presentation");
   zip.file("content.xml", `<?xml version="1.0" encoding="UTF-8"?><office:document-content><office:automatic-styles>` +

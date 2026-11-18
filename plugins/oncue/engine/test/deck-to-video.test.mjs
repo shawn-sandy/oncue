@@ -1,8 +1,8 @@
 // @ts-check
 /**
  * The whole route: a .pptx with speaker notes plus an approved narration and a recorded voiceover becomes an MP4 whose
- * slides change on the narrated words, and the .pptx is byte-for-byte unchanged. Needs ffmpeg and ffprobe, not LibreOffice:
- * the page pictures are supplied.
+ * slides change on the narrated words, and the .pptx is byte-for-byte unchanged. Needs ffmpeg and ffprobe, and is skipped,
+ * never passed, without them. It does not need LibreOffice: the page pictures are supplied.
  */
 import { spawnSync } from "node:child_process";
 import { after, test } from "node:test";
@@ -19,6 +19,9 @@ const { buildSlideTimeline, readWords, LEAD, TAIL } = createRequire(import.meta.
 const example = (/** @type {string} */ f) => fileURLToPath(new URL(`../examples/gleaner/${f}`, import.meta.url));
 const tmp = mkdtempSync(join(tmpdir(), "oncue-deck-video-"));
 after(() => rmSync(tmp, { recursive: true, force: true }));
+
+const missing = ["ffmpeg", "ffprobe"].filter((bin) => spawnSync(bin, ["-version"]).error);
+const skip = missing.length ? `${missing.join(" and ")} not installed, so assembling the video is unverified on this machine` : false;
 
 /** @param {string} file */
 const fingerprint = (file) => ({ sha: createHash("sha256").update(readFileSync(file)).digest("hex"), mtime: statSync(file).mtimeMs });
@@ -43,7 +46,7 @@ const approve = (/** @type {string} */ out) => writeFileSync(join(out, "narratio
 /** @param {string} out */
 const manifest = (out) => JSON.parse(readFileSync(join(out, "source-manifest.json"), "utf8"));
 
-test("a deck with notes and the Gleaner voiceover becomes a 1920×1080 MP4 with each slide on its words, source untouched", async () => {
+test("a deck with notes and the Gleaner voiceover becomes a 1920×1080 MP4 with each slide on its words, source untouched", { skip }, async () => {
   const vo = JSON.parse(readFileSync(example("short.json"), "utf8")).lines.map((/** @type {{ vo: string }} */ l) => l.vo);
   const { deck, out } = await makeProject(join(tmp, "gleaner"), vo.map((/** @type {string} */ notes, /** @type {number} */ i) => ({ text: `Slide ${i + 1}`, notes })));
   const before = fingerprint(deck);
@@ -71,7 +74,7 @@ test("a deck with notes and the Gleaner voiceover becomes a 1920×1080 MP4 with 
   assert.deepEqual([manifest(out).unchanged, manifest(out).sha256], [true, before.sha]);
 });
 
-test("a fallback clip between two takes, and a silent slide, land in slide order with the right total", async () => {
+test("a fallback clip between two takes, and a silent slide, land in slide order with the right total", { skip }, async () => {
   const { deck, out } = await makeProject(join(tmp, "runs"), [
     { text: "A", notes: "Hello world. So we start." },
     { text: "B", notes: "So we continue." },

@@ -101,7 +101,8 @@ async function readOdp(zip: JSZip): Promise<Omit<Slide, "page">[]> {
   const styles = content + ((await zip.file("styles.xml")?.async("string")) ?? "");
   const hidden = new Set([...styles.matchAll(/<style:style\b[^>]*>[\s\S]*?<\/style:style>/g)]
     .filter((m) => /presentation:visibility="hidden"/.test(m[0])).map((m) => attr(m[0], "style:name")));
-  const text = (xml: string): string => paragraphs(xml, /<text:p\b[^>]*>([\s\S]*?)<\/text:p>/g, (p) => p.replace(/<text:(?:s|tab|line-break)\b[^>]*\/>/g, " ").replace(/<[^>]+>/g, ""));
+  // Tags go first, then any stray bracket: real < and > in slide text are still entities here and are decoded afterwards.
+  const text = (xml: string): string => paragraphs(xml, /<text:p\b[^>]*>([\s\S]*?)<\/text:p>/g, (p) => p.replace(/<text:(?:s|tab|line-break)\b[^>]*\/>/g, " ").replace(/<[^>]+>/g, "").replace(/[<>]/g, ""));
   const pages = [...content.matchAll(/<draw:page\b[^>]*>[\s\S]*?<\/draw:page>/g)].map((m) => m[0]);
   if (!pages.length) throw new Error("No slides found in this .odp.");
   const slides: Omit<Slide, "page">[] = [];

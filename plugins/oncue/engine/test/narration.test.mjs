@@ -34,6 +34,11 @@ test("narration.md round-trips with a source marker per slide", () => {
   assert.equal(parseNarration(approve(drafted)).approved, true);
 });
 
+test("a comment marker hidden inside another comment never becomes narration", () => {
+  const md = "---\napproved: false\n---\n\n## Slide 1 (none)\n\n<!<!-- a -->-- hidden -->\n";
+  assert.deepEqual(parseNarration(md).lines, [{ n: 1, source: "none", vo: "" }]);
+});
+
 test("import writes the deck's notes verbatim and marks slides without notes", async () => {
   const { out } = await makeProject(join(tmp, "import"), FOUR.filter((_, i) => i !== 2));
   const { lines } = parseNarration(readFileSync(join(out, "narration.md"), "utf8"));
