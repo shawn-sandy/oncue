@@ -33,13 +33,24 @@ test("output frames equal round(duration × fps) for fades of 0, 0.5 and 2 s", (
 test("each fade starts fade/2 before its cut and is fade long", () => {
   const p = fadePlan(secs([4.3, 4, 5.6]), 0.5, 30);
   assert.deepEqual(p.fades, [{ start: 129 - 7, frames: 15 }, { start: 249 - 7, frames: 15 }]);
-  assert.deepEqual(p.frames, [129 + 7, 120 + 8 + 7, 168 + 8]);
+  assert.deepEqual(p.frames, [129 + 8, 120 + 7 + 8, 168 + 7], "each still lasts until its outgoing fade ends and starts when its incoming fade starts");
 });
 
 test("a fade of 0 leaves the cuts and no fade frames", () => {
   const p = fadePlan(secs([4.3, 4, 5.6]), 0, 30);
   assert.deepEqual(p.frames, [129, 120, 168]);
   assert.ok(p.fades.every((/** @type {any} */ f) => f.frames === 0));
+});
+
+test("every still covers each fade it takes part in, so the xfade chain needs no padding frame", () => {
+  for (const [lengths, fade] of [[[4.3, 4, 5.6], 0.5], [[1.37, 2.11, 0.4, 3.9], 1], [[0.1, 0.2, 0.1], 2]]) {
+    const p = fadePlan(secs(lengths), fade, 30);
+    let start = 0;
+    p.fades.forEach((/** @type {any} */ f, /** @type {number} */ i) => {
+      assert.ok(f.start + f.frames <= start + p.frames[i], `still ${i + 1} ends before fade ${i + 1} does`);
+      start = f.start;
+    });
+  }
 });
 
 test("one slide has no fades", () => assert.deepEqual(fadePlan(secs([3]), 0.5, 30), { frames: [90], fades: [] }));
@@ -67,6 +78,8 @@ test("rounding does not drift across 40 slides of uneven length", () => {
 
 /** @param {string} file */
 const seconds = (file) => Number(spawnSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", file], { encoding: "utf8" }).stdout.trim());
+/** @param {string} file */
+const videoFrames = (file) => Number(spawnSync("ffprobe", ["-v", "error", "-select_streams", "v", "-count_frames", "-show_entries", "stream=nb_read_frames", "-of", "csv=p=0", file], { encoding: "utf8" }).stdout.trim());
 /** @param {string} file @param {number} t */
 const colourAt = (file, t) => [...spawnSync("ffmpeg", ["-v", "error", "-ss", t.toFixed(3), "-i", file, "-frames:v", "1", "-vf", "scale=1:1", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"]).stdout];
 const near = (/** @type {number[]} */ got, /** @type {number[]} */ want) => got.length === 3 && got.every((v, i) => Math.abs(v - want[i]) <= 16);
@@ -88,7 +101,7 @@ test("the first slide change is a blend, settled 0.4 s later, same length as --f
   assert.ok(near(colourAt(files.fade, CUT + 0.4), b), "0.4 s after the cut the second slide is settled");
   assert.ok(near(colourAt(files.cut, CUT + 0.1), b), "--fade 0 is a hard cut");
   assert.ok(blend(colourAt(files.long, CUT + 0.3), a, b), "--fade 1 is still blending 0.3 s after the cut, where 0.5 s has settled");
-  for (const f of [files.cut, files.long]) assert.ok(Math.abs(seconds(f) - seconds(files.fade)) < 0.034, `${f} is the same length`);
+  for (const f of [files.cut, files.long]) assert.equal(videoFrames(f), videoFrames(files.fade), `${f} has the same number of frames`);
 });
 
 test("--fade rejects a non-number, a negative, more than 5 and a missing value, naming it", { skip }, async () => {

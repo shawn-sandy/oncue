@@ -76,7 +76,7 @@ function fadePlan(video, fade, fps) {
     const full = Math.round(fade * fps), lead = Math.floor(full / 2);
     const parts = base.slice(1).map((b, i) => ({ before: Math.min(lead, Math.floor(base[i] / 2)), after: Math.min(full - lead, Math.floor(b / 2)) }));
     return {
-        frames: base.map((b, i) => b + (parts[i - 1]?.after ?? 0) + (parts[i]?.before ?? 0)),
+        frames: base.map((b, i) => b + (parts[i - 1]?.before ?? 0) + (parts[i]?.after ?? 0)),
         fades: parts.map((p, i) => ({ start: cuts[i] - p.before, frames: p.before + p.after })),
     };
 }
