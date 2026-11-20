@@ -82,14 +82,14 @@ export function fadePlan(video: { seconds: number }[], fade: number, fps: number
 /**
  * Joins stills `[v0]`…`[vN]` into `[v]`: an `xfade` of `kinds[i]` at each planned fade, or a `concat` where a fade has no
  * frames. `xfade` with a zero duration never starts when the stream before it is already over, which shifts every later
- * slide, so a cut must stay a cut.
+ * slide, so a cut must stay a cut. `concat` outputs a microsecond time base, which a later `xfade` rejects, so it is set back to 1/fps.
  */
 export function joinFilters(fades: { start: number; frames: number }[], kinds: string[], fps: number): string[] {
   return fades.map((f, i) => {
     const a = i ? `[x${i}]` : "[v0]", b = `[v${i + 1}]`, out = i === fades.length - 1 ? "[v]" : `[x${i + 1}]`;
     return f.frames > 0
       ? `${a}${b}xfade=transition=${kinds[i] ?? "fade"}:duration=${(f.frames / fps).toFixed(4)}:offset=${(f.start / fps).toFixed(4)}${out}`
-      : `${a}${b}concat=n=2:v=1:a=0${out}`;
+      : `${a}${b}concat=n=2:v=1:a=0,settb=1/${fps}${out}`;
   });
 }
 

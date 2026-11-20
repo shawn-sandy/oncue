@@ -87,17 +87,23 @@ test("rounding does not drift across 40 slides of uneven length", () => {
 
 // ---- end to end ----
 
-test("a one-frame slide joins with a cut, not a zero-length xfade, and keeps the planned frame count", { skip }, () => {
-  const lengths = [4.3, 1 / 30, 1 / 30, 5.6];
+/** Runs `joinFilters` through ffmpeg on solid stills planned by `fadePlan`; returns ffmpeg's result and the frame count. @param {number[]} lengths */
+function joinFrames(lengths) {
   const p = fadePlan(secs(lengths), 0.5, 30);
-  assert.ok(p.fades.some((/** @type {any} */ f) => f.frames === 0), "the one-frame slides leave no room for a fade");
-  const colours = ["red", "green", "blue", "yellow"];
-  const inputs = p.frames.flatMap((/** @type {number} */ n, /** @type {number} */ i) => ["-f", "lavfi", "-i", `color=${colours[i]}:s=64x64:r=30,trim=end_frame=${n}`]);
-  const graph = [...p.frames.map((/** @type {any} */ _, /** @type {number} */ i) => `[${i}:v]setpts=PTS-STARTPTS[v${i}]`), ...joinFilters(p.fades, ["fade", "fade", "fade"], 30)].join(";");
+  const inputs = p.frames.flatMap((/** @type {number} */ n, /** @type {number} */ i) => ["-f", "lavfi", "-i", `color=0x${(i * 40 + 30).toString(16).repeat(3)}:s=64x64:r=30,trim=end_frame=${n}`]);
+  const graph = [...p.frames.map((/** @type {any} */ _, /** @type {number} */ i) => `[${i}:v]setpts=PTS-STARTPTS[v${i}]`),
+    ...joinFilters(p.fades, p.fades.map(() => "fade"), 30)].join(";");
   const out = spawnSync("ffmpeg", ["-hide_banner", ...inputs, "-filter_complex", graph, "-map", "[v]", "-f", "null", "-"], { encoding: "utf8" });
-  assert.equal(out.status, 0, out.stderr);
-  const frames = Number(/frame=\s*(\d+)(?![\s\S]*frame=)/.exec(out.stderr)?.[1]);
-  assert.equal(frames, Math.round(lengths.reduce((t, v) => t + v, 0) * 30));
+  return { p, out, frames: Number(/frame=\s*(\d+)(?![\s\S]*frame=)/.exec(out.stderr)?.[1]) };
+}
+
+test("a one-frame slide joins with a cut, and a fade after cuts still renders, each with the planned frame count", { skip }, () => {
+  for (const lengths of [[4.3, 1 / 30, 1 / 30, 5.6], [4.3, 1 / 30, 4, 5.6], [4.3, 4, 1 / 30, 1 / 30, 4, 5.6]]) {
+    const { p, out, frames } = joinFrames(lengths);
+    assert.ok(p.fades.some((/** @type {any} */ f) => f.frames === 0), `${lengths}: has a cut`);
+    assert.equal(out.status, 0, `${lengths}: ${out.stderr}`);
+    assert.equal(frames, Math.round(lengths.reduce((t, v) => t + v, 0) * 30), `${lengths}`);
+  }
 });
 
 /** @param {string} file */
