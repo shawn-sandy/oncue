@@ -36,6 +36,13 @@ test("readTransition takes the fallback of an mc:AlternateContent transition", (
   assert.deepEqual(readTransition(xml), { kind: "push", dir: "u", spd: "slow" });
 });
 
+test("an unrelated mc:AlternateContent before the transition does not hide it", () => {
+  const shape = '<mc:AlternateContent><mc:Choice Requires="a14"><p:sp/></mc:Choice><mc:Fallback><p:sp/></mc:Fallback></mc:AlternateContent>';
+  assert.deepEqual(readTransition(sld(`${shape}<p:transition><p:wipe dir="d"/></p:transition>`)), { kind: "wipe", dir: "d" });
+  assert.deepEqual(readTransition(sld(`${shape}<mc:AlternateContent><mc:Choice Requires="p14"><p:transition><p14:vortex/></p:transition></mc:Choice>` +
+    '<mc:Fallback><p:transition><p:push dir="r"/></p:transition></mc:Fallback></mc:AlternateContent>')), { kind: "push", dir: "r" });
+});
+
 test("readTransition is undefined with no transition, or an empty one", () => {
   assert.equal(readTransition(sld("")), undefined);
   assert.equal(readTransition(sld("<p:transition/>")), undefined);

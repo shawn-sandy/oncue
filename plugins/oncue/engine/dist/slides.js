@@ -23,10 +23,11 @@ const node_url_1 = require("node:url");
 const jszip_1 = __importDefault(require("jszip"));
 /**
  * The `<p:transition>` of a slide part, or undefined when it has none. PowerPoint wraps newer transitions in
- * `mc:AlternateContent`; the `mc:Fallback` branch holds a classic one every reader understands, so that is the one read.
+ * `mc:AlternateContent`; dropping every `mc:Choice` leaves the `mc:Fallback` branches, which hold a classic one every reader
+ * understands, and the whole slide is searched, so an unrelated block earlier on the slide cannot hide it.
  */
 function readTransition(xml) {
-    const scope = /<mc:Fallback\b[^>]*>([\s\S]*?)<\/mc:Fallback>/.exec(xml)?.[1] ?? xml.replace(/<mc:AlternateContent\b[\s\S]*?<\/mc:AlternateContent>/g, "");
+    const scope = xml.replace(/<mc:Choice\b[\s\S]*?<\/mc:Choice>/g, "");
     const m = /<p:transition\b([^>]*?)(?:\/>|>([\s\S]*?)<\/p:transition>)/.exec(scope);
     const effect = m?.[2] && /<p:(\w+)\b([^>]*)/.exec(m[2]);
     if (!m || !effect)
