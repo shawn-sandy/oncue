@@ -9,7 +9,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { COLOURS, makeProject, run } from "./helpers/make-deck.mjs";
 
-const { fadePlan, FADE } = createRequire(import.meta.url)("../dist/assemble.js");
+const { fadePlan, joinFilters, FADE } = createRequire(import.meta.url)("../dist/assemble.js");
 const { LEAD } = createRequire(import.meta.url)("../dist/timeline.js");
 const tmp = mkdtempSync(join(tmpdir(), "oncue-crossfade-"));
 after(() => rmSync(tmp, { recursive: true, force: true }));
@@ -53,6 +53,17 @@ test("every still covers each fade it takes part in, so the xfade chain needs no
   }
 });
 
+test("a fade shortened by one short neighbour stays centred on its cut", () => {
+  const lengths = [4.3, 0.2, 5.6];
+  const p = fadePlan(secs(lengths), 2, 30);
+  let cut = 0;
+  p.fades.forEach((/** @type {any} */ f, /** @type {number} */ i) => {
+    cut += lengths[i];
+    assert.ok(f.frames > 0, `fade ${i + 1} kept`);
+    assert.equal(f.start + Math.floor(f.frames / 2), Math.round(cut * 30), `fade ${i + 1} centred`);
+  });
+});
+
 test("one slide has no fades", () => assert.deepEqual(fadePlan(secs([3]), 0.5, 30), { frames: [90], fades: [] }));
 
 test("a slide shorter than the fade gets fades that never overlap inside it, and never start before frame 0", () => {
@@ -75,6 +86,19 @@ test("rounding does not drift across 40 slides of uneven length", () => {
 });
 
 // ---- end to end ----
+
+test("a one-frame slide joins with a cut, not a zero-length xfade, and keeps the planned frame count", { skip }, () => {
+  const lengths = [4.3, 1 / 30, 1 / 30, 5.6];
+  const p = fadePlan(secs(lengths), 0.5, 30);
+  assert.ok(p.fades.some((/** @type {any} */ f) => f.frames === 0), "the one-frame slides leave no room for a fade");
+  const colours = ["red", "green", "blue", "yellow"];
+  const inputs = p.frames.flatMap((/** @type {number} */ n, /** @type {number} */ i) => ["-f", "lavfi", "-i", `color=${colours[i]}:s=64x64:r=30,trim=end_frame=${n}`]);
+  const graph = [...p.frames.map((/** @type {any} */ _, /** @type {number} */ i) => `[${i}:v]setpts=PTS-STARTPTS[v${i}]`), ...joinFilters(p.fades, ["fade", "fade", "fade"], 30)].join(";");
+  const out = spawnSync("ffmpeg", ["-hide_banner", ...inputs, "-filter_complex", graph, "-map", "[v]", "-f", "null", "-"], { encoding: "utf8" });
+  assert.equal(out.status, 0, out.stderr);
+  const frames = Number(/frame=\s*(\d+)(?![\s\S]*frame=)/.exec(out.stderr)?.[1]);
+  assert.equal(frames, Math.round(lengths.reduce((t, v) => t + v, 0) * 30));
+});
 
 /** @param {string} file */
 const seconds = (file) => Number(spawnSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", file], { encoding: "utf8" }).stdout.trim());

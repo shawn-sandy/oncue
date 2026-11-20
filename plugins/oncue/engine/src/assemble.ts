@@ -54,7 +54,7 @@ export function xfadeKind(t: Transition | undefined): string {
 /**
  * Whole frames per still and, per slide change, where its fade starts and how long it is, on the output timeline.
  * Cut frames come from the running total, so rounding never drifts the picture away from the sound. Each fade is
- * centred on its cut and shortened so the two fades of a short slide never meet. Every still is held half a fade
+ * centred on its cut and shortened so the two fades of a short slide never meet; a slide too short for any fade gets cuts. Every still is held half a fade
  * longer on each faded side, so the joined video is exactly as long as with hard cuts.
  */
 export function fadePlan(video: { seconds: number }[], fade: number, fps: number): { frames: number[]; fades: { start: number; frames: number }[] } {
@@ -68,11 +68,29 @@ export function fadePlan(video: { seconds: number }[], fade: number, fps: number
     cuts.push(frame);
   }
   const full = Math.round(fade * fps), lead = Math.floor(full / 2);
-  const parts = base.slice(1).map((b, i) => ({ before: Math.min(lead, Math.floor(base[i]! / 2)), after: Math.min(full - lead, Math.floor(b / 2)) }));
+  // Both sides share the shorter neighbour's limit, so a shortened fade stays centred; 0 means that change is a cut.
+  const parts = base.slice(1).map((b, i) => {
+    const room = Math.min(Math.floor(base[i]! / 2), Math.floor(b / 2));
+    return { before: Math.min(lead, room), after: Math.min(full - lead, room) };
+  });
   return {
     frames: base.map((b, i) => b + (parts[i - 1]?.before ?? 0) + (parts[i]?.after ?? 0)),
     fades: parts.map((p, i) => ({ start: cuts[i]! - p.before, frames: p.before + p.after })),
   };
+}
+
+/**
+ * Joins stills `[v0]`…`[vN]` into `[v]`: an `xfade` of `kinds[i]` at each planned fade, or a `concat` where a fade has no
+ * frames. `xfade` with a zero duration never starts when the stream before it is already over, which shifts every later
+ * slide, so a cut must stay a cut.
+ */
+export function joinFilters(fades: { start: number; frames: number }[], kinds: string[], fps: number): string[] {
+  return fades.map((f, i) => {
+    const a = i ? `[x${i}]` : "[v0]", b = `[v${i + 1}]`, out = i === fades.length - 1 ? "[v]" : `[x${i + 1}]`;
+    return f.frames > 0
+      ? `${a}${b}xfade=transition=${kinds[i] ?? "fade"}:duration=${(f.frames / fps).toFixed(4)}:offset=${(f.start / fps).toFixed(4)}${out}`
+      : `${a}${b}concat=n=2:v=1:a=0${out}`;
+  });
 }
 
 /**
@@ -119,10 +137,7 @@ export async function assemble(dir: string, out?: string, fade = FADE): Promise<
   });
   if (!faded) filters.push(`${plan.video.map((_, i) => `[v${i}]`).join("")}concat=n=${plan.video.length}:v=1:a=0[v]`);
   else if (timing.frames.length === 1) filters.push("[v0]null[v]");
-  else timing.fades.forEach((f, i) => {
-    const kind = xfadeKind(slides[i + 1]!.transition);
-    filters.push(`[${i ? `x${i}` : "v0"}][v${i + 1}]xfade=transition=${kind}:duration=${(f.frames / FPS).toFixed(4)}:offset=${(f.start / FPS).toFixed(4)}[${i === timing.fades.length - 1 ? "v" : `x${i + 1}`}]`);
-  });
+  else filters.push(...joinFilters(timing.fades, slides.slice(1).map((s) => xfadeKind(s.transition)), FPS));
 
   const pieces = silent ? [{ from: 0, to: plan.duration }] : plan.audio;
   let input = plan.video.length;

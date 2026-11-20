@@ -98,7 +98,7 @@ Use the voiceover skill (`../voiceover/SKILL.md`) with the script from step 4. `
 node dist/cli.js assemble <folder>
 ```
 
-With every recording in place, this writes `<folder>/deck.mp4`: H.264 and AAC at 30 frames a second. Each slide fades into the next over half a second centred on its first spoken word, and the last holds for a moment after the narration ends. A .pptx slide set to push or wipe in PowerPoint or Google Slides pushes or wipes in from the same side instead. `--fade <seconds>` changes how long each change takes (0 to 5), and `--fade 0` keeps hard cuts. The video is the same length either way. If a slide's first word is not found in its transcript, the command names the slide: the narrator probably changed that word, so re-transcribe or re-record that take, and do not edit the notes to match.
+With every recording in place, this writes `<folder>/deck.mp4`: H.264 and AAC at 30 frames a second. Each slide fades into the next over half a second, centred on the cut midway through the pause before the next slide's first spoken word, and the last holds for a moment after the narration ends. A .pptx slide set to push or wipe in PowerPoint or Google Slides pushes or wipes in from the same side instead. `--fade <seconds>` changes how long each change takes (0 to 5), and `--fade 0` keeps hard cuts. The video is the same length either way. If a slide's first word is not found in its transcript, the command names the slide: the narrator probably changed that word, so re-transcribe or re-record that take, and do not edit the notes to match.
 
 Grab a frame or two and check them against the page pictures before sending the video:
 
