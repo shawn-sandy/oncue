@@ -26,7 +26,7 @@ At the end, report the checksum line from `source-manifest.json` so the person c
 ## Say this up front
 
 - **Formats.** A .pptx (from PowerPoint, Keynote's export, or Google Slides' download), an .odp, or a PDF export. A PDF is the most faithful picture of the slides but carries no speaker notes, so every line is drafted. A Google Slides download as .pptx is expected to keep its notes; check after import rather than promising it.
-- **What is not carried over.** Slide animations, builds, transitions, video and audio on slides. Each slide is one still picture.
+- **What is not carried over.** Slide animations, builds, video and audio on slides. Each slide is one still picture. A .pptx slide's own transition is kept if it is a fade, push or wipe; any other transition, and every change in an .odp or PDF, becomes a plain fade.
 - **Fidelity.** LibreOffice draws the .pptx or .odp. It substitutes fonts that are not installed and can misdraw SmartArt and some charts. If the pictures look wrong, ask for a PDF export from the app that made the deck, or for the slides exported as images.
 - **Shape.** The video keeps the deck's own shape, scaled to fit 1920×1080. A 16:9 deck fills it; a 4:3 deck comes out 1440×1080.
 - **Hidden slides** are skipped.
@@ -98,7 +98,7 @@ Use the voiceover skill (`../voiceover/SKILL.md`) with the script from step 4. `
 node dist/cli.js assemble <folder>
 ```
 
-With every recording in place, this writes `<folder>/deck.mp4`: H.264 and AAC at 30 frames a second. Each slide appears on its first spoken word and the last holds for a moment after the narration ends. If a slide's first word is not found in its transcript, the command names the slide: the narrator probably changed that word, so re-transcribe or re-record that take, and do not edit the notes to match.
+With every recording in place, this writes `<folder>/deck.mp4`: H.264 and AAC at 30 frames a second. Each slide fades into the next over half a second centred on its first spoken word, and the last holds for a moment after the narration ends. A .pptx slide set to push or wipe in PowerPoint or Google Slides pushes or wipes in from the same side instead. `--fade <seconds>` changes how long each change takes (0 to 5), and `--fade 0` keeps hard cuts. The video is the same length either way. If a slide's first word is not found in its transcript, the command names the slide: the narrator probably changed that word, so re-transcribe or re-record that take, and do not edit the notes to match.
 
 Grab a frame or two and check them against the page pictures before sending the video:
 

@@ -4,12 +4,14 @@ import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import sharp from "sharp";
 import { readNarration } from "./narration";
-import { readSlides } from "./slides";
+import { readSlides, type Transition } from "./slides";
 import { LEAD, TAIL, buildSlideTimeline, estimateWords, planSlides, readWords } from "./timeline";
 
 /** Seconds a slide with no narration stays on screen. */
 export const DWELL = 4;
 const FPS = 30;
+/** Seconds each slide change fades over, centred on the cut. 0 keeps hard cuts. */
+export const FADE = 0.5;
 
 /** A stretch of the soundtrack: seconds `from`–`to` of recording `run`, or that much silence when there is no run. */
 export interface Piece { run?: number; from: number; to: number }
@@ -38,11 +40,46 @@ export function layout(order: number[], spans: Map<number, { run: number; start:
   return { video, audio, duration: video.reduce((t, v) => t + v.seconds, 0) };
 }
 
+const SIDES: Record<string, string> = { l: "left", r: "right", u: "up", d: "down" };
+
+/**
+ * The ffmpeg `xfade` transition for a slide's own: a push slides, a wipe wipes, each in its direction (left when the deck
+ * gives none); every other kind, or none, is a plain fade. The length is always `--fade`, not the deck's speed.
+ */
+export function xfadeKind(t: Transition | undefined): string {
+  const side = SIDES[t?.dir ?? "l"] ?? "left";
+  return t?.kind === "push" ? `slide${side}` : t?.kind === "wipe" ? `wipe${side}` : "fade";
+}
+
+/**
+ * Whole frames per still and, per slide change, where its fade starts and how long it is, on the output timeline.
+ * Cut frames come from the running total, so rounding never drifts the picture away from the sound. Each fade is
+ * centred on its cut and shortened so the two fades of a short slide never meet. Every still is held half a fade
+ * longer on each faded side, so the joined video is exactly as long as with hard cuts.
+ */
+export function fadePlan(video: { seconds: number }[], fade: number, fps: number): { frames: number[]; fades: { start: number; frames: number }[] } {
+  const cuts: number[] = [], base: number[] = [];
+  let t = 0, frame = 0;
+  for (const v of video) {
+    t += v.seconds;
+    const frames = Math.max(1, Math.round(t * fps) - frame);
+    frame += frames;
+    base.push(frames);
+    cuts.push(frame);
+  }
+  const full = Math.round(fade * fps), lead = Math.floor(full / 2);
+  const parts = base.slice(1).map((b, i) => ({ before: Math.min(lead, Math.floor(base[i]! / 2)), after: Math.min(full - lead, Math.floor(b / 2)) }));
+  return {
+    frames: base.map((b, i) => b + (parts[i - 1]?.after ?? 0) + (parts[i]?.before ?? 0)),
+    fades: parts.map((p, i) => ({ start: cuts[i]! - p.before, frames: p.before + p.after })),
+  };
+}
+
 /**
  * Writes `<dir>/deck.mp4`, or `preview-silent.mp4` with estimated timing when nothing has been recorded yet.
  * The picture keeps the deck's own shape, scaled to fit 1920×1080 with even sides.
  */
-export async function assemble(dir: string, out?: string): Promise<string> {
+export async function assemble(dir: string, out?: string, fade = FADE): Promise<string> {
   const slides = readSlides(dir);
   const { lines } = readNarration(dir);
   const { runs } = planSlides(lines);
@@ -72,17 +109,20 @@ export async function assemble(dir: string, out?: string): Promise<string> {
   const even = (px: number): number => Math.max(2, Math.round((px * scale) / 2) * 2);
   const [w, h] = [even(first.width), even(first.height)];
 
-  // Whole frames per slide, taken from the running total so rounding never drifts the picture away from the sound.
+  // Joined by `concat` (hard cuts) or a chain of `xfade`s at the planned offsets, which keeps the same length.
+  const timing = fadePlan(plan.video, fade, FPS);
+  const faded = timing.fades.some((f) => f.frames > 0);
   const inputs: string[] = [], filters: string[] = [];
-  let t = 0, frame = 0;
-  plan.video.forEach((v, i) => {
-    t += v.seconds;
-    const frames = Math.max(1, Math.round(t * FPS) - frame);
-    frame += frames;
+  timing.frames.forEach((frames, i) => {
     inputs.push("-framerate", String(FPS), "-loop", "1", "-t", ((frames + 1) / FPS).toFixed(3), "-i", join(dir, slides[i]!.page));
     filters.push(`[${i}:v]trim=end_frame=${frames},setpts=PTS-STARTPTS,scale=${w}:${h}:force_original_aspect_ratio=decrease,pad=${w}:${h}:(ow-iw)/2:(oh-ih)/2,setsar=1,format=yuv420p[v${i}]`);
   });
-  filters.push(`${plan.video.map((_, i) => `[v${i}]`).join("")}concat=n=${plan.video.length}:v=1:a=0[v]`);
+  if (!faded) filters.push(`${plan.video.map((_, i) => `[v${i}]`).join("")}concat=n=${plan.video.length}:v=1:a=0[v]`);
+  else if (timing.frames.length === 1) filters.push("[v0]null[v]");
+  else timing.fades.forEach((f, i) => {
+    const kind = xfadeKind(slides[i + 1]!.transition);
+    filters.push(`[${i ? `x${i}` : "v0"}][v${i + 1}]xfade=transition=${kind}:duration=${(f.frames / FPS).toFixed(4)}:offset=${(f.start / FPS).toFixed(4)}[${i === timing.fades.length - 1 ? "v" : `x${i + 1}`}]`);
+  });
 
   const pieces = silent ? [{ from: 0, to: plan.duration }] : plan.audio;
   let input = plan.video.length;

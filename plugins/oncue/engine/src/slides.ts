@@ -10,7 +10,25 @@ import { pathToFileURL } from "node:url";
 import JSZip from "jszip";
 
 /** `n` counts visible slides and names the page picture; `deck` is the slide's place in the deck, hidden ones included. */
-export interface Slide { n: number; deck: number; page: string; notes: string; text: string }
+/** A slide's own transition as the .pptx names it: `kind` is the element (`fade`, `push`, `wipe`, ...), `dir` and `spd` its attributes. */
+export interface Transition { kind: string; dir?: string; spd?: string }
+export interface Slide { n: number; deck: number; page: string; notes: string; text: string; transition?: Transition }
+
+/**
+ * The `<p:transition>` of a slide part, or undefined when it has none. PowerPoint wraps newer transitions in
+ * `mc:AlternateContent`; the `mc:Fallback` branch holds a classic one every reader understands, so that is the one read.
+ */
+export function readTransition(xml: string): Transition | undefined {
+  const scope = /<mc:Fallback\b[^>]*>([\s\S]*?)<\/mc:Fallback>/.exec(xml)?.[1] ?? xml.replace(/<mc:AlternateContent\b[\s\S]*?<\/mc:AlternateContent>/g, "");
+  const m = /<p:transition\b([^>]*?)(?:\/>|>([\s\S]*?)<\/p:transition>)/.exec(scope);
+  const effect = m?.[2] && /<p:(\w+)\b([^>]*)/.exec(m[2]);
+  if (!m || !effect) return undefined;
+  const t: Transition = { kind: effect[1]! };
+  const dir = attr(effect[2]!, "dir"), spd = attr(m[1]!, "spd");
+  if (dir) t.dir = dir;
+  if (spd) t.spd = spd;
+  return t;
+}
 export interface Manifest { source: string; sha256: string; mtimeMs: number; bytes: number; unchanged: boolean; checked: string }
 
 const MANIFEST = "source-manifest.json";
@@ -99,7 +117,8 @@ async function readPptx(zip: JSZip): Promise<Omit<Slide, "page">[]> {
     const notesPath = (await rels(path)).find((r) => r.type.endsWith("/notesSlide"))?.target;
     // Only the notes body: the notes page also holds a slide-number field and sometimes a header, footer or date.
     const body = notesPath ? [...(await read(notesPath)).matchAll(/<p:sp>[\s\S]*?<\/p:sp>/g)].map((m) => m[0]).filter((sp) => /<p:ph\b[^>]*type="body"/.test(sp)).join("") : "";
-    slides.push({ n: slides.length + 1, deck: i + 1, notes: text(body), text: text(xml) });
+    const transition = readTransition(xml);
+    slides.push({ n: slides.length + 1, deck: i + 1, notes: text(body), text: text(xml), ...(transition && { transition }) });
   }
   return slides;
 }
@@ -194,7 +213,10 @@ export async function importDeck(source: string, outDir: string, pagesFrom?: str
     if (!pages.length) throw new Error(pagesFrom ? `No .png or .jpg images in ${pagesFrom}.` : "Rendering produced no pages.");
     if (deck && deck.length !== pages.length)
       throw new Error(`The deck has ${deck.length} visible slides but there are ${pages.length} page pictures. Hidden slides are skipped; supply one picture per visible slide, in order.`);
-    const slides = pages.map((page, i) => ({ n: i + 1, deck: deck?.[i]?.deck ?? i + 1, page, notes: deck?.[i]?.notes ?? "", text: deck?.[i]?.text ?? "" }));
+    const slides: Slide[] = pages.map((page, i) => {
+      const d = deck?.[i];
+      return { n: i + 1, deck: d?.deck ?? i + 1, page, notes: d?.notes ?? "", text: d?.text ?? "", ...(d?.transition && { transition: d.transition }) };
+    });
     writeFileSync(join(out, "slides.json"), JSON.stringify({ source: resolve(source), slides }, null, 2));
     return slides;
   });

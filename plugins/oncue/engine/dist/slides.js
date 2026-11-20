@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.readTransition = readTransition;
 exports.guardSource = guardSource;
 exports.verifySource = verifySource;
 exports.strip = strip;
@@ -20,6 +21,24 @@ const node_fs_1 = require("node:fs");
 const node_path_1 = require("node:path");
 const node_url_1 = require("node:url");
 const jszip_1 = __importDefault(require("jszip"));
+/**
+ * The `<p:transition>` of a slide part, or undefined when it has none. PowerPoint wraps newer transitions in
+ * `mc:AlternateContent`; the `mc:Fallback` branch holds a classic one every reader understands, so that is the one read.
+ */
+function readTransition(xml) {
+    const scope = /<mc:Fallback\b[^>]*>([\s\S]*?)<\/mc:Fallback>/.exec(xml)?.[1] ?? xml.replace(/<mc:AlternateContent\b[\s\S]*?<\/mc:AlternateContent>/g, "");
+    const m = /<p:transition\b([^>]*?)(?:\/>|>([\s\S]*?)<\/p:transition>)/.exec(scope);
+    const effect = m?.[2] && /<p:(\w+)\b([^>]*)/.exec(m[2]);
+    if (!m || !effect)
+        return undefined;
+    const t = { kind: effect[1] };
+    const dir = attr(effect[2], "dir"), spd = attr(m[1], "spd");
+    if (dir)
+        t.dir = dir;
+    if (spd)
+        t.spd = spd;
+    return t;
+}
 const MANIFEST = "source-manifest.json";
 function fingerprint(file) {
     const stat = (0, node_fs_1.statSync)(file);
@@ -110,7 +129,8 @@ async function readPptx(zip) {
         const notesPath = (await rels(path)).find((r) => r.type.endsWith("/notesSlide"))?.target;
         // Only the notes body: the notes page also holds a slide-number field and sometimes a header, footer or date.
         const body = notesPath ? [...(await read(notesPath)).matchAll(/<p:sp>[\s\S]*?<\/p:sp>/g)].map((m) => m[0]).filter((sp) => /<p:ph\b[^>]*type="body"/.test(sp)).join("") : "";
-        slides.push({ n: slides.length + 1, deck: i + 1, notes: text(body), text: text(xml) });
+        const transition = readTransition(xml);
+        slides.push({ n: slides.length + 1, deck: i + 1, notes: text(body), text: text(xml), ...(transition && { transition }) });
     }
     return slides;
 }
@@ -210,7 +230,10 @@ async function importDeck(source, outDir, pagesFrom) {
             throw new Error(pagesFrom ? `No .png or .jpg images in ${pagesFrom}.` : "Rendering produced no pages.");
         if (deck && deck.length !== pages.length)
             throw new Error(`The deck has ${deck.length} visible slides but there are ${pages.length} page pictures. Hidden slides are skipped; supply one picture per visible slide, in order.`);
-        const slides = pages.map((page, i) => ({ n: i + 1, deck: deck?.[i]?.deck ?? i + 1, page, notes: deck?.[i]?.notes ?? "", text: deck?.[i]?.text ?? "" }));
+        const slides = pages.map((page, i) => {
+            const d = deck?.[i];
+            return { n: i + 1, deck: d?.deck ?? i + 1, page, notes: d?.notes ?? "", text: d?.text ?? "", ...(d?.transition && { transition: d.transition }) };
+        });
         (0, node_fs_1.writeFileSync)((0, node_path_1.join)(out, "slides.json"), JSON.stringify({ source: (0, node_path_1.resolve)(source), slides }, null, 2));
         return slides;
     });

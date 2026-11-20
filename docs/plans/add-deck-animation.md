@@ -75,21 +75,21 @@ Risks carried from the proposal review:
 
 ### Phase: 1 Cross-fades
 
-1. Implement `docs/plans/add-slide-cross-fades.md` end to end with `/plan-agent:build docs/plans/add-slide-cross-fades.md`, on its own branch from `main`, ending at version 1.12.0. Why: it is the low-risk slice every later phase builds on (`fadePlan` and the `xfade` graph), and it is already planned in detail. Verify: that plan's frontmatter reads `status: completed`, `node --test test/crossfade.test.mjs` passes in `plugins/oncue/engine`, and `git grep -n "xfade" plugins/oncue/engine/src/assemble.ts` prints at least one line.
+1. [x] Implement `docs/plans/add-slide-cross-fades.md` end to end with `/plan-agent:build docs/plans/add-slide-cross-fades.md`, on its own branch from `main`, ending at version 1.12.0. Why: it is the low-risk slice every later phase builds on (`fadePlan` and the `xfade` graph), and it is already planned in detail. Verify: that plan's frontmatter reads `status: completed`, `node --test test/crossfade.test.mjs` passes in `plugins/oncue/engine`, and `git grep -n "xfade" plugins/oncue/engine/src/assemble.ts` prints at least one line.
 
 ### Phase: 2 RED — deck transitions
 
-2. Extend `test/helpers/make-deck.mjs` so a fixture slide can carry a `<p:transition>` child (`fade`, `push dir="l"`, `wipe dir="r"`, `zoom`), and create `test/transitions.test.mjs` with unit tests for a new `readTransition(slideXml)` and `xfadeKind(transition)` plus an end-to-end test that imports a three-slide deck (fade, push left, zoom) and asserts slide 2's change is a left slide: halfway through it the left half of the frame shows slide 2's colour and the right half slide 1's. Why: the push must be proven as a push in the MP4, not just in the parse. Verify: `npm run build && node --test test/transitions.test.mjs` fails because `readTransition` is not exported and the halfway frame is a uniform blend; paste the output.
+2. [x] Extend `test/helpers/make-deck.mjs` so a fixture slide can carry a `<p:transition>` child (`fade`, `push dir="l"`, `wipe dir="r"`, `zoom`), and create `test/transitions.test.mjs` with unit tests for a new `readTransition(slideXml)` and `xfadeKind(transition)` plus an end-to-end test that imports a three-slide deck (fade, push left, zoom) and asserts slide 2's change is a left slide: halfway through it the left half of the frame shows slide 2's colour and the right half slide 1's. Why: the push must be proven as a push in the MP4, not just in the parse. Verify: `npm run build && node --test test/transitions.test.mjs` fails because `readTransition` is not exported and the halfway frame is a uniform blend; paste the output.
 
 ### Phase: 2 GREEN — deck transitions
 
-3. In `src/slides.ts` add `export function readTransition(xml)` returning `{ kind, dir, spd } | undefined` from the slide part's `<p:transition>` (tolerating `mc:AlternateContent` by reading its `mc:Fallback`), and store it as an optional `transition` on each `Slide` in `slides.json`; `.odp` and PDF slides leave it absent. Why: import is the only step that reads the deck, and `slides.json` is how it hands facts to `assemble`. Verify: the `readTransition` unit tests pass and an imported fixture's `slides.json` shows `"transition": { "kind": "push", "dir": "l" }` on slide 2.
-4. In `src/assemble.ts` add `export function xfadeKind(t)` mapping `fade` to `fade`, `push` to `slideleft`/`slideright`/`slideup`/`slidedown`, `wipe` to `wipeleft`/`wiperight`/`wipeup`/`wipedown`, and anything else or absent to `fade`, and use the incoming slide's kind in each `xfade` the Phase 1 graph builds. Why: one mapping function is testable without ffmpeg and keeps the graph code unchanged in shape. Verify: `node --test test/transitions.test.mjs` passes in full; if it still fails after 8 edit-and-rerun iterations, stop and report the failing assertion and what was ruled out.
-5. Update `skills/deck-to-video/SKILL.md` to say fade, push and wipe transitions are kept and others become a fade, set version 1.13.0 in `plugin.json`, and add a `### 1.13.0` README entry. Why: the skill text is what the model reads at run time, and the engine's behaviour changed. Verify: `npm run validate` exits 0 and `grep -n "### 1.13.0" README.md` prints one line.
+3. [x] In `src/slides.ts` add `export function readTransition(xml)` returning `{ kind, dir, spd } | undefined` from the slide part's `<p:transition>` (tolerating `mc:AlternateContent` by reading its `mc:Fallback`), and store it as an optional `transition` on each `Slide` in `slides.json`; `.odp` and PDF slides leave it absent. Why: import is the only step that reads the deck, and `slides.json` is how it hands facts to `assemble`. Verify: the `readTransition` unit tests pass and an imported fixture's `slides.json` shows `"transition": { "kind": "push", "dir": "l" }` on slide 2.
+4. [x] In `src/assemble.ts` add `export function xfadeKind(t)` mapping `fade` to `fade`, `push` to `slideleft`/`slideright`/`slideup`/`slidedown`, `wipe` to `wipeleft`/`wiperight`/`wipeup`/`wipedown`, and anything else or absent to `fade`, and use the incoming slide's kind in each `xfade` the Phase 1 graph builds. Why: one mapping function is testable without ffmpeg and keeps the graph code unchanged in shape. Verify: `node --test test/transitions.test.mjs` passes in full; if it still fails after 8 edit-and-rerun iterations, stop and report the failing assertion and what was ruled out.
+5. [x] Update `skills/deck-to-video/SKILL.md` to say fade, push and wipe transitions are kept and others become a fade, set version 1.13.0 in `plugin.json`, and add a `### 1.13.0` README entry. Why: the skill text is what the model reads at run time, and the engine's behaviour changed. Verify: `npm run validate` exits 0 and `grep -n "### 1.13.0" README.md` prints one line.
 
 ### Phase: 2 VERIFY — deck transitions
 
-6. Run `npm run build`, then `npm run validate`, `npm run engine:typecheck`, `npm run engine:test`, `npm run example:deck` and `npm run example:stills` from the right folders, and pull one frame mid-push from a real assemble. Why: the project's stated checks plus one look by a person. Verify: all exit 0 with output read, no video tests skipped, and the frame visibly shows two slides side by side, not blended.
+6. [x] Run `npm run build`, then `npm run validate`, `npm run engine:typecheck`, `npm run engine:test`, `npm run example:deck` and `npm run example:stills` from the right folders, and pull one frame mid-push from a real assemble. Why: the project's stated checks plus one look by a person. Verify: all exit 0 with output read, no video tests skipped, and the frame visibly shows two slides side by side, not blended.
 
 ### Phase: 3 Gate — real animated deck
 
@@ -125,8 +125,8 @@ Tier 1 — This plan changes application code
 
 ## Acceptance Criteria
 
-- [ ] Each slide change in a default `assemble` is a 0.5 s fade centred on the old cut, and `--fade 0` restores hard cuts.
-- [ ] A `.pptx` slide with a push or wipe transition is entered with that motion and direction; any other transition is a fade.
+- [x] Each slide change in a default `assemble` is a 0.5 s fade centred on the old cut, and `--fade 0` restores hard cuts.
+- [x] A `.pptx` slide with a push or wipe transition is entered with that motion and direction; any other transition is a fade.
 - [ ] A PDF or `.odp` input assembles exactly as after Phase 1, with fades and no builds.
 - [ ] On a `.pptx` with click builds, an element whose text is spoken does not appear before that word.
 - [ ] A build whose text is never spoken appears at an evenly spaced time and the command prints a warning naming it.
@@ -137,6 +137,14 @@ Tier 1 — This plan changes application code
 - [ ] A 40-slide, 200-build deck assembles without error, and its measured time and memory are recorded.
 - [ ] `npm run validate`, `npm run engine:typecheck` and `npm run engine:test` exit 0 at the end of every phase.
 - [ ] The plugin is at 1.14.0 with `### 1.12.0`, `### 1.13.0` and `### 1.14.0` README entries, and `SKILL.md` describes fades, transitions, builds and `--builds off`.
+
+## Completion Report
+
+- Phases 1 and 2 on one branch at 1.13.0 — the plan's three-PR split was not followed; README has `### 1.12.0` and `### 1.13.0`.
+- Checks pass on 2026-11-19 — validate and typecheck exit 0, engine:test 169 pass, 0 fail, 1 skipped (LibreOffice-only import render, unrelated), example:deck and example:stills exit 0; ffmpeg was installed with Homebrew for `xfade`.
+- Push direction reversed in the test — a `push dir="l"` enters from the right, so mid-change the old slide is on the left and the new one on the right; a viewed frame confirmed it.
+- `--fade 1` sampled at 0.3 s, not 0.4 s — at 0.4 s a one-second fade is 90 % settled and reads as the new slide.
+- Blocked at step 7 — no real animated `.pptx` exists, so Phases 3 and 4 have not started.
 
 ## Verification
 

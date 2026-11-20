@@ -67,8 +67,8 @@ test("a deck with notes and the Gleaner voiceover becomes a 1920×1080 MP4 with 
   const spans = buildSlideTimeline(vo.map((/** @type {string} */ v, /** @type {number} */ i) => ({ n: i + 1, vo: v })), readWords(example("words.json")), audioSeconds);
   for (const s of spans) showsSlide(mp4, LEAD + (s.start + s.end) / 2, s.n);
   showsSlide(mp4, 0.05, 1);
-  showsSlide(mp4, LEAD + spans[1].start + 0.15, 2);
-  showsSlide(mp4, LEAD + spans[1].start - 0.15, 1);
+  showsSlide(mp4, LEAD + spans[1].start + 0.35, 2);
+  showsSlide(mp4, LEAD + spans[1].start - 0.35, 1);
 
   assert.deepEqual(fingerprint(deck), before, "the deck's checksum and modified time are unchanged");
   assert.deepEqual([manifest(out).unchanged, manifest(out).sha256], [true, before.sha]);

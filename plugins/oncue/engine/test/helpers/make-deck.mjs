@@ -15,7 +15,7 @@ export const cli = fileURLToPath(new URL("../../dist/cli.js", import.meta.url));
 /** @param {string[]} args */
 export const run = (...args) => spawnSync(process.execPath, [cli, ...args], { encoding: "utf8" });
 
-/** @typedef {{ text: string, notes?: string }} FixtureSlide */
+/** `transition` is the inner XML of a `<p:transition>`, such as `<p:push dir="l"/>`. @typedef {{ text: string, notes?: string, transition?: string }} FixtureSlide */
 
 /** Four slides: notes on 1 and 4, none on 2, slide 3 hidden. @type {FixtureSlide[]} */
 export const FOUR = [
@@ -40,6 +40,11 @@ export async function makeDeck(file, { slides = FOUR, hidden = slides === FOUR ?
   for (const n of hidden) {
     const path = `ppt/slides/slide${n}.xml`;
     zip.file(path, (await zip.file(path).async("string")).replace("<p:sld ", '<p:sld show="0" '));
+  }
+  for (const [i, s] of slides.entries()) {
+    if (!s.transition) continue;
+    const path = `ppt/slides/slide${i + 1}.xml`;
+    zip.file(path, (await zip.file(path).async("string")).replace("</p:sld>", `<p:transition>${s.transition}</p:transition></p:sld>`));
   }
   if (order) {
     const path = "ppt/presentation.xml";
