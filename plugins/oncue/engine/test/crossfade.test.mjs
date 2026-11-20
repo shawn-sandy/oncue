@@ -88,12 +88,12 @@ test("rounding does not drift across 40 slides of uneven length", () => {
 // ---- end to end ----
 
 /** Runs `joinFilters` through ffmpeg on solid stills planned by `fadePlan`; returns ffmpeg's result and the frame count. @param {number[]} lengths */
-function joinFrames(lengths) {
+function joinFrames(lengths, file = "-") {
   const p = fadePlan(secs(lengths), 0.5, 30);
   const inputs = p.frames.flatMap((/** @type {number} */ n, /** @type {number} */ i) => ["-f", "lavfi", "-i", `color=0x${(i * 40 + 30).toString(16).repeat(3)}:s=64x64:r=30,trim=end_frame=${n}`]);
   const graph = [...p.frames.map((/** @type {any} */ _, /** @type {number} */ i) => `[${i}:v]setpts=PTS-STARTPTS[v${i}]`),
     ...joinFilters(p.fades, p.fades.map(() => "fade"), 30)].join(";");
-  const out = spawnSync("ffmpeg", ["-hide_banner", ...inputs, "-filter_complex", graph, "-map", "[v]", "-f", "null", "-"], { encoding: "utf8" });
+  const out = spawnSync("ffmpeg", ["-hide_banner", ...inputs, "-filter_complex", graph, "-map", "[v]", ...(file === "-" ? ["-f", "null"] : ["-y", "-c:v", "ffv1"]), file], { encoding: "utf8" });
   return { p, out, frames: Number(/frame=\s*(\d+)(?![\s\S]*frame=)/.exec(out.stderr)?.[1]) };
 }
 
@@ -104,6 +104,20 @@ test("a one-frame slide joins with a cut, and a fade after cuts still renders, e
     assert.equal(out.status, 0, `${lengths}: ${out.stderr}`);
     assert.equal(frames, Math.round(lengths.reduce((t, v) => t + v, 0) * 30), `${lengths}`);
   }
+});
+
+test("a fade after cuts starts on its planned frame", { skip }, () => {
+  const file = join(tmp, "mixed.mkv");
+  const { p, out } = joinFrames([4.3, 4, 1 / 30, 1 / 30, 4, 5.6], file);
+  assert.equal(out.status, 0, out.stderr);
+  const grey = (/** @type {number} */ i) => i * 40 + 30;
+  const at = (/** @type {number} */ n) => colourAt(file, (n + 0.5) / 30)[0];
+  const last = p.fades.length - 1, f = p.fades[last];
+  assert.ok(f.frames > 0 && p.fades.slice(1, last).some((/** @type {any} */ g) => g.frames === 0), "a fade follows the cuts");
+  assert.ok(Math.abs(at(f.start - 1) - grey(last)) <= 3, `frame ${f.start - 1} is still slide ${last + 1}: ${at(f.start - 1)}`);
+  const mid = at(f.start + Math.floor(f.frames / 2));
+  assert.ok(mid > grey(last) + 10 && mid < grey(last + 1) - 10, `frame ${f.start + Math.floor(f.frames / 2)} is mid-fade: ${mid}`);
+  assert.ok(Math.abs(at(f.start + f.frames) - grey(last + 1)) <= 3, `frame ${f.start + f.frames} is slide ${last + 2}`);
 });
 
 /** @param {string} file */
