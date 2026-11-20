@@ -143,11 +143,20 @@ async function deckCommand(cmd, target, opt) {
             console.warn("warning:", w);
     }
     else
-        await (0, assemble_1.assemble)(target, opt["out"]);
+        await (0, assemble_1.assemble)(target, opt["out"], fadeSeconds(opt["fade"]));
     (0, slides_1.verifySource)(target);
+}
+/** `--fade` as seconds from 0 to 5. An empty value is an error, not 0: `flags` stores "" for an option with nothing after it. */
+function fadeSeconds(value) {
+    if (value === undefined)
+        return undefined;
+    const n = Number(value);
+    if (!value.trim() || !Number.isFinite(n) || n < 0 || n > 5)
+        throw new Error(`--fade must be a number of seconds from 0 to 5, got "${value}"`);
+    return n;
 }
 function readHelp() {
     return "usage: node dist/cli.js <check|script|deck|stills|video> <short.json> [--words words.json --audio vo.mp3] [--out file] [--at t1,t2]\n" +
-        "       node dist/cli.js import <deck.pptx|.odp|.pdf> [--out folder] [--pages folder] | narration <folder> [--approved] | assemble <folder> [--out file]";
+        "       node dist/cli.js import <deck.pptx|.odp|.pdf> [--out folder] [--pages folder] | narration <folder> [--approved] | assemble <folder> [--out file] [--fade seconds]";
 }
 main().catch((e) => { console.error(e instanceof Error ? e.message : e); process.exit(1); });

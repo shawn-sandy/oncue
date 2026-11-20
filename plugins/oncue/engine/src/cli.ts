@@ -12,7 +12,7 @@
  *
  *   node dist/cli.js import    <deck> [--out folder] [--pages folder]   page pictures, slides.json, narration.md and source-manifest.json
  *   node dist/cli.js narration <folder> [--approved]                    print the script, warnings and estimate; --approved fails until narration.md says approved: true
- *   node dist/cli.js assemble  <folder> [--out deck.mp4]                the MP4 from the pages and the recordings, or a silent preview without them
+ *   node dist/cli.js assemble  <folder> [--out deck.mp4] [--fade seconds]              the MP4 from the pages and the recordings, or a silent preview without them
  *
  * The size comes from short.json's format: wider than tall renders the landscape layout, anything else the portrait one.
  * stills and video write build/fit.json and warn about any scene shrunk to fit its frame.
@@ -150,13 +150,21 @@ async function deckCommand(cmd: "import" | "narration" | "assemble", target: str
       throw new Error("narration.md is not approved yet. The person reads it, then changes its first lines to say approved: true. Nothing is recorded before that.");
     console.log(report.out.join("\n"));
     for (const w of report.warnings) console.warn("warning:", w);
-  } else await assemble(target, opt["out"]);
+  } else await assemble(target, opt["out"], fadeSeconds(opt["fade"]));
   verifySource(target);
+}
+
+/** `--fade` as seconds from 0 to 5. An empty value is an error, not 0: `flags` stores "" for an option with nothing after it. */
+function fadeSeconds(value: string | undefined): number | undefined {
+  if (value === undefined) return undefined;
+  const n = Number(value);
+  if (!value.trim() || !Number.isFinite(n) || n < 0 || n > 5) throw new Error(`--fade must be a number of seconds from 0 to 5, got "${value}"`);
+  return n;
 }
 
 function readHelp(): string {
   return "usage: node dist/cli.js <check|script|deck|stills|video> <short.json> [--words words.json --audio vo.mp3] [--out file] [--at t1,t2]\n" +
-    "       node dist/cli.js import <deck.pptx|.odp|.pdf> [--out folder] [--pages folder] | narration <folder> [--approved] | assemble <folder> [--out file]";
+    "       node dist/cli.js import <deck.pptx|.odp|.pdf> [--out folder] [--pages folder] | narration <folder> [--approved] | assemble <folder> [--out file] [--fade seconds]";
 }
 
 main().catch((e: unknown) => { console.error(e instanceof Error ? e.message : e); process.exit(1); });

@@ -229,6 +229,14 @@ The editor previews supported layouts approximately. It does not support arbitra
 
 ## Changelog
 
+### 1.13.0 (2026-11-19)
+
+- deck-to-video keeps a .pptx slide's own transition: `import` records it in `slides.json`, and `assemble` plays a push or wipe as a push or wipe from the same side. Any other transition becomes a fade. The length still comes from `--fade`.
+
+### 1.12.0 (2026-11-19)
+
+- deck-to-video fades each slide into the next over half a second, centred on the moment it used to cut, so the video keeps its length and soundtrack. `assemble --fade <seconds>` changes the length (0 to 5) and `--fade 0` keeps hard cuts.
+
 ### 1.11.0 (2026-11-18)
 
 - Add deck-to-video: turn a finished .pptx, .odp or PDF export (including Google Slides downloads) into a narrated MP4, one still picture per visible slide, each changing on the first spoken word of the next.
