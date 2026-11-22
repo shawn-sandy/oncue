@@ -1,0 +1,102 @@
+{
+  "title": "prompt-triage: the right model, before the work starts",
+  "format": { "width": 1920, "height": 1080 },
+  "brand": {
+    "name": "prompt-triage",
+    "logo": "logo.png",
+    "colors": {
+      "ground": "#0f172a", "card": "#1e293b", "chip": "#334155", "rule": "#475569",
+      "ink": "#f1f5f9", "muted": "#cbd5e1", "accent": "#7dd3fc", "highlight": "#fbbf24",
+      "you": "#fcd34d", "panel": "#0e4f6e", "panelInk": "#ffffff", "panelMuted": "#d6eaf5", "panelRule": "#2a7497"
+    },
+    "fonts": { "sans": "plus-jakarta-sans", "mono": "jetbrains-mono" },
+    "deckFonts": { "head": "Arial", "body": "Calibri" }
+  },
+  "theme": { "radius": "soft", "background": "subtle" },
+  "lines": [
+    { "vo": "Nothing checks whether your model fits the task. This is prompt-triage, a Claude Code mod that picks the right model before the work starts.",
+      "scene": { "kind": "hook", "headline": "The right model, {before the work starts.}", "headlineCue": { "word": "nothing" },
+        "sub": "{prompt-triage} · a Claude Code mod", "subCue": { "word": "this" } } },
+    { "vo": "You pick the model before you know the task. I once left a session on Fable at high effort and forgot to switch back. That cost twenty-five percent of my weekly tokens, in one day.",
+      "scene": { "kind": "list", "kicker": "The problem", "title": "You pick the model {before you know the task.}",
+        "items": [
+          { "icon": "FiClock", "title": "A new session starts on yesterday's model", "cue": { "word": "pick" } },
+          { "icon": "FiAlertTriangle", "title": "25% of my weekly tokens, in one day", "desc": "Left on Fable at high effort", "cue": { "word": "fable" } },
+          { "icon": "FiHelpCircle", "title": "Nothing checks if the model fits", "desc": "Overpay for easy work, underpower hard work", "cue": { "word": "cost" } } ] } },
+    { "vo": "One call to haiku at low effort rates your first prompt. Simple goes to haiku, moderate to sonnet, complex to opus, and long-running to fable. If the suggestion matches your model, there is no dialog at all.",
+      "scene": { "kind": "grid", "kicker": "One rating", "title": "One rating. {One suggestion.}",
+        "tiles": [
+          { "icon": "FiZap", "label": "simple → haiku", "cue": { "word": "simple" } },
+          { "icon": "FiEdit3", "label": "moderate → sonnet", "cue": { "word": "moderate" } },
+          { "icon": "FiLayers", "label": "complex → opus", "cue": { "word": "complex" } },
+          { "icon": "FiClock", "label": "long-running → fable", "cue": { "word": "long-running" } } ] } },
+    { "vo": "It is a dialog, not an override. Switch moves the whole session. Keep model, effort low is offered first for simple prompts. A read-as line restates your prompt so a misread shows early. And a long-running rating offers one click down to opus.",
+      "scene": { "kind": "list", "kicker": "The dialog", "title": "A dialog, {not an override.}",
+        "items": [
+          { "icon": "FiRepeat", "title": "Switch", "desc": "Move the whole session to the suggested model", "cue": { "word": "switch" } },
+          { "icon": "FiSliders", "title": "Keep model, effort low", "desc": "Offered first for simple prompts", "cue": { "word": "keep" } },
+          { "icon": "FiEye", "title": "Read as: line", "desc": "A one-line restatement of your prompt", "cue": { "word": "read" } },
+          { "icon": "FiArrowDown", "title": "Step down", "desc": "One click to opus after long-running", "cue": { "word": "long-running" } } ] } },
+    { "vo": "Sometimes the fix is effort, not the model. Simple keeps your model with effort low. Moderate sets a medium floor. Complex and long-running set a high floor. Run slash effort and the floor goes away.",
+      "scene": { "kind": "grid", "kicker": "Effort", "title": "Sometimes the fix is {effort, not the model.}",
+        "tiles": [
+          { "icon": "FiSliders", "label": "simple: keep model, effort low", "cue": { "word": "simple" } },
+          { "icon": "FiMinus", "label": "moderate: floor medium", "cue": { "word": "moderate" } },
+          { "icon": "FiTrendingUp", "label": "complex: floor high", "cue": { "word": "complex" } },
+          { "icon": "FiClock", "label": "long-running: floor high, plus fable", "cue": { "word": "long-running" } } ] } },
+    { "vo": "Catch the leftover placeholder before you hit Enter. Say you type, make the login better, with a bracket placeholder still in it. Refine sends it to haiku for review, asks up to three questions, and rewrites the prompt into your prompt box. Nothing is sent until you press Enter.",
+      "scene": { "kind": "card", "kicker": "Refine", "title": "Catch the leftover {placeholder.}",
+        "card": { "title": "Make the login better. [Specify the files]", "cue": { "word": "make" },
+          "rows": [
+            { "label": "Review", "value": "Missing goal, vague scope, placeholders", "cue": { "word": "refine" } },
+            { "label": "Ask", "value": "Up to three questions", "cue": { "word": "three" } },
+            { "label": "Rewrite", "value": "Into your prompt box", "cue": { "word": "rewrites" } } ],
+          "tags": ["Nothing is sent until Enter"], "tagsCue": { "word": "nothing" } } } },
+    { "vo": "You can refine any prompt, any time. Type slash refine-prompt, then your prompt. Pickers sit in a band above the prompt box. A refine button reviews a draft while you type. And restore original keeps your first version.",
+      "scene": { "kind": "list", "kicker": "Anytime", "title": "Refine any prompt, {any time.}",
+        "items": [
+          { "icon": "FiTerminal", "title": "/refine-prompt <your prompt>", "cue": { "word": "type" } },
+          { "icon": "FiSliders", "title": "Goal, Workflow, Scope", "desc": "Pickers above the prompt box", "cue": { "word": "pickers" } },
+          { "icon": "FiEdit3", "title": "Refine button", "desc": "Review a draft while you type", "cue": { "word": "button" } },
+          { "icon": "FiRotateCcw", "title": "Restore original", "cue": { "word": "restore" } } ] } },
+    { "vo": "New in zero point seven point six: one switch, whole session. Before, switching to haiku moved only the main chat. Compaction, recap and prompt suggestions stayed on the old model. Now a new fetch hook rewrites the model in those requests, just before they are sent.",
+      "scene": { "kind": "steps", "kicker": "New in 0.7.6", "title": "One switch, {whole session.}",
+        "steps": [
+          { "title": "Before", "desc": "Only the main chat moved; compaction, /recap and suggestions stayed on the old model", "cue": { "word": "before" } },
+          { "title": "Now", "desc": "An http.fetch hook rewrites the model just before the request is sent", "cue": { "word": "now" } } ],
+        "result": { "text": "No /model run · your default is untouched", "cue": { "word": "sent" } } } },
+    { "vo": "Watch the context before it costs you. A session estimate row shows cost, prompts, and tokens in context. At fifty thousand tokens, the manage context button appears. At one hundred twenty thousand, compact is recommended.",
+      "scene": { "kind": "steps", "kicker": "Context", "title": "Watch the context {before it costs you.}",
+        "steps": [
+          { "title": "Session estimate", "desc": "Cost, prompts and tokens in context", "cue": { "word": "estimate" } },
+          { "title": "50,000 tokens", "desc": "Manage context button: /clear or /compact", "cue": { "word": "fifty" } },
+          { "title": "120,000 tokens", "desc": "Compact is recommended", "cue": { "word": "hundred" } } ] } },
+    { "vo": "Receipts, not vibes. Slash triage-stats logs every rating, with the model before and after and the option you picked, but no prompt text. It shows the cost per decision, and it makes no model call.",
+      "scene": { "kind": "list", "kicker": "Stats", "title": "Receipts, {not vibes.}",
+        "items": [
+          { "icon": "FiList", "title": "Every rating logged", "desc": "Model before and after, option picked. No prompt text", "cue": { "word": "logs" } },
+          { "icon": "FiDollarSign", "title": "Cost per decision", "desc": "Spend after it, average by rating, and effort", "cue": { "word": "cost" } },
+          { "icon": "FiCpu", "title": "No model call", "desc": "Just reads the log", "cue": { "word": "makes" } } ] } },
+    { "vo": "Did it save me anything? Too early to say. Five of fifteen sessions after install ran entirely on Sonnet, against none of twenty-nine before. But most of that drop is not the plugin. The rating call costs about three hundredths of a cent per session.",
+      "scene": { "kind": "card", "kicker": "Early numbers", "title": "Did it save me anything? {Too early to say.}",
+        "card": { "title": "A hint, not a measurement", "cue": { "word": "too" },
+          "rows": [
+            { "label": "After install", "value": "5 of 15 sessions entirely on Sonnet", "cue": { "word": "five" } },
+            { "label": "Before", "value": "0 of 29", "cue": { "word": "none" } },
+            { "label": "Rating call", "value": "About $0.0003 per session", "cue": { "word": "costs" } } ],
+          "tags": ["Most of the drop is not the plugin"], "tagsCue": { "word": "most" } } } },
+    { "vo": "Here is where it falls short. The first prompt waits up to ten seconds. The rating can over-reach. The effort floor applies to prompt one only. State lives in memory, so a reload resets the override. Cost can be mispriced. And whether each switch was the right call is not measured yet.",
+      "scene": { "kind": "grid", "kicker": "Limits", "title": "Where it {falls short.}",
+        "tiles": [
+          { "icon": "FiClock", "label": "First prompt waits up to 10s", "cue": { "word": "waits" } },
+          { "icon": "FiTarget", "label": "Rating can over-reach", "cue": { "word": "over-reach" } },
+          { "icon": "FiSliders", "label": "Effort floor: prompt one only", "cue": { "word": "floor" } },
+          { "icon": "FiDatabase", "label": "State lives in memory", "cue": { "word": "memory" } },
+          { "icon": "FiDollarSign", "label": "Cost can be mispriced", "cue": { "word": "mispriced" } },
+          { "icon": "FiHelpCircle", "label": "Not measured yet", "cue": { "word": "measured" } } ] } },
+    { "vo": "Try it on a vague prompt. Open a new session, type something vague on purpose, and pick Refine prompt. It costs one small haiku request per session, plus one each time you refine. If the rating gets it wrong, tell me.",
+      "scene": { "kind": "cta", "headline": "Try it on a {vague prompt.}", "sub": "claude plugin install prompt-triage --marketplace shawn-sandy/prompt-triage", "subCue": { "word": "open" },
+        "pill": { "icon": "FiGithub", "text": "github.com/shawn-sandy/prompt-triage", "cue": { "word": "costs" } },
+        "follow": "If the rating gets it wrong, tell me.", "followCue": { "word": "tell" } } }
+  ]
+}
