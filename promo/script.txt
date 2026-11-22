@@ -22,4 +22,4 @@ Did it save me anything? Too early to say. Five of fifteen sessions after instal
 
 Here is where it falls short. The first prompt waits up to ten seconds. The rating can over-reach. The effort floor applies to prompt one only. State lives in memory, so a reload resets the override. Cost can be mispriced. And whether each switch was the right call is not measured yet.
 
-Try it on a vague prompt. Open a new session, type something vague on purpose, and pick Refine prompt. It costs one small haiku request per session. If the rating gets it wrong, tell me.
+Try it on a vague prompt. Open a new session, type something vague on purpose, and pick Refine prompt. It costs one small haiku request per session, plus one each time you refine. If the rating gets it wrong, tell me.

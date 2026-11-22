@@ -94,7 +94,7 @@
           { "icon": "FiDatabase", "label": "State lives in memory", "cue": { "word": "memory" } },
           { "icon": "FiDollarSign", "label": "Cost can be mispriced", "cue": { "word": "mispriced" } },
           { "icon": "FiHelpCircle", "label": "Not measured yet", "cue": { "word": "measured" } } ] } },
-    { "vo": "Try it on a vague prompt. Open a new session, type something vague on purpose, and pick Refine prompt. It costs one small haiku request per session. If the rating gets it wrong, tell me.",
+    { "vo": "Try it on a vague prompt. Open a new session, type something vague on purpose, and pick Refine prompt. It costs one small haiku request per session, plus one each time you refine. If the rating gets it wrong, tell me.",
       "scene": { "kind": "cta", "headline": "Try it on a {vague prompt.}", "sub": "claude plugin install prompt-triage --marketplace shawn-sandy/prompt-triage", "subCue": { "word": "open" },
         "pill": { "icon": "FiGithub", "text": "github.com/shawn-sandy/prompt-triage", "cue": { "word": "costs" } },
         "follow": "If the rating gets it wrong, tell me.", "followCue": { "word": "tell" } } }
