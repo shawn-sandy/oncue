@@ -1,0 +1,25 @@
+Nothing checks whether your model fits the task. This is prompt-triage, a Claude Code mod that picks the right model before the work starts.
+
+You pick the model before you know the task. I once left a session on Fable at high effort and forgot to switch back. That cost twenty-five percent of my weekly tokens, in one day.
+
+One call to haiku at low effort rates your first prompt. Simple goes to haiku, moderate to sonnet, complex to opus, and long-running to fable. If the suggestion matches your model, there is no dialog at all.
+
+It is a dialog, not an override. Switch moves the whole session. Keep model, effort low is offered first for simple prompts. A read-as line restates your prompt so a misread shows early. And a long-running rating offers one click down to opus.
+
+Sometimes the fix is effort, not the model. Simple keeps your model with effort low. Moderate sets a medium floor. Complex and long-running set a high floor. Run slash effort and the floor goes away.
+
+Catch the leftover placeholder before you hit Enter. Say you type, make the login better, with a bracket placeholder still in it. Refine sends it to haiku for review, asks up to three questions, and rewrites the prompt into your prompt box. Nothing is sent until you press Enter.
+
+You can refine any prompt, any time. Type slash refine-prompt, then your prompt. Pickers sit in a band above the prompt box. A refine button reviews a draft while you type. And restore original keeps your first version.
+
+New in zero point seven point six: one switch, whole session. Before, switching to haiku moved only the main chat. Compaction, recap and prompt suggestions stayed on the old model. Now a new fetch hook rewrites the model in those requests, just before they are sent.
+
+Watch the context before it costs you. A session estimate row shows cost, prompts, and tokens in context. At fifty thousand tokens, the manage context button appears. At one hundred twenty thousand, compact is recommended.
+
+Receipts, not vibes. Slash triage-stats logs every rating, with the model before and after and the option you picked, but no prompt text. It shows the cost per decision, and it makes no model call.
+
+Did it save me anything? Too early to say. Five of fifteen sessions after install ran entirely on Sonnet, against none of twenty-nine before. But most of that drop is not the plugin. The rating call costs about three hundredths of a cent per session.
+
+Here is where it falls short. The first prompt waits up to ten seconds. The rating can over-reach. The effort floor applies to prompt one only. State lives in memory, so a reload resets the override. Cost can be mispriced. And whether each switch was the right call is not measured yet.
+
+Try it on a vague prompt. Open a new session, type something vague on purpose, and pick Refine prompt. It costs one small haiku request per session. If the rating gets it wrong, tell me.
